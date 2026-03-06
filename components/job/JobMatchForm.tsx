@@ -1,0 +1,79 @@
+"use client";
+
+import { useState } from "react";
+
+interface JobMatchFormProps {
+  defaultResumeText?: string;
+  onResult: (data: {
+    match_score: number;
+    missing_skills: string[];
+    recommended_keywords: string[];
+  }) => void;
+}
+
+export function JobMatchForm({ defaultResumeText = "", onResult }: JobMatchFormProps) {
+  const [jobDescription, setJobDescription] = useState("");
+  const [resumeText, setResumeText] = useState(defaultResumeText);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!resumeText.trim() || !jobDescription.trim()) {
+      setError("Paste both resume text and job description.");
+      return;
+    }
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/job-match", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resumeText: resumeText.trim(),
+          jobDescription: jobDescription.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Match failed");
+      onResult(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Match failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-text">Resume text</label>
+        <textarea
+          className="mt-1 w-full rounded-lg border border-gray-300 p-3 text-sm text-text"
+          rows={6}
+          value={resumeText}
+          onChange={(e) => setResumeText(e.target.value)}
+          placeholder="Paste your resume text…"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-text">Job description</label>
+        <textarea
+          className="mt-1 w-full rounded-lg border border-gray-300 p-3 text-sm text-text"
+          rows={8}
+          value={jobDescription}
+          onChange={(e) => setJobDescription(e.target.value)}
+          placeholder="Paste the job description…"
+        />
+      </div>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <button
+        type="submit"
+        disabled={loading}
+        className="rounded-lg bg-primary px-4 py-2 font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+      >
+        {loading ? "Matching…" : "Match resume"}
+      </button>
+    </form>
+  );
+}
