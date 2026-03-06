@@ -2,25 +2,31 @@ import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canUseFeature, logUsage } from "@/lib/usage";
-import { chatCompletion } from "@/lib/openai";
-import type { AnalysisResult } from "@/types/resume";
+import { geminiGenerateContent } from "@/lib/gemini";
+import type { ATSAnalysisResult } from "@/types/resume";
 
-const SYSTEM_PROMPT = `You are an expert ATS resume reviewer.
-Analyze the following software developer resume.
-Provide:
-1. ATS score out of 100 (integer)
-2. Key strengths (array of short strings)
-3. Weak sections (array of short strings)
-4. Missing keywords (array of strings that would help ATS)
-5. Suggestions to improve the resume (array of short strings)
-Return ONLY valid JSON with this exact structure:
+const PROMPT = `You are an ATS resume analyzer.
+
+Analyze the resume and return ONLY JSON.
+
+Return format:
+
 {
-  "score": 72,
-  "strengths": [],
-  "weaknesses": [],
-  "missing_keywords": [],
-  "suggestions": []
-}`;
+  "atsScore": number,
+  "missingSkills": [],
+  "resumeImprovements": [],
+  "recommendedRoles": []
+}
+
+Rules:
+- atsScore between 0-100
+- missingSkills maximum 10
+- resumeImprovements maximum 10
+- recommendedRoles maximum 5
+- Return ONLY JSON (no explanations)
+
+Resume:
+`;
 
 export async function POST(request: Request) {
   const user = await getUser();
@@ -29,7 +35,7 @@ export async function POST(request: Request) {
   }
 
   const planType = user.profile?.plan_type ?? "free";
-  const { allowed, limit } = await canUseFeature(user.id, "resume_analysis", planType);
+  const { allowed } = await canUseFeature(user.id, "resume_analysis", planType);
   if (!allowed) {
     return NextResponse.json(
       { error: "Free limit reached for resume analysis. Upgrade to Pro for unlimited." },
@@ -47,19 +53,35 @@ export async function POST(request: Request) {
   }
 
   const text = resumeText.slice(0, 15000);
-  let result: AnalysisResult;
+  let raw: string;
   try {
-    const raw = await chatCompletion(SYSTEM_PROMPT, text, { jsonMode: true });
-    result = JSON.parse(raw) as AnalysisResult;
-    if (typeof result.score !== "number") result.score = 0;
-    if (!Array.isArray(result.strengths)) result.strengths = [];
-    if (!Array.isArray(result.weaknesses)) result.weaknesses = [];
-    if (!Array.isArray(result.missing_keywords)) result.missing_keywords = [];
-    if (!Array.isArray(result.suggestions)) result.suggestions = [];
+    raw = await geminiGenerateContent(PROMPT + text);
   } catch (e) {
-    console.error("AI parse error:", e);
+    const message = e instanceof Error ? e.message : "Unknown error";
+    console.error("Analyze resume error:", e);
     return NextResponse.json(
-      { error: "Analysis failed" },
+      {
+        error: "Analysis failed",
+        detail: process.env.NODE_ENV === "development" ? message : undefined,
+      },
+      { status: 500 }
+    );
+  }
+
+  let data: ATSAnalysisResult;
+  try {
+    let jsonStr = raw.trim();
+    const jsonMatch = jsonStr.match(/^```(?:json)?\s*([\s\S]*?)```$/m);
+    if (jsonMatch) jsonStr = jsonMatch[1].trim();
+    data = JSON.parse(jsonStr) as ATSAnalysisResult;
+    data.atsScore = Math.min(100, Math.max(0, Number(data.atsScore) || 0));
+    data.missingSkills = Array.isArray(data.missingSkills) ? data.missingSkills.slice(0, 10) : [];
+    data.resumeImprovements = Array.isArray(data.resumeImprovements) ? data.resumeImprovements.slice(0, 10) : [];
+    data.recommendedRoles = Array.isArray(data.recommendedRoles) ? data.recommendedRoles.slice(0, 5) : [];
+  } catch (e) {
+    console.error("Parse analysis JSON error:", e);
+    return NextResponse.json(
+      { error: "Analysis failed", detail: "Invalid JSON from AI." },
       { status: 500 }
     );
   }
@@ -77,11 +99,11 @@ export async function POST(request: Request) {
     if (resume) {
       await supabase.from("resume_analysis").insert({
         resume_id: resume.id,
-        score: result.score,
-        analysis_json: result,
+        score: data.atsScore,
+        analysis_json: data,
       });
     }
   }
 
-  return NextResponse.json(result);
+  return NextResponse.json(data);
 }

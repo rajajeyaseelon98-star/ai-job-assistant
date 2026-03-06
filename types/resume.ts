@@ -21,3 +21,11 @@ export interface AnalysisResult {
   missing_keywords: string[];
   suggestions: string[];
 }
+
+/** ATS analysis response from Gemini (JSON-only prompt). */
+export interface ATSAnalysisResult {
+  atsScore: number;
+  missingSkills: string[];
+  resumeImprovements: string[];
+  recommendedRoles: string[];
+}

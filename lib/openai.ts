@@ -1,11 +1,12 @@
 import OpenAI from "openai";
 
-if (!process.env.OPENAI_API_KEY) {
+const apiKey = process.env.OPENAI_API_KEY?.trim();
+if (!apiKey) {
   console.warn("OPENAI_API_KEY is not set; AI features will fail.");
 }
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "",
+  apiKey: apiKey || "",
 });
 
 export { openai };
@@ -16,6 +17,9 @@ export async function chatCompletion(
   userContent: string,
   options?: { jsonMode?: boolean }
 ) {
+  if (!apiKey) {
+    throw new Error("OPENAI_API_KEY is not configured. Add it to .env.local.");
+  }
   const res = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [

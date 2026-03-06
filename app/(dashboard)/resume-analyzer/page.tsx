@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { ResumeUpload } from "@/components/resume/ResumeUpload";
 import { ResumeAnalysisResult } from "@/components/resume/ResumeAnalysisResult";
-import type { AnalysisResult } from "@/types/resume";
+import type { ATSAnalysisResult } from "@/types/resume";
 
 export default function ResumeAnalyzerPage() {
   const [resumeId, setResumeId] = useState<string | null>(null);
   const [resumeText, setResumeText] = useState<string | null>(null);
-  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [analysis, setAnalysis] = useState<ATSAnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,7 +35,10 @@ export default function ResumeAnalyzerPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Analysis failed");
+      if (!res.ok) {
+        const msg = data.detail ? `${data.error}: ${data.detail}` : (data.error || "Analysis failed");
+        throw new Error(msg);
+      }
       setAnalysis(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Analysis failed");
