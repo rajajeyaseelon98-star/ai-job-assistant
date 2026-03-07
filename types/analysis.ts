@@ -5,4 +5,5 @@ export interface ImproveResumeResponse {
 export interface InterviewPrepResponse {
   technical_questions: { question: string; answer: string }[];
   behavioral_questions: { question: string; answer: string }[];
+  coding_questions?: { question: string; answer: string }[];
 }

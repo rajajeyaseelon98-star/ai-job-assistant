@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS public.users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL UNIQUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  plan_type TEXT NOT NULL DEFAULT 'free' CHECK (plan_type IN ('free', 'pro'))
+  plan_type TEXT NOT NULL DEFAULT 'free' CHECK (plan_type IN ('free', 'pro', 'premium')),
+  name TEXT
 );
 
 -- Resumes table
@@ -34,17 +35,22 @@ CREATE TABLE IF NOT EXISTS public.resume_analysis (
 
 CREATE INDEX IF NOT EXISTS idx_resume_analysis_resume_id ON public.resume_analysis(resume_id);
 
--- Job matches
+-- Job matches (user_id so paste-only matches are saved; resume_id optional; resume_text for pre-fill on view)
 CREATE TABLE IF NOT EXISTS public.job_matches (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  resume_id UUID NOT NULL REFERENCES public.resumes(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  resume_id UUID REFERENCES public.resumes(id) ON DELETE CASCADE,
   job_description TEXT NOT NULL,
+  job_title TEXT,
+  resume_text TEXT,
   match_score INTEGER NOT NULL CHECK (match_score >= 0 AND match_score <= 100),
   missing_skills JSONB,
+  analysis JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_job_matches_resume_id ON public.job_matches(resume_id);
+CREATE INDEX IF NOT EXISTS idx_job_matches_user_id ON public.job_matches(user_id);
 
 -- Usage logs for free plan limits
 CREATE TABLE IF NOT EXISTS public.usage_logs (
@@ -74,6 +80,9 @@ CREATE POLICY "Users can update own row" ON public.users
 CREATE POLICY "Users can insert own row" ON public.users
   FOR INSERT WITH CHECK (auth.uid() = id);
 
+CREATE POLICY "Users can delete own row" ON public.users
+  FOR DELETE USING (auth.uid() = id);
+
 -- Resumes: full CRUD for own rows
 CREATE POLICY "Users can manage own resumes" ON public.resumes
   FOR ALL USING (auth.uid() = user_id);
@@ -89,11 +98,9 @@ CREATE POLICY "Users can insert resume analysis" ON public.resume_analysis
     EXISTS (SELECT 1 FROM public.resumes r WHERE r.id = resume_analysis.resume_id AND r.user_id = auth.uid())
   );
 
--- Job matches: full access for own resume's matches
+-- Job matches: full access for own rows (by user_id)
 CREATE POLICY "Users can manage own job matches" ON public.job_matches
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.resumes r WHERE r.id = job_matches.resume_id AND r.user_id = auth.uid())
-  );
+  FOR ALL USING (auth.uid() = user_id);
 
 -- Usage logs: users can only insert and read their own
 CREATE POLICY "Users can view own usage" ON public.usage_logs
@@ -118,3 +125,67 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Cover letters (resume_text for pre-fill on view)
+CREATE TABLE IF NOT EXISTS public.cover_letters (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  company_name TEXT,
+  job_title TEXT,
+  job_description TEXT,
+  content TEXT NOT NULL,
+  resume_text TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_cover_letters_user_id ON public.cover_letters(user_id);
+ALTER TABLE public.cover_letters ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage own cover letters" ON public.cover_letters FOR ALL USING (auth.uid() = user_id);
+
+-- Interview sessions
+CREATE TABLE IF NOT EXISTS public.interview_sessions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  role TEXT NOT NULL,
+  experience_level TEXT,
+  content_json JSONB NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_interview_sessions_user_id ON public.interview_sessions(user_id);
+ALTER TABLE public.interview_sessions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage own interview sessions" ON public.interview_sessions FOR ALL USING (auth.uid() = user_id);
+
+-- User preferences
+CREATE TABLE IF NOT EXISTS public.user_preferences (
+  user_id UUID PRIMARY KEY REFERENCES public.users(id) ON DELETE CASCADE,
+  experience_level TEXT,
+  preferred_role TEXT,
+  preferred_location TEXT,
+  salary_expectation TEXT,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE public.user_preferences ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage own preferences" ON public.user_preferences FOR ALL USING (auth.uid() = user_id);
+
+-- Subscriptions
+CREATE TABLE IF NOT EXISTS public.subscriptions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE UNIQUE,
+  plan_type TEXT NOT NULL DEFAULT 'free' CHECK (plan_type IN ('free', 'pro', 'premium')),
+  stripe_customer_id TEXT,
+  stripe_subscription_id TEXT,
+  razorpay_subscription_id TEXT,
+  status TEXT DEFAULT 'active',
+  current_period_end TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON public.subscriptions(user_id);
+ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view own subscription" ON public.subscriptions FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can update own subscription" ON public.subscriptions FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own subscription" ON public.subscriptions FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Required: allow anon/authenticated roles to use public schema and tables (fixes "permission denied for schema public")
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;

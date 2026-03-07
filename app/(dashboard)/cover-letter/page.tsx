@@ -1,11 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { CoverLetterForm } from "@/components/cover-letter/CoverLetterForm";
 import { CoverLetterResult } from "@/components/cover-letter/CoverLetterResult";
+import type { CoverLetterGenerated } from "@/components/cover-letter/CoverLetterForm";
 
-export default function CoverLetterPage() {
-  const [generated, setGenerated] = useState("");
+function CoverLetterContent() {
+  const [generated, setGenerated] = useState<CoverLetterGenerated | null>(null);
+  const searchParams = useSearchParams();
+  const idFromUrl = searchParams.get("id");
+
+  useEffect(() => {
+    if (!idFromUrl) return;
+    fetch(`/api/cover-letters/${idFromUrl}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data)
+          setGenerated({
+            id: data.id,
+            coverLetter: data.content,
+            companyName: data.company_name,
+            jobTitle: data.job_title,
+            createdAt: data.created_at,
+            jobDescription: data.job_description ?? "",
+            resumeText: data.resume_text ?? "",
+          });
+      })
+      .catch(() => {});
+  }, [idFromUrl]);
 
   return (
     <div className="space-y-8">
@@ -16,15 +39,33 @@ export default function CoverLetterPage() {
 
       <section className="rounded-xl border border-gray-200 bg-card p-6 shadow-sm">
         <h2 className="mb-4 text-lg font-semibold text-text">Generate cover letter</h2>
-        <CoverLetterForm onGenerated={setGenerated} />
+        <CoverLetterForm
+          defaultCompanyName={generated?.companyName ?? ""}
+          defaultRole={generated?.jobTitle ?? ""}
+          defaultJobDescription={generated?.jobDescription ?? ""}
+          defaultResumeText={generated?.resumeText ?? ""}
+          onGenerated={setGenerated}
+        />
       </section>
 
       {generated && (
         <section>
           <h2 className="mb-4 text-lg font-semibold text-text">Generated cover letter</h2>
-          <CoverLetterResult text={generated} />
+          <CoverLetterResult
+            id={generated.id}
+            text={generated.coverLetter}
+            onSaved={(newContent) => setGenerated((p) => p ? { ...p, coverLetter: newContent } : null)}
+          />
         </section>
       )}
     </div>
+  );
+}
+
+export default function CoverLetterPage() {
+  return (
+    <Suspense fallback={<div className="space-y-8"><h1 className="text-2xl font-bold text-text">Cover Letter Generator</h1><p className="text-text-muted">Loading…</p></div>}>
+      <CoverLetterContent />
+    </Suspense>
   );
 }

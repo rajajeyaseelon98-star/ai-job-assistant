@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 import { canUseFeature, logUsage } from "@/lib/usage";
 import { chatCompletion } from "@/lib/openai";
+import { geminiGenerateContent } from "@/lib/gemini";
 
 const SYSTEM_PROMPT = `You are an expert cover letter writer for software developers.
 Write a professional cover letter based on the resume and job details.
@@ -39,10 +41,14 @@ export async function POST(request: Request) {
   }
 
   const content = `Company: ${companyName || "Company"}\nRole: ${role || "Software Developer"}\n\nJob description:\n${jobDescription.slice(0, 4000)}\n\nResume:\n${resumeText.slice(0, 6000)}`;
+  const fullPrompt = `${SYSTEM_PROMPT}\n\n---\n\n${content}`;
+  let letter: string;
   try {
-    const letter = await chatCompletion(SYSTEM_PROMPT, content);
+    const useGemini = !!process.env.GEMINI_API_KEY?.trim();
+    letter = useGemini
+      ? await geminiGenerateContent(fullPrompt)
+      : await chatCompletion(SYSTEM_PROMPT, content);
     await logUsage(user.id, "cover_letter");
-    return NextResponse.json({ coverLetter: letter });
   } catch (e) {
     console.error("Cover letter error:", e);
     return NextResponse.json(
@@ -50,4 +56,30 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+
+  const supabase = await createClient();
+  const { data: row, error } = await supabase
+    .from("cover_letters")
+    .insert({
+      user_id: user.id,
+      company_name: companyName?.trim() || null,
+      job_title: role?.trim() || null,
+      job_description: jobDescription.slice(0, 5000),
+      content: letter,
+      resume_text: resumeText?.slice(0, 10000) || null,
+    })
+    .select("id, company_name, job_title, content, created_at")
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: "Failed to save cover letter" }, { status: 500 });
+  }
+
+  return NextResponse.json({
+    coverLetter: letter,
+    id: row.id,
+    companyName: row.company_name,
+    jobTitle: row.job_title,
+    createdAt: row.created_at,
+  });
 }

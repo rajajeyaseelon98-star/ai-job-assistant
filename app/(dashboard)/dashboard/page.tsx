@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/auth";
 import { getUsageSummary } from "@/lib/usage";
 import { ScoreCard } from "@/components/dashboard/ScoreCard";
+import { JobMatchAvgCard } from "@/components/dashboard/JobMatchAvgCard";
 import { UsageCard } from "@/components/dashboard/UsageCard";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { ActivityList } from "@/components/dashboard/ActivityList";
@@ -20,9 +21,25 @@ export default async function DashboardPage() {
 
   const { data: matches } = await supabase
     .from("job_matches")
-    .select("id, match_score, created_at")
+    .select("id, match_score, job_title, created_at")
     .order("created_at", { ascending: false })
     .limit(5);
+
+  const { data: coverLetters } = await supabase
+    .from("cover_letters")
+    .select("id, company_name, created_at")
+    .eq("user_id", user!.id)
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+  const { data: avgRow } = await supabase
+    .from("job_matches")
+    .select("match_score")
+    .limit(1000);
+  const matchScores = (avgRow ?? []).map((r) => r.match_score).filter((n) => typeof n === "number");
+  const avgMatchScore = matchScores.length > 0
+    ? matchScores.reduce((a, b) => a + b, 0) / matchScores.length
+    : null;
 
   const latestScore = analyses?.[0]?.score ?? null;
   const activityItems = [
@@ -37,8 +54,15 @@ export default async function DashboardPage() {
       id: m.id,
       type: "job_match" as const,
       title: "Job match",
-      subtitle: `Match ${m.match_score}%`,
+      subtitle: m.job_title ? `${m.job_title} ${m.match_score}%` : `Match ${m.match_score}%`,
       date: new Date(m.created_at).toLocaleDateString(),
+    })) ?? []),
+    ...(coverLetters?.map((c) => ({
+      id: c.id,
+      type: "cover_letter" as const,
+      title: "Cover letter generated",
+      subtitle: c.company_name || "Cover letter",
+      date: new Date(c.created_at).toLocaleDateString(),
     })) ?? []),
   ]
     .sort((a, b) => b.date.localeCompare(a.date))
@@ -47,16 +71,17 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-bold text-text">
-        Welcome back{user?.profile?.email ? `, ${user.profile.email.split("@")[0]}` : ""} 👋
+        Welcome back{user?.profile?.name ? `, ${user.profile.name}` : user?.profile?.email ? `, ${user.profile.email.split("@")[0]}` : ""} 👋
       </h1>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <ScoreCard score={latestScore} />
+        <JobMatchAvgCard avgScore={avgMatchScore} />
         <UsageCard
           resume={usage.resume_analysis}
           jobMatch={usage.job_match}
           coverLetter={usage.cover_letter}
-          isPro={planType === "pro"}
+          isPro={planType === "pro" || planType === "premium"}
         />
       </div>
 

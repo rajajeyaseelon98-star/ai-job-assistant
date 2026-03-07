@@ -3,20 +3,21 @@ import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canUseFeature, logUsage } from "@/lib/usage";
 import { chatCompletion } from "@/lib/openai";
+import { geminiGenerate } from "@/lib/gemini";
 import type { JobMatchResult } from "@/types/jobMatch";
 
 const SYSTEM_PROMPT = `You are an expert job-resume matcher for software developers.
-Given a resume and a job description, calculate:
-1. job match score (0-100 integer)
-2. missing skills (list of skills in the job that are weak or missing in the resume)
-3. recommended keywords (phrases or terms to add to the resume for better ATS match)
-
-Return ONLY valid JSON:
+Compare the resume and job description. Return ONLY valid JSON:
 {
-  "match_score": 68,
+  "match_score": 72,
+  "matched_skills": [],
   "missing_skills": [],
-  "recommended_keywords": []
-}`;
+  "resume_improvements": []
+}
+- match_score: 0-100 integer
+- matched_skills: skills from the job that appear in the resume (max 15)
+- missing_skills: skills in the job that are weak or missing in the resume (max 15)
+- resume_improvements: short suggestions to improve the resume for this job (max 10)`;
 
 export async function POST(request: Request) {
   const user = await getUser();
@@ -34,10 +35,11 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { resumeText, jobDescription, resumeId } = body as {
+  const { resumeText, jobDescription, resumeId, jobTitle } = body as {
     resumeText?: string;
     jobDescription?: string;
     resumeId?: string;
+    jobTitle?: string;
   };
   if (!resumeText || !jobDescription) {
     return NextResponse.json(
@@ -49,11 +51,18 @@ export async function POST(request: Request) {
   const content = `Resume:\n${resumeText.slice(0, 8000)}\n\nJob description:\n${jobDescription.slice(0, 6000)}`;
   let result: JobMatchResult;
   try {
-    const raw = await chatCompletion(SYSTEM_PROMPT, content, { jsonMode: true });
-    result = JSON.parse(raw) as JobMatchResult;
+    const useGemini = !!process.env.GEMINI_API_KEY?.trim();
+    const raw = useGemini
+      ? await geminiGenerate(SYSTEM_PROMPT, content, { jsonMode: true })
+      : await chatCompletion(SYSTEM_PROMPT, content, { jsonMode: true });
+    let jsonStr = raw.trim();
+    const jsonMatch = jsonStr.match(/^```(?:json)?\s*([\s\S]*?)```$/m);
+    if (jsonMatch) jsonStr = jsonMatch[1].trim();
+    result = JSON.parse(jsonStr) as JobMatchResult;
     if (typeof result.match_score !== "number") result.match_score = 0;
+    if (!Array.isArray(result.matched_skills)) result.matched_skills = [];
     if (!Array.isArray(result.missing_skills)) result.missing_skills = [];
-    if (!Array.isArray(result.recommended_keywords)) result.recommended_keywords = [];
+    if (!Array.isArray(result.resume_improvements)) result.resume_improvements = [];
   } catch (e) {
     console.error("Job match error:", e);
     return NextResponse.json(
@@ -65,6 +74,7 @@ export async function POST(request: Request) {
   await logUsage(user.id, "job_match");
 
   const supabase = await createClient();
+  let resumeIdToSave: string | null = null;
   if (resumeId) {
     const { data: resume } = await supabase
       .from("resumes")
@@ -72,15 +82,18 @@ export async function POST(request: Request) {
       .eq("id", resumeId)
       .eq("user_id", user.id)
       .single();
-    if (resume) {
-      await supabase.from("job_matches").insert({
-        resume_id: resume.id,
-        job_description: jobDescription.slice(0, 5000),
-        match_score: result.match_score,
-        missing_skills: result.missing_skills,
-      });
-    }
+    if (resume) resumeIdToSave = resume.id;
   }
+  await supabase.from("job_matches").insert({
+    user_id: user.id,
+    resume_id: resumeIdToSave,
+    job_description: jobDescription.slice(0, 5000),
+    job_title: jobTitle?.trim() || null,
+    resume_text: resumeText?.slice(0, 10000) || null,
+    match_score: result.match_score,
+    missing_skills: result.missing_skills,
+    analysis: result,
+  });
 
   return NextResponse.json(result);
 }

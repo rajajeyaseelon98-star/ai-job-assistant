@@ -1,16 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { ResumeUpload } from "@/components/resume/ResumeUpload";
 import { ResumeAnalysisResult } from "@/components/resume/ResumeAnalysisResult";
 import type { ATSAnalysisResult } from "@/types/resume";
 
-export default function ResumeAnalyzerPage() {
+function ResumeAnalyzerContent() {
+  const searchParams = useSearchParams();
+  const analysisId = searchParams.get("analysisId");
   const [resumeId, setResumeId] = useState<string | null>(null);
   const [resumeText, setResumeText] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<ATSAnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pastAnalysisLoading, setPastAnalysisLoading] = useState(!!analysisId);
+
+  useEffect(() => {
+    if (!analysisId) return;
+    setPastAnalysisLoading(true);
+    fetch(`/api/resume-analysis/${analysisId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.analysis_json) setAnalysis(data.analysis_json as ATSAnalysisResult);
+      })
+      .catch(() => {})
+      .finally(() => setPastAnalysisLoading(false));
+  }, [analysisId]);
 
   function handleUploadComplete(data: { id: string; parsed_text: string | null }) {
     setResumeId(data.id);
@@ -50,6 +66,13 @@ export default function ResumeAnalyzerPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-bold text-text">Resume Analyzer</h1>
+      {analysisId && analysis && (
+        <p className="text-sm text-text-muted">Viewing past analysis from history.</p>
+      )}
+
+      {pastAnalysisLoading && (
+        <p className="text-sm text-text-muted">Loading past analysis…</p>
+      )}
 
       <section>
         <h2 className="mb-4 text-lg font-semibold text-text">Upload resume</h2>
@@ -87,5 +110,13 @@ export default function ResumeAnalyzerPage() {
         </section>
       )}
     </div>
+  );
+}
+
+export default function ResumeAnalyzerPage() {
+  return (
+    <Suspense fallback={<div className="space-y-8"><h1 className="text-2xl font-bold text-text">Resume Analyzer</h1><p className="text-text-muted">Loading…</p></div>}>
+      <ResumeAnalyzerContent />
+    </Suspense>
   );
 }

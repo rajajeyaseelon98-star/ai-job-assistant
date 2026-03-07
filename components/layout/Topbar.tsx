@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ChevronDown, User, CreditCard, LogOut } from "lucide-react";
 
 interface TopbarProps {
-  planType: "free" | "pro";
+  planType: "free" | "pro" | "premium";
   usage?: {
     resume_analysis: { used: number; limit: number };
     job_match: { used: number; limit: number };
@@ -47,7 +47,7 @@ export function Topbar({ planType, usage }: TopbarProps) {
         <span className="text-text-muted hidden text-sm md:inline">
           Usage: Resume {usedResume}/{limitResume === -1 ? "∞" : limitResume} · Job match {usedJob}/{limitJob === -1 ? "∞" : limitJob}
         </span>
-        {planType === "free" && (
+        {(planType === "free") && (
           <Link
             href="/pricing"
             className="rounded-lg bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/20"

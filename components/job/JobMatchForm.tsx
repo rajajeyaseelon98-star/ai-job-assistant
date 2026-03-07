@@ -1,21 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface JobMatchFormProps {
   defaultResumeText?: string;
+  defaultJobTitle?: string;
+  defaultJobDescription?: string;
   onResult: (data: {
     match_score: number;
+    matched_skills: string[];
     missing_skills: string[];
-    recommended_keywords: string[];
+    resume_improvements: string[];
   }) => void;
 }
 
-export function JobMatchForm({ defaultResumeText = "", onResult }: JobMatchFormProps) {
-  const [jobDescription, setJobDescription] = useState("");
+export function JobMatchForm({
+  defaultResumeText = "",
+  defaultJobTitle = "",
+  defaultJobDescription = "",
+  onResult,
+}: JobMatchFormProps) {
+  const [jobTitle, setJobTitle] = useState(defaultJobTitle);
+  const [jobDescription, setJobDescription] = useState(defaultJobDescription);
   const [resumeText, setResumeText] = useState(defaultResumeText);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (defaultJobTitle !== undefined) setJobTitle(defaultJobTitle);
+    if (defaultJobDescription !== undefined) setJobDescription(defaultJobDescription);
+    if (defaultResumeText !== undefined) setResumeText(defaultResumeText);
+  }, [defaultJobTitle, defaultJobDescription, defaultResumeText]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,6 +47,7 @@ export function JobMatchForm({ defaultResumeText = "", onResult }: JobMatchFormP
         body: JSON.stringify({
           resumeText: resumeText.trim(),
           jobDescription: jobDescription.trim(),
+          jobTitle: jobTitle.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -54,6 +70,16 @@ export function JobMatchForm({ defaultResumeText = "", onResult }: JobMatchFormP
           value={resumeText}
           onChange={(e) => setResumeText(e.target.value)}
           placeholder="Paste your resume text…"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-text">Job title (optional)</label>
+        <input
+          type="text"
+          className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-text"
+          value={jobTitle}
+          onChange={(e) => setJobTitle(e.target.value)}
+          placeholder="e.g. React Developer"
         />
       </div>
       <div>

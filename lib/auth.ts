@@ -1,10 +1,11 @@
 import { createClient } from "./supabase/server";
 
-export type PlanType = "free" | "pro";
+export type PlanType = "free" | "pro" | "premium";
 
 export interface UserProfile {
   id: string;
   email: string;
+  name: string | null;
   created_at: string;
   plan_type: PlanType;
 }
@@ -21,11 +22,21 @@ export async function getUser(): Promise<{
   } = await supabase.auth.getUser();
   if (!user?.email) return null;
 
-  const { data: profile } = await supabase
+  let { data: profile } = await supabase
     .from("users")
-    .select("id, email, created_at, plan_type")
+    .select("id, email, name, created_at, plan_type")
     .eq("id", user.id)
     .single();
+
+  if (!profile) {
+    await ensureUserRow(user.id, user.email);
+    const res = await supabase
+      .from("users")
+      .select("id, email, name, created_at, plan_type")
+      .eq("id", user.id)
+      .single();
+    profile = res.data;
+  }
 
   return {
     id: user.id,

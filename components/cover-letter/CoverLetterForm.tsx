@@ -1,22 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+export interface CoverLetterGenerated {
+  id: string;
+  coverLetter: string;
+  companyName: string | null;
+  jobTitle: string | null;
+  createdAt: string;
+  jobDescription?: string;
+  resumeText?: string;
+}
 
 interface CoverLetterFormProps {
   defaultResumeText?: string;
-  onGenerated: (text: string) => void;
+  defaultCompanyName?: string;
+  defaultRole?: string;
+  defaultJobDescription?: string;
+  onGenerated: (data: CoverLetterGenerated) => void;
 }
 
 export function CoverLetterForm({
   defaultResumeText = "",
+  defaultCompanyName = "",
+  defaultRole = "",
+  defaultJobDescription = "",
   onGenerated,
 }: CoverLetterFormProps) {
-  const [companyName, setCompanyName] = useState("");
-  const [role, setRole] = useState("");
-  const [jobDescription, setJobDescription] = useState("");
+  const [companyName, setCompanyName] = useState(defaultCompanyName);
+  const [role, setRole] = useState(defaultRole);
+  const [jobDescription, setJobDescription] = useState(defaultJobDescription);
   const [resumeText, setResumeText] = useState(defaultResumeText);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (defaultCompanyName !== undefined) setCompanyName(defaultCompanyName);
+    if (defaultRole !== undefined) setRole(defaultRole);
+    if (defaultJobDescription !== undefined) setJobDescription(defaultJobDescription);
+    if (defaultResumeText !== undefined) setResumeText(defaultResumeText);
+  }, [defaultCompanyName, defaultRole, defaultJobDescription, defaultResumeText]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,7 +62,13 @@ export function CoverLetterForm({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Generation failed");
-      onGenerated(data.coverLetter ?? "");
+      onGenerated({
+        id: data.id,
+        coverLetter: data.coverLetter ?? "",
+        companyName: data.companyName ?? null,
+        jobTitle: data.jobTitle ?? null,
+        createdAt: data.createdAt ?? new Date().toISOString(),
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Generation failed");
     } finally {

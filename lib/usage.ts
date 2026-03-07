@@ -7,10 +7,10 @@ export type FeatureType =
   | "interview_prep";
 
 const FREE_LIMITS: Record<FeatureType, number> = {
-  resume_analysis: 2,
-  job_match: 1,
+  resume_analysis: 3,
+  job_match: 3,
   cover_letter: 1,
-  interview_prep: 0, // free plan: no interview prep; or set to 1 if you want to allow 1
+  interview_prep: 0,
 };
 
 /** Get current usage count for a feature in the current period (e.g. monthly). */
@@ -34,13 +34,13 @@ export async function getUsageCount(
   return count ?? 0;
 }
 
-/** Check if user can use the feature (under free limit or pro). */
+/** Check if user can use the feature (under free limit or pro/premium). */
 export async function canUseFeature(
   userId: string,
   feature: FeatureType,
-  planType: "free" | "pro"
+  planType: "free" | "pro" | "premium"
 ): Promise<{ allowed: boolean; used: number; limit: number }> {
-  if (planType === "pro") {
+  if (planType === "pro" || planType === "premium") {
     return { allowed: true, used: 0, limit: -1 };
   }
   const used = await getUsageCount(userId, feature);
@@ -62,7 +62,7 @@ export async function logUsage(
 }
 
 /** Get usage summary for dashboard (current month). */
-export async function getUsageSummary(userId: string, planType: "free" | "pro") {
+export async function getUsageSummary(userId: string, planType: "free" | "pro" | "premium") {
   const features: FeatureType[] = [
     "resume_analysis",
     "job_match",
@@ -72,7 +72,7 @@ export async function getUsageSummary(userId: string, planType: "free" | "pro") 
   const summary: Record<FeatureType, { used: number; limit: number }> = {} as any;
   for (const f of features) {
     const used = await getUsageCount(userId, f);
-    const limit = planType === "pro" ? -1 : FREE_LIMITS[f];
+    const limit = planType === "pro" || planType === "premium" ? -1 : FREE_LIMITS[f];
     summary[f] = { used, limit };
   }
   return summary;

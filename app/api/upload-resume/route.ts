@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUser } from "@/lib/auth";
+import { getUser, ensureUserRow } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { extractTextFromPdf } from "@/utils/pdfParser";
 import { extractTextFromDocx } from "@/utils/docxParser";
@@ -15,6 +15,7 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  await ensureUserRow(user.id, user.email);
 
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
