@@ -1,0 +1,22 @@
+---
+description: Update the Knowledge Transfer doc when changing app code, APIs, or schema
+alwaysApply: true
+---
+
+# Keep Knowledge Transfer doc in sync
+
+When you change any of the following, **update `docs/KNOWLEDGE_TRANSFER.md`** to match:
+
+- **Routes:** New or removed API routes (`app/api/**`), or changed request/response behavior.
+- **Pages:** New or removed pages, or material changes to data loading or protected paths.
+- **Auth/middleware:** Changes to protected paths, redirects, or session handling.
+- **Database:** Schema, RLS, migrations, or grants (tables, columns, policies).
+- **Lib:** New or changed functions in `lib/` (auth, ai, usage, rateLimit, validation, buildDocx, supabase).
+- **Components:** New key components or changed behavior that affects flows (e.g. ImprovedResumeView, history sections).
+
+In the KT doc:
+
+1. Update the section that describes the changed area (§2–§9).
+2. Set **Last updated** at the top to the current date (or note the change briefly).
+
+Keep descriptions accurate and concise so the doc remains the single source of truth for how the app works.
