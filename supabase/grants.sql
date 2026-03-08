@@ -6,6 +6,7 @@ GRANT USAGE ON SCHEMA public TO anon, authenticated;
 GRANT ALL ON public.users TO anon, authenticated;
 GRANT ALL ON public.resumes TO anon, authenticated;
 GRANT ALL ON public.resume_analysis TO anon, authenticated;
+GRANT ALL ON public.improved_resumes TO anon, authenticated;
 GRANT ALL ON public.job_matches TO anon, authenticated;
 GRANT ALL ON public.usage_logs TO anon, authenticated;
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { dispatchUsageUpdated } from "@/components/layout/Topbar";
 
 interface JobMatchFormProps {
   defaultResumeText?: string;
@@ -53,6 +54,7 @@ export function JobMatchForm({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Match failed");
       onResult(data);
+      dispatchUsageUpdated();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Match failed");
     } finally {

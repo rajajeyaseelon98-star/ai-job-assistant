@@ -45,11 +45,11 @@ export async function getUser(): Promise<{
   };
 }
 
-/** Ensure user exists in public.users (e.g. after signup). */
+/** Ensure user exists in public.users (e.g. after signup). Only inserts when missing; never overwrites existing rows (e.g. plan_type). */
 export async function ensureUserRow(userId: string, email: string) {
   const supabase = await createClient();
   await supabase.from("users").upsert(
     { id: userId, email, plan_type: "free" },
-    { onConflict: "id" }
+    { onConflict: "id", ignoreDuplicates: true }
   );
 }

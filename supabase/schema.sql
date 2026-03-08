@@ -35,6 +35,22 @@ CREATE TABLE IF NOT EXISTS public.resume_analysis (
 
 CREATE INDEX IF NOT EXISTS idx_resume_analysis_resume_id ON public.resume_analysis(resume_id);
 
+-- Improved resumes (user_id so paste-only improve is saved; resume_id optional)
+CREATE TABLE IF NOT EXISTS public.improved_resumes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  resume_id UUID REFERENCES public.resumes(id) ON DELETE CASCADE,
+  improved_content JSONB NOT NULL,
+  job_title TEXT,
+  job_description TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_improved_resumes_resume_id ON public.improved_resumes(resume_id);
+CREATE INDEX IF NOT EXISTS idx_improved_resumes_user_id ON public.improved_resumes(user_id);
+ALTER TABLE public.improved_resumes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage own improved resumes" ON public.improved_resumes
+  FOR ALL USING (auth.uid() = user_id);
+
 -- Job matches (user_id so paste-only matches are saved; resume_id optional; resume_text for pre-fill on view)
 CREATE TABLE IF NOT EXISTS public.job_matches (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -56,7 +72,7 @@ CREATE INDEX IF NOT EXISTS idx_job_matches_user_id ON public.job_matches(user_id
 CREATE TABLE IF NOT EXISTS public.usage_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  feature TEXT NOT NULL CHECK (feature IN ('resume_analysis', 'job_match', 'cover_letter', 'interview_prep')),
+  feature TEXT NOT NULL CHECK (feature IN ('resume_analysis', 'job_match', 'cover_letter', 'interview_prep', 'resume_improve')),
   timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

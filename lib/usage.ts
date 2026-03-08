@@ -4,13 +4,15 @@ export type FeatureType =
   | "resume_analysis"
   | "job_match"
   | "cover_letter"
-  | "interview_prep";
+  | "interview_prep"
+  | "resume_improve";
 
 const FREE_LIMITS: Record<FeatureType, number> = {
   resume_analysis: 3,
   job_match: 3,
   cover_letter: 1,
   interview_prep: 0,
+  resume_improve: 0, // Pro/Premium only
 };
 
 /** Get current usage count for a feature in the current period (e.g. monthly). */
@@ -68,6 +70,7 @@ export async function getUsageSummary(userId: string, planType: "free" | "pro" |
     "job_match",
     "cover_letter",
     "interview_prep",
+    "resume_improve",
   ];
   const summary: Record<FeatureType, { used: number; limit: number }> = {} as any;
   for (const f of features) {

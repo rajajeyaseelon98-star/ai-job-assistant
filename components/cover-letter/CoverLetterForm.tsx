@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { dispatchUsageUpdated } from "@/components/layout/Topbar";
 
 export interface CoverLetterGenerated {
   id: string;
@@ -69,6 +70,7 @@ export function CoverLetterForm({
         jobTitle: data.jobTitle ?? null,
         createdAt: data.createdAt ?? new Date().toISOString(),
       });
+      dispatchUsageUpdated();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Generation failed");
     } finally {

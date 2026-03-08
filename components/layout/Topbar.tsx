@@ -6,20 +6,51 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ChevronDown, User, CreditCard, LogOut } from "lucide-react";
 
-interface TopbarProps {
-  planType: "free" | "pro" | "premium";
-  usage?: {
-    resume_analysis: { used: number; limit: number };
-    job_match: { used: number; limit: number };
-    cover_letter: { used: number; limit: number };
-    interview_prep: { used: number; limit: number };
-  };
+const USAGE_UPDATED_EVENT = "usage-updated";
+
+export function dispatchUsageUpdated() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent(USAGE_UPDATED_EVENT));
+  }
 }
 
-export function Topbar({ planType, usage }: TopbarProps) {
+interface UsageSummary {
+  resume_analysis: { used: number; limit: number };
+  job_match: { used: number; limit: number };
+  cover_letter: { used: number; limit: number };
+  interview_prep: { used: number; limit: number };
+}
+
+interface TopbarProps {
+  planType: "free" | "pro" | "premium";
+  usage?: UsageSummary;
+}
+
+export function Topbar({ planType, usage: initialUsage }: TopbarProps) {
   const [open, setOpen] = useState(false);
+  const [usage, setUsage] = useState<UsageSummary | null>(initialUsage ?? null);
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    if (initialUsage) setUsage(initialUsage);
+  }, [initialUsage]);
+
+  useEffect(() => {
+    function fetchUsage() {
+      fetch("/api/usage")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data) setUsage(data);
+        })
+        .catch(() => {});
+    }
+    function onUsageUpdated() {
+      fetchUsage();
+    }
+    window.addEventListener(USAGE_UPDATED_EVENT, onUsageUpdated);
+    return () => window.removeEventListener(USAGE_UPDATED_EVENT, onUsageUpdated);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

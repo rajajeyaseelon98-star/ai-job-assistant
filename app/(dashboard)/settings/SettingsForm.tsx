@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { DevPlanSwitcher } from "./DevPlanSwitcher";
 
 interface SettingsFormProps {
   name: string;
@@ -165,6 +166,8 @@ export function SettingsForm({
           Upgrade or change plan →
         </Link>
       </section>
+
+      <DevPlanSwitcher currentPlan={planType as "free" | "pro" | "premium"} />
 
       <section className="rounded-xl border border-red-200 bg-red-50/50 p-6 shadow-sm">
         <h2 className="font-semibold text-red-800">Danger zone</h2>

@@ -11,28 +11,10 @@ export async function GET(
   const { id } = await params;
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("resume_analysis")
-    .select("id, score, analysis_json, created_at, resume_id")
+    .from("improved_resumes")
+    .select("id, improved_content, job_title, created_at")
     .eq("id", id)
     .single();
   if (error || !data) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-  let resume_text: string | null = null;
-  if (data.resume_id) {
-    const { data: resume } = await supabase
-      .from("resumes")
-      .select("parsed_text")
-      .eq("id", data.resume_id)
-      .single();
-    resume_text = resume?.parsed_text ?? null;
-  }
-
-  return NextResponse.json({
-    id: data.id,
-    score: data.score,
-    analysis_json: data.analysis_json,
-    created_at: data.created_at,
-    resume_text,
-    resume_id: data.resume_id ?? null,
-  });
+  return NextResponse.json(data);
 }
