@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { InterviewQuestions } from "@/components/interview/InterviewQuestions";
+import { AIProgressIndicator } from "@/components/ui/AIProgressIndicator";
 import type { InterviewPrepResponse } from "@/types/analysis";
 
 const EXPERIENCE_LEVELS = ["Junior", "Mid", "Senior"] as const;
@@ -77,6 +78,7 @@ export default function InterviewPrepPage() {
           >
             {loading ? "Generating…" : "Generate questions"}
           </button>
+          {loading && <AIProgressIndicator message="Generating interview questions…" />}
         </form>
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
       </section>

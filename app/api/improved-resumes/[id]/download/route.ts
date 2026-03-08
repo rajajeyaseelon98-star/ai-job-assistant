@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { buildImprovedResumeDocx } from "@/lib/buildDocx";
+import { isValidUUID } from "@/lib/validation";
 import type { ImprovedResumeContent } from "@/types/analysis";
 
 export async function GET(
@@ -11,12 +12,14 @@ export async function GET(
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
+  if (!isValidUUID(id)) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
   const format = new URL(request.url).searchParams.get("format") || "docx";
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("improved_resumes")
     .select("improved_content")
     .eq("id", id)
+    .eq("user_id", user.id)
     .single();
   if (error || !data) return NextResponse.json({ error: "Not found" }, { status: 404 });
 

@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canUseFeature, logUsage } from "@/lib/usage";
-import { chatCompletion } from "@/lib/openai";
-import { geminiGenerate } from "@/lib/gemini";
+import { aiGenerate } from "@/lib/ai";
+import { checkRateLimit } from "@/lib/rateLimit";
 import type { InterviewPrepResponse } from "@/types/analysis";
 
 const SYSTEM_PROMPT = `You are an expert technical interviewer for software developers.
@@ -25,6 +25,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const rl = checkRateLimit(user.id);
+  if (!rl.allowed) return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429 });
+
   const planType = user.profile?.plan_type ?? "free";
   const { allowed } = await canUseFeature(user.id, "interview_prep", planType);
   if (!allowed && (planType === "free")) {
@@ -34,9 +37,14 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = await request.json();
-  const role = body?.role ?? body?.jobRole ?? "Software Developer";
-  const experienceLevel = body?.experienceLevel ?? body?.experience_level ?? "";
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+  const role = (body?.role ?? body?.jobRole ?? "Software Developer") as string;
+  const experienceLevel = (body?.experienceLevel ?? body?.experience_level ?? "") as string;
   if (!role || typeof role !== "string") {
     return NextResponse.json(
       { error: "role is required" },
@@ -46,10 +54,7 @@ export async function POST(request: Request) {
 
   const userContent = `Job role: ${role.slice(0, 200)}${experienceLevel ? `\nExperience level: ${String(experienceLevel).slice(0, 50)}` : ""}`;
   try {
-    const useGemini = !!process.env.GEMINI_API_KEY?.trim();
-    const raw = useGemini
-      ? await geminiGenerate(SYSTEM_PROMPT, userContent, { jsonMode: true })
-      : await chatCompletion(SYSTEM_PROMPT, userContent, { jsonMode: true });
+    const raw = await aiGenerate(SYSTEM_PROMPT, userContent, { jsonMode: true });
     let jsonStr = raw.trim();
     const jsonMatch = jsonStr.match(/^```(?:json)?\s*([\s\S]*?)```$/m);
     if (jsonMatch) jsonStr = jsonMatch[1].trim();

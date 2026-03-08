@@ -24,7 +24,9 @@ function LoginForm() {
       setMessage({ type: "error", text: error.message });
       return;
     }
-    router.push(searchParams.get("next") || "/dashboard");
+    const next = searchParams.get("next") || "/dashboard";
+    const safePath = next.startsWith("/") && !next.startsWith("//") && !next.includes("://") ? next : "/dashboard";
+    router.push(safePath);
     router.refresh();
   }
 

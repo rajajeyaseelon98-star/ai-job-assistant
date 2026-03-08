@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 interface Item {
@@ -11,6 +12,7 @@ interface Item {
 }
 
 export function HistoryCoverLetterSection({ items }: { items: Item[] }) {
+  const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const dateStr = (d: string) =>
@@ -38,7 +40,7 @@ export function HistoryCoverLetterSection({ items }: { items: Item[] }) {
     setDeletingId(id);
     try {
       await fetch(`/api/cover-letters/${id}`, { method: "DELETE" });
-      window.location.reload();
+      router.refresh();
     } finally {
       setDeletingId(null);
     }

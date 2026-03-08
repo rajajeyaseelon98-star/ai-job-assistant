@@ -26,7 +26,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = await request.json();
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
   const { resumeText, jobDescription, companyName, role } = body as {
     resumeText?: string;
     jobDescription?: string;
@@ -48,7 +54,6 @@ export async function POST(request: Request) {
     letter = useGemini
       ? await geminiGenerateContent(fullPrompt)
       : await chatCompletion(SYSTEM_PROMPT, content);
-    await logUsage(user.id, "cover_letter");
   } catch (e) {
     console.error("Cover letter error:", e);
     return NextResponse.json(
@@ -74,6 +79,8 @@ export async function POST(request: Request) {
   if (error) {
     return NextResponse.json({ error: "Failed to save cover letter" }, { status: 500 });
   }
+
+  await logUsage(user.id, "cover_letter");
 
   return NextResponse.json({
     coverLetter: letter,

@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canUseFeature, logUsage } from "@/lib/usage";
-import { geminiGenerate } from "@/lib/gemini";
+import { aiGenerate } from "@/lib/ai";
+import { checkRateLimit } from "@/lib/rateLimit";
 import type { ImprovedResumeContent } from "@/types/analysis";
 
 const BASE_PROMPT = `You are an expert ATS resume writer for software developers.
@@ -60,6 +61,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const rl = checkRateLimit(user.id);
+  if (!rl.allowed) return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429 });
+
   const planType = user.profile?.plan_type ?? "free";
   const { allowed } = await canUseFeature(user.id, "resume_improve", planType);
   if (!allowed) {
@@ -69,7 +73,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = await request.json();
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
   const resumeText = body?.resumeText ?? body?.resume_text;
   const resumeId = body?.resumeId;
   const jobTitle = typeof body?.jobTitle === "string" ? body.jobTitle.trim() : undefined;
@@ -108,7 +117,7 @@ export async function POST(request: Request) {
 
   let content: ImprovedResumeContent;
   try {
-    const raw = await geminiGenerate(prompt, userContent, { jsonMode: true });
+    const raw = await aiGenerate(prompt, userContent, { jsonMode: true });
     let jsonStr = raw.trim();
     const jsonMatch = jsonStr.match(/^```(?:json)?\s*([\s\S]*?)```$/m);
     if (jsonMatch) jsonStr = jsonMatch[1].trim();
@@ -139,13 +148,20 @@ export async function POST(request: Request) {
       .single();
     if (resume) resumeIdToSave = resume.id;
   }
-  await supabase.from("improved_resumes").insert({
-    user_id: user.id,
-    resume_id: resumeIdToSave,
-    improved_content: content,
-    job_title: jobTitle || null,
-    job_description: jobDescription ? jobDescription.slice(0, 5000) : null,
-  });
+  const { data: inserted } = await supabase
+    .from("improved_resumes")
+    .insert({
+      user_id: user.id,
+      resume_id: resumeIdToSave,
+      improved_content: content,
+      job_title: jobTitle || null,
+      job_description: jobDescription ? jobDescription.slice(0, 5000) : null,
+    })
+    .select("id")
+    .single();
 
-  return NextResponse.json(content);
+  return NextResponse.json({
+    ...content,
+    improvedResumeId: inserted?.id ?? undefined,
+  });
 }

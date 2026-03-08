@@ -1,11 +1,21 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const apiKey = process.env.GEMINI_API_KEY?.trim();
-if (!apiKey) {
-  console.warn("GEMINI_API_KEY is not set; Gemini AI features will fail.");
+let _genAI: GoogleGenerativeAI | null = null;
+
+function getGenAI(): GoogleGenerativeAI {
+  if (_genAI) return _genAI;
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is not configured. Add it to .env.local.");
+  }
+  _genAI = new GoogleGenerativeAI(apiKey);
+  return _genAI;
 }
 
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
+/** Returns true if a Gemini API key is configured. */
+export function isGeminiAvailable(): boolean {
+  return !!process.env.GEMINI_API_KEY?.trim();
+}
 
 /**
  * Generate content with Gemini. Returns raw text.
@@ -16,9 +26,7 @@ export async function geminiGenerate(
   userContent: string,
   options?: { jsonMode?: boolean }
 ): Promise<string> {
-  if (!genAI || !apiKey) {
-    throw new Error("GEMINI_API_KEY is not configured. Add it to .env.local.");
-  }
+  const genAI = getGenAI();
   const model = genAI.getGenerativeModel({
     model: "gemini-2.5-flash",
     generationConfig: options?.jsonMode
@@ -39,9 +47,7 @@ export async function geminiGenerate(
  * Simple generateContent: single prompt, returns raw text. Uses gemini-2.5-flash.
  */
 export async function geminiGenerateContent(prompt: string): Promise<string> {
-  if (!genAI || !apiKey) {
-    throw new Error("GEMINI_API_KEY is not configured. Add it to .env.local.");
-  }
+  const genAI = getGenAI();
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
   const result = await model.generateContent(prompt);
   const text = result.response.text();

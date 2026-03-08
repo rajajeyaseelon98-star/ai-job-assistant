@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { dispatchUsageUpdated } from "@/components/layout/Topbar";
+import { AIProgressIndicator } from "@/components/ui/AIProgressIndicator";
 
 interface JobMatchFormProps {
   defaultResumeText?: string;
@@ -102,6 +103,7 @@ export function JobMatchForm({
       >
         {loading ? "Matching…" : "Match resume"}
       </button>
+      {loading && <AIProgressIndicator message="Matching your resume to the job…" />}
     </form>
   );
 }

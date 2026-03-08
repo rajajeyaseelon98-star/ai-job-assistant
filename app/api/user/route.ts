@@ -30,17 +30,36 @@ export async function GET() {
 export async function PATCH(request: Request) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const body = await request.json();
+
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
   const supabase = await createClient();
 
+  // Validate and sanitize name
   if (body.name !== undefined) {
-    await supabase.from("users").update({ name: body.name }).eq("id", user.id);
+    if (typeof body.name !== "string" && body.name !== null) {
+      return NextResponse.json({ error: "name must be a string" }, { status: 400 });
+    }
+    const name = typeof body.name === "string" ? body.name.trim().slice(0, 100) : null;
+    await supabase.from("users").update({ name }).eq("id", user.id);
   }
+
+  // Validate and sanitize preferences
+  const rawExpLevel = body.experience_level ?? body.experienceLevel;
+  const rawRole = body.preferred_role ?? body.preferredRole;
+  const rawLocation = body.preferred_location ?? body.preferredLocation;
+  const rawSalary = body.salary_expectation ?? body.salaryExpectation;
+
   const prefs = {
-    experience_level: body.experience_level ?? body.experienceLevel,
-    preferred_role: body.preferred_role ?? body.preferredRole,
-    preferred_location: body.preferred_location ?? body.preferredLocation,
-    salary_expectation: body.salary_expectation ?? body.salaryExpectation,
+    experience_level: typeof rawExpLevel === "string" ? rawExpLevel.slice(0, 50) : null,
+    preferred_role: typeof rawRole === "string" ? rawRole.trim().slice(0, 200) : null,
+    preferred_location: typeof rawLocation === "string" ? rawLocation.trim().slice(0, 200) : null,
+    salary_expectation: typeof rawSalary === "string" ? rawSalary.trim().slice(0, 100) : null,
   };
   const hasPrefs = Object.values(prefs).some((v) => v != null && v !== "");
   if (hasPrefs) {

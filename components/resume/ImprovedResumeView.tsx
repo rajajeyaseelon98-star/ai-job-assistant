@@ -1,12 +1,11 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { ImprovedResumeContent } from "@/types/analysis";
 
 interface ImprovedResumeViewProps {
   content: ImprovedResumeContent;
-  onDownloadPdf?: () => void;
-  onDownloadDocx?: () => void;
+  improvedResumeId?: string;
 }
 
 export function improvedToPlainText(c: ImprovedResumeContent): string {
@@ -43,15 +42,24 @@ export function improvedToPlainText(c: ImprovedResumeContent): string {
   return lines.join("\n");
 }
 
+function esc(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function improvedToHtml(c: ImprovedResumeContent): string {
   const sections: string[] = [];
-  sections.push("<h2>Professional Summary</h2><p>" + (c.summary || "").replace(/\n/g, "<br>") + "</p>");
-  sections.push("<h2>Skills</h2><p>" + (c.skills?.join(", ") || "") + "</p>");
+  sections.push("<h2>Professional Summary</h2><p>" + esc(c.summary || "").replace(/\n/g, "<br>") + "</p>");
+  sections.push("<h2>Skills</h2><p>" + esc(c.skills?.join(", ") || "") + "</p>");
   if (c.experience?.length) {
     let html = "<h2>Experience</h2>";
     for (const exp of c.experience) {
-      html += `<h3>${exp.title} — ${exp.company}</h3><ul>`;
-      (exp.bullets || []).forEach((b) => (html += `<li>${b}</li>`));
+      html += `<h3>${esc(exp.title)} — ${esc(exp.company)}</h3><ul>`;
+      (exp.bullets || []).forEach((b) => (html += `<li>${esc(b)}</li>`));
       html += "</ul>";
     }
     sections.push(html);
@@ -59,16 +67,16 @@ function improvedToHtml(c: ImprovedResumeContent): string {
   if (c.projects?.length) {
     let html = "<h2>Projects</h2>";
     for (const proj of c.projects) {
-      html += `<h3>${proj.name}</h3><p>${proj.description || ""}</p>`;
+      html += `<h3>${esc(proj.name)}</h3><p>${esc(proj.description || "")}</p>`;
       if (proj.bullets?.length) {
         html += "<ul>";
-        proj.bullets.forEach((b) => (html += `<li>${b}</li>`));
+        proj.bullets.forEach((b) => (html += `<li>${esc(b)}</li>`));
         html += "</ul>";
       }
     }
     sections.push(html);
   }
-  sections.push("<h2>Education</h2><p>" + (c.education || "").replace(/\n/g, "<br>") + "</p>");
+  sections.push("<h2>Education</h2><p>" + esc(c.education || "").replace(/\n/g, "<br>") + "</p>");
   return `
 <!DOCTYPE html>
 <html>
@@ -90,64 +98,91 @@ function improvedToHtml(c: ImprovedResumeContent): string {
 </html>`;
 }
 
-export function ImprovedResumeView({ content }: ImprovedResumeViewProps) {
+export function ImprovedResumeView({ content, improvedResumeId }: ImprovedResumeViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [copyFeedback, setCopyFeedback] = useState<"copied" | "error" | null>(null);
+  const [pdfMessage, setPdfMessage] = useState<string | null>(null);
+  const [docxLoading, setDocxLoading] = useState(false);
+  const [docxError, setDocxError] = useState<string | null>(null);
 
   function handleCopy() {
+    setCopyFeedback(null);
     const text = improvedToPlainText(content);
-    navigator.clipboard.writeText(text).catch(() => {});
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setCopyFeedback("copied");
+        setTimeout(() => setCopyFeedback(null), 2000);
+      })
+      .catch(() => {
+        setCopyFeedback("error");
+        setTimeout(() => setCopyFeedback(null), 3000);
+      });
   }
 
   function handleDownloadPdf() {
+    setPdfMessage(null);
     const html = improvedToHtml(content);
-    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const w = window.open(url, "_blank", "noopener,noreferrer");
-    if (w) {
-      w.onload = () => {
-        w.print();
-        URL.revokeObjectURL(url);
-      };
-    } else {
-      URL.revokeObjectURL(url);
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("title", "Print improved resume");
+    iframe.style.position = "fixed";
+    iframe.style.inset = "0";
+    iframe.style.width = "100%";
+    iframe.style.height = "100%";
+    iframe.style.border = "none";
+    iframe.style.zIndex = "9999";
+    iframe.style.backgroundColor = "#fff";
+    document.body.appendChild(iframe);
+    const doc = iframe.contentWindow?.document;
+    if (!doc) {
+      document.body.removeChild(iframe);
+      setPdfMessage("Could not open print dialog.");
+      setTimeout(() => setPdfMessage(null), 4000);
+      return;
     }
+    doc.open();
+    doc.write(html);
+    doc.close();
+    iframe.contentWindow?.focus();
+    const removeIframe = () => {
+      if (iframe.parentNode) document.body.removeChild(iframe);
+    };
+    iframe.contentWindow?.addEventListener("afterprint", removeIframe);
+    setTimeout(() => {
+      iframe.contentWindow?.print();
+    }, 300);
   }
 
   async function handleDownloadDocx() {
-    const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import("docx");
-    const children: (Paragraph | ReturnType<typeof Paragraph.create>)[] = [];
-    children.push(new Paragraph({ text: "Professional Summary", heading: HeadingLevel.HEADING_1 }));
-    children.push(new Paragraph({ children: [new TextRun({ text: content.summary || "" })] }));
-    children.push(new Paragraph({ text: "Skills", heading: HeadingLevel.HEADING_1 }));
-    children.push(new Paragraph({ children: [new TextRun({ text: content.skills?.join(", ") || "" })] }));
-    for (const exp of content.experience || []) {
-      children.push(new Paragraph({ text: `${exp.title} — ${exp.company}`, heading: HeadingLevel.HEADING_2 }));
-      for (const b of exp.bullets || []) {
-        children.push(new Paragraph({ bullet: { level: 0 }, children: [new TextRun({ text: b })] }));
-      }
+    setDocxError(null);
+    if (improvedResumeId) {
+      window.open(`/api/improved-resumes/${improvedResumeId}/download?format=docx`, "_blank");
+      return;
     }
-    if (content.projects?.length) {
-      children.push(new Paragraph({ text: "Projects", heading: HeadingLevel.HEADING_1 }));
-      for (const proj of content.projects) {
-        children.push(new Paragraph({ text: proj.name, heading: HeadingLevel.HEADING_2 }));
-        if (proj.description) {
-          children.push(new Paragraph({ children: [new TextRun({ text: proj.description })] }));
-        }
-        for (const b of proj.bullets || []) {
-          children.push(new Paragraph({ bullet: { level: 0 }, children: [new TextRun({ text: b })] }));
-        }
+    setDocxLoading(true);
+    try {
+      const res = await fetch("/api/improved-resumes/export-docx", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Download failed");
       }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "improved-resume.docx";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setDocxError(e instanceof Error ? e.message : "Download failed");
+      setTimeout(() => setDocxError(null), 4000);
+    } finally {
+      setDocxLoading(false);
     }
-    children.push(new Paragraph({ text: "Education", heading: HeadingLevel.HEADING_1 }));
-    children.push(new Paragraph({ children: [new TextRun({ text: content.education || "" })] }));
-    const doc = new Document({ sections: [{ children }] });
-    const blob = await Packer.toBlob(doc);
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "improved-resume.docx";
-    a.click();
-    URL.revokeObjectURL(url);
   }
 
   return (
@@ -158,7 +193,7 @@ export function ImprovedResumeView({ content }: ImprovedResumeViewProps) {
           onClick={handleCopy}
           className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-text hover:bg-gray-50"
         >
-          Copy text
+          {copyFeedback === "copied" ? "Copied!" : "Copy text"}
         </button>
         <button
           type="button"
@@ -170,10 +205,16 @@ export function ImprovedResumeView({ content }: ImprovedResumeViewProps) {
         <button
           type="button"
           onClick={handleDownloadDocx}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-text hover:bg-gray-50"
+          disabled={docxLoading}
+          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-text hover:bg-gray-50 disabled:opacity-50"
         >
-          Download DOCX
+          {docxLoading ? "Preparing…" : "Download DOCX"}
         </button>
+        {copyFeedback === "error" && (
+          <span className="text-sm text-amber-600">Copy failed. Try selecting text and copying manually.</span>
+        )}
+        {pdfMessage && <span className="text-sm text-amber-600">{pdfMessage}</span>}
+        {docxError && <span className="text-sm text-red-600">{docxError}</span>}
       </div>
 
       <div ref={containerRef} className="overflow-hidden rounded-xl border border-gray-200 bg-card shadow-sm print:border-0 print:shadow-none">

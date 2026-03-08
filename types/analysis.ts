@@ -1,7 +1,3 @@
-export interface ImproveResumeResponse {
-  improved_bullets: string[];
-}
-
 /** AI-rewritten resume in structured form (for full Resume Fixer flow). */
 export interface ImprovedResumeContent {
   summary: string;

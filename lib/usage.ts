@@ -63,7 +63,7 @@ export async function logUsage(
   await supabase.from("usage_logs").insert({ user_id: userId, feature });
 }
 
-/** Get usage summary for dashboard (current month). */
+/** Get usage summary for dashboard (current month). Runs all queries in parallel. */
 export async function getUsageSummary(userId: string, planType: "free" | "pro" | "premium") {
   const features: FeatureType[] = [
     "resume_analysis",
@@ -72,11 +72,11 @@ export async function getUsageSummary(userId: string, planType: "free" | "pro" |
     "interview_prep",
     "resume_improve",
   ];
+  const counts = await Promise.all(features.map((f) => getUsageCount(userId, f)));
   const summary: Record<FeatureType, { used: number; limit: number }> = {} as any;
-  for (const f of features) {
-    const used = await getUsageCount(userId, f);
+  features.forEach((f, i) => {
     const limit = planType === "pro" || planType === "premium" ? -1 : FREE_LIMITS[f];
-    summary[f] = { used, limit };
-  }
+    summary[f] = { used: counts[i], limit };
+  });
   return summary;
 }

@@ -6,7 +6,13 @@ interface Item {
   created_at: string;
 }
 
-export function HistoryImprovedResumeSection({ items }: { items: Item[] }) {
+export function HistoryImprovedResumeSection({
+  items,
+  loadError,
+}: {
+  items: Item[];
+  loadError?: string | null;
+}) {
   const dateStr = (d: string) =>
     new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
@@ -16,9 +22,13 @@ export function HistoryImprovedResumeSection({ items }: { items: Item[] }) {
         <h2 className="font-semibold text-text">Improved Resumes</h2>
       </div>
       <ul className="divide-y divide-gray-100">
-        {items.length === 0 ? (
+        {loadError ? (
+          <li className="px-6 py-6 text-center text-sm text-red-600">
+            Could not load improved resumes: {loadError}
+          </li>
+        ) : items.length === 0 ? (
           <li className="px-6 py-6 text-center text-sm text-text-muted">
-            No improved resumes yet.
+            No improved resumes yet. Use &quot;Improve my resume&quot; on the Resume Analyzer to create one.
           </li>
         ) : (
           items.map((item) => (

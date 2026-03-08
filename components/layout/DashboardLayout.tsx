@@ -20,7 +20,7 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
-      <div className="pl-[240px]">
+      <div className="lg:pl-[240px]">
         <Topbar planType={planType} usage={usage} />
         <main className="p-6">{children}</main>
       </div>

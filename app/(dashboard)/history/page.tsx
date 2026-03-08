@@ -1,11 +1,17 @@
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
+import { getUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { HistoryResumeSection } from "./HistoryResumeSection";
 import { HistoryJobMatchSection } from "./HistoryJobMatchSection";
 import { HistoryCoverLetterSection } from "./HistoryCoverLetterSection";
 import { HistoryImprovedResumeSection } from "./HistoryImprovedResumeSection";
 
+export const dynamic = "force-dynamic";
+
 export default async function HistoryPage() {
+  const user = await getUser();
+  if (!user) redirect("/login");
+
   const supabase = await createClient();
 
   const { data: analyses } = await supabase
@@ -17,18 +23,21 @@ export default async function HistoryPage() {
   const { data: matches } = await supabase
     .from("job_matches")
     .select("id, match_score, job_title, created_at")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(50);
 
   const { data: coverLetters } = await supabase
     .from("cover_letters")
     .select("id, company_name, job_title, created_at")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(50);
 
-  const { data: improvedResumes } = await supabase
+  const { data: improvedResumes, error: improvedResumesError } = await supabase
     .from("improved_resumes")
     .select("id, job_title, created_at")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(50);
 
@@ -41,7 +50,10 @@ export default async function HistoryPage() {
 
       <HistoryResumeSection items={analyses ?? []} />
       <HistoryJobMatchSection items={matches ?? []} />
-      <HistoryImprovedResumeSection items={improvedResumes ?? []} />
+      <HistoryImprovedResumeSection
+        items={improvedResumes ?? []}
+        loadError={improvedResumesError?.message}
+      />
       <HistoryCoverLetterSection items={coverLetters ?? []} />
     </div>
   );

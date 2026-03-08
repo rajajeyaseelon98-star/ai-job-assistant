@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canUseFeature, logUsage } from "@/lib/usage";
-import { chatCompletion } from "@/lib/openai";
-import { geminiGenerate } from "@/lib/gemini";
+import { aiGenerate } from "@/lib/ai";
+import { checkRateLimit } from "@/lib/rateLimit";
 import type { JobMatchResult } from "@/types/jobMatch";
 
 const SYSTEM_PROMPT = `You are an expert job-resume matcher for software developers.
@@ -25,6 +25,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const rl = checkRateLimit(user.id);
+  if (!rl.allowed) return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429 });
+
   const planType = user.profile?.plan_type ?? "free";
   const { allowed } = await canUseFeature(user.id, "job_match", planType);
   if (!allowed) {
@@ -34,7 +37,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = await request.json();
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
   const { resumeText, jobDescription, resumeId, jobTitle } = body as {
     resumeText?: string;
     jobDescription?: string;
@@ -51,10 +59,7 @@ export async function POST(request: Request) {
   const content = `Resume:\n${resumeText.slice(0, 8000)}\n\nJob description:\n${jobDescription.slice(0, 6000)}`;
   let result: JobMatchResult;
   try {
-    const useGemini = !!process.env.GEMINI_API_KEY?.trim();
-    const raw = useGemini
-      ? await geminiGenerate(SYSTEM_PROMPT, content, { jsonMode: true })
-      : await chatCompletion(SYSTEM_PROMPT, content, { jsonMode: true });
+    const raw = await aiGenerate(SYSTEM_PROMPT, content, { jsonMode: true });
     let jsonStr = raw.trim();
     const jsonMatch = jsonStr.match(/^```(?:json)?\s*([\s\S]*?)```$/m);
     if (jsonMatch) jsonStr = jsonMatch[1].trim();

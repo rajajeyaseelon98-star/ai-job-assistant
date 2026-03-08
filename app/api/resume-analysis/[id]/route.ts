@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { isValidUUID } from "@/lib/validation";
 
 export async function GET(
   _request: Request,
@@ -9,6 +10,7 @@ export async function GET(
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
+  if (!isValidUUID(id)) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("resume_analysis")

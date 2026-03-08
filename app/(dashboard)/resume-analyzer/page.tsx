@@ -7,6 +7,7 @@ import { ResumeUpload } from "@/components/resume/ResumeUpload";
 import { ResumeAnalysisResult } from "@/components/resume/ResumeAnalysisResult";
 import { ImprovedResumeView, improvedToPlainText } from "@/components/resume/ImprovedResumeView";
 import { dispatchUsageUpdated } from "@/components/layout/Topbar";
+import { AIProgressIndicator } from "@/components/ui/AIProgressIndicator";
 import type { ATSAnalysisResult } from "@/types/resume";
 import type { ImprovedResumeContent } from "@/types/analysis";
 
@@ -21,6 +22,7 @@ function ResumeAnalyzerContent() {
   const [improving, setImproving] = useState(false);
   const [improveError, setImproveError] = useState<string | null>(null);
   const [improvedContent, setImprovedContent] = useState<ImprovedResumeContent | null>(null);
+  const [improvedResumeId, setImprovedResumeId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pastAnalysisLoading, setPastAnalysisLoading] = useState(!!analysisId);
   const [improvedLoading, setImprovedLoading] = useState(!!improvedId);
@@ -53,6 +55,7 @@ function ResumeAnalyzerContent() {
   useEffect(() => {
     if (!improvedId) return;
     setImprovedLoading(true);
+    setImprovedResumeId(improvedId);
     fetch(`/api/improved-resumes/${improvedId}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
@@ -66,7 +69,8 @@ function ResumeAnalyzerContent() {
     setResumeId(data.id);
     setResumeText(data.parsed_text ?? "");
     setAnalysis(null);
-      setImprovedContent(null);
+    setImprovedContent(null);
+    setImprovedResumeId(null);
     setImproveError(null);
     setAnalysisForRecheck(null);
   }
@@ -78,6 +82,7 @@ function ResumeAnalyzerContent() {
       return;
     }
     setImprovedContent(null);
+    setImprovedResumeId(null);
     setImproving(true);
     try {
       const res = await fetch("/api/improve-resume", {
@@ -102,7 +107,9 @@ function ResumeAnalyzerContent() {
         setImproveError(data.error || "Failed to improve resume");
         return;
       }
-      setImprovedContent(data as ImprovedResumeContent);
+      const { improvedResumeId: id, ...contentOnly } = data;
+      setImprovedContent(contentOnly as ImprovedResumeContent);
+      if (typeof id === "string") setImprovedResumeId(id);
       if (analysis) setAnalysisForRecheck(analysis);
     } catch {
       setImproveError("Failed to improve resume");
@@ -219,6 +226,7 @@ function ResumeAnalyzerContent() {
               {loading ? "Analyzing…" : "Analyze resume"}
             </button>
           </div>
+          {loading && <div className="mt-3"><AIProgressIndicator message="Analyzing your resume…" /></div>}
           {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
         </section>
       )}
@@ -251,6 +259,7 @@ function ResumeAnalyzerContent() {
             >
               {improving ? "AI generating improved resume…" : "Improve my resume"}
             </button>
+            {improving && <AIProgressIndicator message="AI is rewriting your resume…" />}
             {improveError && (
               <p className="text-sm text-red-600">
                 {improveError}
@@ -284,7 +293,7 @@ function ResumeAnalyzerContent() {
               </p>
             </div>
           )}
-          <ImprovedResumeView content={improvedContent} />
+          <ImprovedResumeView content={improvedContent} improvedResumeId={improvedResumeId ?? undefined} />
         </section>
       )}
     </div>

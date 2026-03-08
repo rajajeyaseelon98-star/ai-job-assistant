@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { dispatchUsageUpdated } from "@/components/layout/Topbar";
+import { AIProgressIndicator } from "@/components/ui/AIProgressIndicator";
 
 export interface CoverLetterGenerated {
   id: string;
@@ -130,6 +131,7 @@ export function CoverLetterForm({
       >
         {loading ? "Generating…" : "Generate cover letter"}
       </button>
+      {loading && <AIProgressIndicator message="Generating your cover letter…" />}
     </form>
   );
 }

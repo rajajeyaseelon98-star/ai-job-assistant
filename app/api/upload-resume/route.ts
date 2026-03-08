@@ -54,7 +54,6 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createClient();
-  const ext = file.name.split(".").pop() || "pdf";
   const path = `${user.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
 
   const { data: uploadData, error: uploadError } = await supabase.storage
