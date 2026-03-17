@@ -2,7 +2,24 @@
   "permissions": {
     "allow": [
       "Bash(npx tsc --noEmit --pretty)",
-      "Bash(npx tsc --noEmit)"
+      "Bash(npx tsc --noEmit)",
+      "Bash(npx next:*)",
+      "Bash(npx tsc:*)",
+      "Bash(ls C:/Users/Lenovo/ai-job-assistant/app/api/recruiter/applications/*/interview/)",
+      "Bash(ls C:/Users/Lenovo/ai-job-assistant/app/'\\(dashboard\\)'/job-board/)",
+      "Bash(find C:/Users/Lenovo/ai-job-assistant -type f -name *pricing* -o -name *price*)",
+      "Bash(ls -la /c/Users/Lenovo/ai-job-assistant/app/\\\\\\(dashboard\\\\\\)/dashboard/)",
+      "Bash(ls -la \"C:/Users/Lenovo/ai-job-assistant/app/\\(dashboard\\)/pricing/\")",
+      "Bash(grep -r cache C:/Users/Lenovo/ai-job-assistant --include=*.ts --include=*.tsx)",
+      "Bash(find C:UsersLenovoai-job-assistant -name *pricing* -type f)",
+      "Bash(grep -r \"TODO\\\\|FIXME\\\\|HACK\\\\|XXX\\\\|BUG\" C:UsersLenovoai-job-assistantapp --include=*.ts --include=*.tsx)",
+      "Bash(find /root/ai-job-assistant -maxdepth 3 -type f \\\\\\(-name .github -o -name Dockerfile -o -name docker-compose* -o -name vercel.json -o -name .env* \\\\\\))",
+      "Bash(ls \"C:\\\\Users\\\\Lenovo\\\\ai-job-assistant\\\\app\\\\\\(dashboard\\)\")",
+      "Bash(npm run:*)",
+      "Bash(grep -c \"kB$\")",
+      "Bash(node _check_imports.js)",
+      "Bash(node _check_circular.js)",
+      "Bash(node _check_multiline.js)"
     ]
   }
 }

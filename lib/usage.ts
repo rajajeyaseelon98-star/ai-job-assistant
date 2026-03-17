@@ -5,7 +5,10 @@ export type FeatureType =
   | "job_match"
   | "cover_letter"
   | "interview_prep"
-  | "resume_improve";
+  | "resume_improve"
+  | "job_finder"
+  | "auto_apply"
+  | "smart_apply";
 
 const FREE_LIMITS: Record<FeatureType, number> = {
   resume_analysis: 3,
@@ -13,6 +16,9 @@ const FREE_LIMITS: Record<FeatureType, number> = {
   cover_letter: 1,
   interview_prep: 0,
   resume_improve: 0, // Pro/Premium only
+  job_finder: 1, // Free users get 1 search; Pro/Premium unlimited
+  auto_apply: 2, // Free users get 2/month; Pro unlimited
+  smart_apply: 0, // Pro/Premium only
 };
 
 /** Get current usage count for a feature in the current period (e.g. monthly). */
@@ -63,20 +69,46 @@ export async function logUsage(
   await supabase.from("usage_logs").insert({ user_id: userId, feature });
 }
 
-/** Get usage summary for dashboard (current month). Runs all queries in parallel. */
+const ALL_FEATURES: FeatureType[] = [
+  "resume_analysis",
+  "job_match",
+  "cover_letter",
+  "interview_prep",
+  "resume_improve",
+  "job_finder",
+  "auto_apply",
+  "smart_apply",
+];
+
+/**
+ * Get usage summary for dashboard (current month).
+ * Uses a single DB query instead of 7 separate queries.
+ */
 export async function getUsageSummary(userId: string, planType: "free" | "pro" | "premium") {
-  const features: FeatureType[] = [
-    "resume_analysis",
-    "job_match",
-    "cover_letter",
-    "interview_prep",
-    "resume_improve",
-  ];
-  const counts = await Promise.all(features.map((f) => getUsageCount(userId, f)));
-  const summary: Record<FeatureType, { used: number; limit: number }> = {} as any;
-  features.forEach((f, i) => {
+  const supabase = await createClient();
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  // Single query: fetch all feature usage rows for this month, count in JS
+  const { data, error } = await supabase
+    .from("usage_logs")
+    .select("feature")
+    .eq("user_id", userId)
+    .gte("timestamp", startOfMonth.toISOString())
+    .in("feature", ALL_FEATURES);
+
+  const counts: Record<string, number> = {};
+  if (!error && data) {
+    for (const row of data) {
+      counts[row.feature] = (counts[row.feature] || 0) + 1;
+    }
+  }
+
+  const summary = {} as Record<FeatureType, { used: number; limit: number }>;
+  for (const f of ALL_FEATURES) {
     const limit = planType === "pro" || planType === "premium" ? -1 : FREE_LIMITS[f];
-    summary[f] = { used: counts[i], limit };
-  });
+    summary[f] = { used: counts[f] || 0, limit };
+  }
   return summary;
 }

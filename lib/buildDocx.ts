@@ -66,6 +66,22 @@ export async function buildImprovedResumeDocx(content: ImprovedResumeContent): P
       children: [new TextRun({ text: content.education || "" })],
     })
   );
+
+  // Watermark / branding
+  children.push(new Paragraph({ text: "" }));
+  children.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: "Created with AI Job Assistant",
+          size: 16,
+          color: "999999",
+          italics: true,
+        }),
+      ],
+    })
+  );
+
   const doc = new Document({ sections: [{ children }] });
   return Packer.toBuffer(doc);
 }

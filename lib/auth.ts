@@ -1,6 +1,7 @@
 import { createClient } from "./supabase/server";
 
 export type PlanType = "free" | "pro" | "premium";
+export type UserRole = "job_seeker" | "recruiter";
 
 export interface UserProfile {
   id: string;
@@ -8,6 +9,7 @@ export interface UserProfile {
   name: string | null;
   created_at: string;
   plan_type: PlanType;
+  role: UserRole;
 }
 
 /** Get current user from Supabase Auth and their profile from public.users */
@@ -24,7 +26,7 @@ export async function getUser(): Promise<{
 
   let { data: profile } = await supabase
     .from("users")
-    .select("id, email, name, created_at, plan_type")
+    .select("id, email, name, created_at, plan_type, role")
     .eq("id", user.id)
     .single();
 
@@ -32,7 +34,7 @@ export async function getUser(): Promise<{
     await ensureUserRow(user.id, user.email);
     const res = await supabase
       .from("users")
-      .select("id, email, name, created_at, plan_type")
+      .select("id, email, name, created_at, plan_type, role")
       .eq("id", user.id)
       .single();
     profile = res.data;
@@ -49,7 +51,7 @@ export async function getUser(): Promise<{
 export async function ensureUserRow(userId: string, email: string) {
   const supabase = await createClient();
   await supabase.from("users").upsert(
-    { id: userId, email, plan_type: "free" },
+    { id: userId, email, plan_type: "free", role: "job_seeker" },
     { onConflict: "id", ignoreDuplicates: true }
   );
 }

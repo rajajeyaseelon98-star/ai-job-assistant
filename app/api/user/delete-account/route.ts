@@ -13,6 +13,8 @@ export async function POST() {
   await Promise.all([
     supabase.from("usage_logs").delete().eq("user_id", user.id),
     supabase.from("interview_sessions").delete().eq("user_id", user.id),
+    supabase.from("applications").delete().eq("user_id", user.id),
+    supabase.from("job_searches").delete().eq("user_id", user.id),
     supabase.from("cover_letters").delete().eq("user_id", user.id),
     supabase.from("improved_resumes").delete().eq("user_id", user.id),
     supabase.from("job_matches").delete().eq("user_id", user.id),

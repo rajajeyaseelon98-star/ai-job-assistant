@@ -1,30 +1,47 @@
-/** Simple in-memory rate limiter per user. Resets on server restart. */
-const windowMs = 60_000; // 1 minute window
-const maxRequests = 10; // max requests per window per user
+import { createClient } from "@/lib/supabase/server";
 
-const requests = new Map<string, { count: number; resetAt: number }>();
+/**
+ * Database-backed rate limiter that works in serverless environments.
+ * Uses usage_logs table to count recent requests within a sliding window.
+ * Falls back to allowing requests if the DB query fails (fail-open for availability).
+ */
+const WINDOW_MS = 60_000; // 1 minute window
+const MAX_REQUESTS = 10; // max requests per window per user
 
-// Periodically clean stale entries
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of requests) {
-    if (now > entry.resetAt) requests.delete(key);
-  }
-}, 60_000);
+export async function checkRateLimit(
+  userId: string
+): Promise<{ allowed: boolean; retryAfterMs: number }> {
+  try {
+    const supabase = await createClient();
+    const windowStart = new Date(Date.now() - WINDOW_MS).toISOString();
 
-export function checkRateLimit(userId: string): { allowed: boolean; retryAfterMs: number } {
-  const now = Date.now();
-  const entry = requests.get(userId);
+    const { count, error } = await supabase
+      .from("usage_logs")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("feature", "rate_limit")
+      .gte("timestamp", windowStart);
 
-  if (!entry || now > entry.resetAt) {
-    requests.set(userId, { count: 1, resetAt: now + windowMs });
+    if (error) {
+      // Fail open — allow request if DB query fails
+      console.error("Rate limit check failed:", error.message);
+      return { allowed: true, retryAfterMs: 0 };
+    }
+
+    const currentCount = count ?? 0;
+
+    if (currentCount >= MAX_REQUESTS) {
+      return { allowed: false, retryAfterMs: WINDOW_MS };
+    }
+
+    // Log this request for rate counting
+    await supabase
+      .from("usage_logs")
+      .insert({ user_id: userId, feature: "rate_limit" });
+
+    return { allowed: true, retryAfterMs: 0 };
+  } catch {
+    // Fail open on unexpected errors
     return { allowed: true, retryAfterMs: 0 };
   }
-
-  if (entry.count >= maxRequests) {
-    return { allowed: false, retryAfterMs: entry.resetAt - now };
-  }
-
-  entry.count++;
-  return { allowed: true, retryAfterMs: 0 };
 }

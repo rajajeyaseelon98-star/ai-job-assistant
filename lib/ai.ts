@@ -1,5 +1,6 @@
 import { isGeminiAvailable, geminiGenerate, geminiGenerateContent } from "./gemini";
 import { isOpenAIAvailable, chatCompletion } from "./openai";
+import { generateCacheKey, getCachedResponse, setCachedResponse } from "./aiCache";
 
 function isQuotaOrRateLimitError(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err);
@@ -35,9 +36,42 @@ export async function aiGenerate(
 }
 
 /**
- * Standardized AI generation: single prompt style.
- * Prefers Gemini, falls back to OpenAI on quota/429.
+ * Cached version of aiGenerate. Checks cache first, stores result on miss.
  */
+export async function cachedAiGenerate(
+  systemPrompt: string,
+  userContent: string,
+  options?: { jsonMode?: boolean; cacheFeature?: string }
+): Promise<string> {
+  const feature = options?.cacheFeature || "general";
+  const hash = generateCacheKey(feature, systemPrompt + userContent);
+
+  const cached = await getCachedResponse(hash);
+  if (cached) return cached;
+
+  const result = await aiGenerate(systemPrompt, userContent, options);
+  await setCachedResponse(hash, result, feature);
+  return result;
+}
+
+/**
+ * Cached version of aiGenerateContent. Checks cache first, stores result on miss.
+ */
+export async function cachedAiGenerateContent(
+  prompt: string,
+  cacheFeature?: string
+): Promise<string> {
+  const feature = cacheFeature || "general";
+  const hash = generateCacheKey(feature, prompt);
+
+  const cached = await getCachedResponse(hash);
+  if (cached) return cached;
+
+  const result = await aiGenerateContent(prompt);
+  await setCachedResponse(hash, result, feature);
+  return result;
+}
+
 export async function aiGenerateContent(prompt: string): Promise<string> {
   if (isGeminiAvailable()) {
     try {

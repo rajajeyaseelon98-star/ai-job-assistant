@@ -7,6 +7,9 @@ import { JobMatchAvgCard } from "@/components/dashboard/JobMatchAvgCard";
 import { UsageCard } from "@/components/dashboard/UsageCard";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { ActivityList } from "@/components/dashboard/ActivityList";
+import { StreakWidget } from "@/components/dashboard/StreakWidget";
+import { DailyActions } from "@/components/dashboard/DailyActions";
+import { OpportunityAlerts } from "@/components/dashboard/OpportunityAlerts";
 
 export const dynamic = "force-dynamic";
 
@@ -84,7 +87,9 @@ export default async function DashboardPage() {
         Welcome back{user?.profile?.name ? `, ${user.profile.name}` : user?.profile?.email ? `, ${user.profile.email.split("@")[0]}` : ""} 👋
       </h1>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Streak + Score Cards Row */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <StreakWidget />
         <ScoreCard score={latestScore} />
         <JobMatchAvgCard avgScore={avgMatchScore} />
         <UsageCard
@@ -94,6 +99,12 @@ export default async function DashboardPage() {
           isPro={planType === "pro" || planType === "premium"}
         />
       </div>
+
+      {/* Opportunity Alerts */}
+      <OpportunityAlerts />
+
+      {/* Daily Action Plan */}
+      <DailyActions />
 
       <div>
         <h2 className="mb-4 text-lg font-semibold text-text">Quick Actions</h2>

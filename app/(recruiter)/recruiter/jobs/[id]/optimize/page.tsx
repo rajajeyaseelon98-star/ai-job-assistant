@@ -1,0 +1,140 @@
+"use client";
+
+import { useState } from "react";
+import { use } from "react";
+import { Loader2, Wand2, ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+
+interface OptimizeResult {
+  suggestions: string[];
+  optimized_title?: string;
+  optimized_description?: string;
+  score: number;
+}
+
+export default function OptimizeJobPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<OptimizeResult | null>(null);
+  const [error, setError] = useState("");
+  const [applying, setApplying] = useState(false);
+
+  async function handleOptimize() {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/recruiter/jobs/${id}/optimize`, { method: "POST" });
+      if (res.ok) {
+        setResult(await res.json());
+      } else {
+        const data = await res.json();
+        setError(data.error || "Optimization failed");
+      }
+    } catch { setError("Something went wrong"); }
+    finally { setLoading(false); }
+  }
+
+  async function applyOptimizations() {
+    if (!result) return;
+    setApplying(true);
+    try {
+      const updates: Record<string, string> = {};
+      if (result.optimized_title) updates.title = result.optimized_title;
+      if (result.optimized_description) updates.description = result.optimized_description;
+
+      const res = await fetch(`/api/recruiter/jobs/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+      if (res.ok) {
+        router.push(`/recruiter/jobs/${id}`);
+      }
+    } catch { setError("Failed to apply changes"); }
+    finally { setApplying(false); }
+  }
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-6">
+      <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-text-muted hover:text-text">
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
+
+      <h1 className="text-2xl font-bold text-text">AI Job Post Optimization</h1>
+      <p className="text-sm text-text-muted">Analyze your job posting for clarity, inclusivity, SEO, and attractiveness.</p>
+
+      {!result && (
+        <button onClick={handleOptimize} disabled={loading}
+          className="flex items-center gap-2 rounded-lg bg-purple-600 px-6 py-3 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50">
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+          {loading ? "Analyzing..." : "Analyze & Optimize"}
+        </button>
+      )}
+
+      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+
+      {result && (
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <div className={`flex h-16 w-16 items-center justify-center rounded-full text-xl font-bold text-white ${
+              result.score >= 80 ? "bg-green-500" : result.score >= 60 ? "bg-yellow-500" : "bg-red-500"
+            }`}>
+              {result.score}
+            </div>
+            <div>
+              <p className="text-lg font-semibold text-text">Optimization Score</p>
+              <p className="text-sm text-text-muted">
+                {result.score >= 80 ? "Great job posting!" : result.score >= 60 ? "Room for improvement" : "Needs significant optimization"}
+              </p>
+            </div>
+          </div>
+
+          {result.suggestions.length > 0 && (
+            <div>
+              <h3 className="mb-3 text-sm font-semibold text-text">Suggestions</h3>
+              <div className="space-y-2">
+                {result.suggestions.map((s, i) => (
+                  <div key={i} className="flex items-start gap-2 rounded-lg border border-gray-200 bg-card p-3">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-500" />
+                    <p className="text-sm text-text">{s}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {result.optimized_title && (
+            <div>
+              <h3 className="mb-2 text-sm font-semibold text-text">Optimized Title</h3>
+              <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+                <p className="text-sm text-green-800">{result.optimized_title}</p>
+              </div>
+            </div>
+          )}
+
+          {result.optimized_description && (
+            <div>
+              <h3 className="mb-2 text-sm font-semibold text-text">Optimized Description</h3>
+              <div className="max-h-64 overflow-y-auto rounded-lg border border-green-200 bg-green-50 p-3">
+                <p className="whitespace-pre-wrap text-sm text-green-800">{result.optimized_description}</p>
+              </div>
+            </div>
+          )}
+
+          {(result.optimized_title || result.optimized_description) && (
+            <button onClick={applyOptimizations} disabled={applying}
+              className="flex items-center gap-2 rounded-lg bg-green-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50">
+              {applying ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+              Apply Optimizations
+            </button>
+          )}
+
+          <button onClick={() => setResult(null)} className="text-sm text-text-muted underline hover:text-text">
+            Run again
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

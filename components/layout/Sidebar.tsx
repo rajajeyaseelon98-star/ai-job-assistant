@@ -7,21 +7,50 @@ import {
   LayoutDashboard,
   FileText,
   Target,
+  Search,
+  Rocket,
+  Zap,
+  Wand2,
   Mail,
   Mic2,
+  Linkedin,
+  ClipboardList,
+  BarChart3,
   History,
   CreditCard,
   Settings,
   Menu,
   X,
+  ArrowLeftRight,
+  Briefcase,
+  Activity,
+  IndianRupee,
+  TrendingUp,
+  Award,
+  Brain,
+  Gift,
 } from "lucide-react";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/resume-analyzer", label: "Resume Analyzer", icon: FileText },
   { href: "/job-match", label: "Job Match", icon: Target },
+  { href: "/job-board", label: "Job Board", icon: Briefcase },
+  { href: "/job-finder", label: "Auto Job Finder", icon: Search },
+  { href: "/auto-apply", label: "AI Auto-Apply", icon: Rocket },
+  { href: "/smart-apply", label: "Smart Auto-Apply", icon: Zap },
+  { href: "/tailor-resume", label: "Resume Tailoring", icon: Wand2 },
   { href: "/cover-letter", label: "Cover Letter Generator", icon: Mail },
   { href: "/interview-prep", label: "Interview Prep", icon: Mic2 },
+  { href: "/import-linkedin", label: "LinkedIn Import", icon: Linkedin },
+  { href: "/applications", label: "Applications", icon: ClipboardList },
+  { href: "/analytics", label: "Career Analytics", icon: BarChart3 },
+  { href: "/resume-performance", label: "Resume Performance", icon: Award },
+  { href: "/career-coach", label: "AI Career Coach", icon: Brain },
+  { href: "/activity", label: "Activity Feed", icon: Activity },
+  { href: "/salary-insights", label: "Salary Insights", icon: IndianRupee },
+  { href: "/skill-demand", label: "Skill Demand", icon: TrendingUp },
+  { href: "/streak-rewards", label: "Streak Rewards", icon: Gift },
   { href: "/history", label: "History", icon: History },
   { href: "/pricing", label: "Pricing", icon: CreditCard },
   { href: "/settings", label: "Settings", icon: Settings },
@@ -92,6 +121,16 @@ export function Sidebar() {
               );
             })}
           </nav>
+
+          {/* Switch to Recruiter */}
+          <Link
+            href="/select-role?next=/recruiter"
+            onClick={() => setOpen(false)}
+            className="mt-2 flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-text-muted hover:bg-gray-50 hover:text-text"
+          >
+            <ArrowLeftRight className="h-4 w-4" />
+            Switch to Recruiter
+          </Link>
         </div>
       </aside>
     </>

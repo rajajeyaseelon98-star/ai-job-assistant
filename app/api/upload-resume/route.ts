@@ -4,11 +4,53 @@ import { createClient } from "@/lib/supabase/server";
 import { extractTextFromPdf } from "@/utils/pdfParser";
 import { extractTextFromDocx } from "@/utils/docxParser";
 
+/** GET /api/upload-resume — list user's uploaded resumes */
+export async function GET() {
+  const user = await getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("resumes")
+    .select("id, file_url, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return NextResponse.json({ error: "Failed to load resumes" }, { status: 500 });
+  }
+
+  // Derive a file_name from the file_url for display
+  const resumes = (data || []).map((r) => {
+    const urlPath = r.file_url?.split("/").pop() || "";
+    const fileName = urlPath.replace(/^\d+-/, "").replace(/_/g, " ") || "Resume";
+    return { id: r.id, file_name: fileName, file_url: r.file_url, created_at: r.created_at };
+  });
+
+  return NextResponse.json(resumes);
+}
+
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = [
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
+
+// Magic bytes for file type validation
+const PDF_MAGIC = [0x25, 0x50, 0x44, 0x46]; // %PDF
+const DOCX_MAGIC = [0x50, 0x4b, 0x03, 0x04]; // PK.. (ZIP/DOCX)
+
+function validateFileHeader(buffer: Buffer, type: string): boolean {
+  if (buffer.length < 4) return false;
+  const header = Array.from(buffer.subarray(0, 4));
+  if (type === "application/pdf") {
+    return PDF_MAGIC.every((b, i) => header[i] === b);
+  }
+  // DOCX is a ZIP file
+  return DOCX_MAGIC.every((b, i) => header[i] === b);
+}
 
 export async function POST(request: Request) {
   const user = await getUser();
@@ -37,6 +79,15 @@ export async function POST(request: Request) {
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
+
+  // Validate file header (magic bytes) to prevent disguised files
+  if (!validateFileHeader(buffer, file.type)) {
+    return NextResponse.json(
+      { error: "File content does not match its type. Upload a valid PDF or DOCX." },
+      { status: 400 }
+    );
+  }
+
   let parsedText: string;
 
   try {
@@ -70,14 +121,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: urlData } = supabase.storage.from("resumes").getPublicUrl(uploadData.path);
-  const fileUrl = urlData.publicUrl;
+  // Store the storage path (not a signed URL) so it never expires.
+  // Generate signed URLs on-demand at read time via /api/resume-file/[id].
+  const storagePath = uploadData.path;
 
   const { data: row, error: insertError } = await supabase
     .from("resumes")
     .insert({
       user_id: user.id,
-      file_url: fileUrl,
+      file_url: storagePath,
       parsed_text: parsedText || null,
     })
     .select("id, file_url, parsed_text, created_at")

@@ -2,6 +2,82 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Check, Zap, Crown, Rocket, Star } from "lucide-react";
+
+interface Plan {
+  name: string;
+  price: string;
+  period: string;
+  icon: typeof Zap;
+  color: string;
+  features: string[];
+  popular?: boolean;
+  planKey: "free" | "pro" | "premium";
+}
+
+const PLANS: Plan[] = [
+  {
+    name: "Free",
+    price: "₹0",
+    period: "",
+    icon: Star,
+    color: "text-gray-600 bg-gray-100",
+    planKey: "free",
+    features: [
+      "3 resume analyses per month",
+      "3 job matches per month",
+      "1 cover letter per month",
+      "1 job finder search per month",
+      "2 AI Auto-Apply runs per month",
+      "Activity feed",
+      "Salary insights (basic)",
+    ],
+  },
+  {
+    name: "Pro",
+    price: "₹299",
+    period: "/month",
+    icon: Crown,
+    color: "text-purple-600 bg-purple-100",
+    popular: true,
+    planKey: "pro",
+    features: [
+      "Unlimited resume analyses",
+      "Unlimited job matches",
+      "Unlimited cover letters",
+      "Interview preparation tool",
+      "AI Resume Fixer",
+      "Unlimited Auto Job Finder",
+      "Unlimited AI Auto-Apply",
+      "Smart Auto-Apply (set & forget)",
+      "Resume tailoring for specific jobs",
+      "LinkedIn profile import",
+      "Career Analytics dashboard",
+      "Skill demand insights",
+      "Profile boost (2x visibility)",
+      "Daily AI reports",
+    ],
+  },
+  {
+    name: "Premium",
+    price: "₹499",
+    period: "/month",
+    icon: Rocket,
+    color: "text-orange-600 bg-orange-100",
+    planKey: "premium",
+    features: [
+      "Everything in Pro",
+      "Mock interviews (AI)",
+      "Hiring success prediction",
+      "Priority AI processing",
+      "Profile boost (2.5x visibility)",
+      "Shareable score cards",
+      "Public profile with badges",
+      "Career roadmap (coming soon)",
+      "Priority support",
+    ],
+  },
+];
 
 export default function PricingPage() {
   const router = useRouter();
@@ -9,8 +85,6 @@ export default function PricingPage() {
 
   async function handleUpgrade(plan: "pro" | "premium") {
     setUpgrading(plan);
-    // TODO: Replace with real Stripe/Razorpay checkout session creation
-    // For now show an alert indicating payment is not yet integrated
     alert(
       `Payment integration coming soon!\n\nTo test ${plan} features locally, use the plan switcher in Settings (dev mode only).`
     );
@@ -19,65 +93,69 @@ export default function PricingPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-text">Pricing</h1>
-      <p className="text-text-muted">
-        Choose the plan that fits your job search.
-      </p>
+    <div className="mx-auto max-w-5xl space-y-8">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold text-text">Pricing</h1>
+        <p className="mt-2 text-text-muted">
+          Choose the plan that fits your job search. Upgrade anytime.
+        </p>
+      </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        <div className="rounded-xl border border-gray-200 bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-text">Free</h2>
-          <p className="mt-2 text-3xl font-bold text-text">₹0</p>
-          <ul className="mt-4 space-y-2 text-sm text-text-muted">
-            <li>3 resume analyses per month</li>
-            <li>3 job matches per month</li>
-            <li>1 cover letter per month</li>
-            <li>Interview prep (Pro+)</li>
-          </ul>
-          <p className="mt-4 text-sm text-text-muted">No credit card required.</p>
-        </div>
-
-        <div className="rounded-xl border-2 border-primary bg-primary/5 p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-primary">Pro</h2>
-          <p className="mt-2 text-3xl font-bold text-text">
-            ₹199 <span className="text-base font-normal text-text-muted">/month</span>
-          </p>
-          <ul className="mt-4 space-y-2 text-sm text-text-muted">
-            <li>Unlimited resume analyses</li>
-            <li>Unlimited job matches</li>
-            <li>Unlimited cover letters</li>
-            <li>Interview preparation tool</li>
-          </ul>
-          <button
-            type="button"
-            onClick={() => handleUpgrade("pro")}
-            disabled={upgrading === "pro"}
-            className="mt-6 inline-block rounded-lg bg-primary px-4 py-2 font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+        {PLANS.map((plan) => (
+          <div
+            key={plan.name}
+            className={`relative rounded-2xl border bg-card p-6 shadow-sm transition-shadow hover:shadow-md ${
+              plan.popular ? "border-primary ring-2 ring-primary/20" : "border-gray-200"
+            }`}
           >
-            {upgrading === "pro" ? "Processing..." : "Upgrade to Pro"}
-          </button>
-        </div>
+            {plan.popular && (
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-0.5 text-xs font-medium text-white">
+                Most Popular
+              </div>
+            )}
 
-        <div className="rounded-xl border border-gray-200 bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-text">Premium</h2>
-          <p className="mt-2 text-3xl font-bold text-text">
-            ₹499 <span className="text-base font-normal text-text-muted">/month</span>
-          </p>
-          <ul className="mt-4 space-y-2 text-sm text-text-muted">
-            <li>Everything in Pro</li>
-            <li>Mock interviews (AI)</li>
-            <li>Career roadmap</li>
-          </ul>
-          <button
-            type="button"
-            onClick={() => handleUpgrade("premium")}
-            disabled={upgrading === "premium"}
-            className="mt-6 inline-block rounded-lg border border-primary px-4 py-2 font-medium text-primary hover:bg-primary/5 disabled:opacity-50"
-          >
-            {upgrading === "premium" ? "Processing..." : "Upgrade to Premium"}
-          </button>
-        </div>
+            <div className="mb-4 flex items-center gap-3">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-full ${plan.color}`}>
+                <plan.icon className="h-5 w-5" />
+              </div>
+              <h2 className="text-lg font-bold text-text">{plan.name}</h2>
+            </div>
+
+            <div className="mb-6">
+              <span className="text-3xl font-bold text-text">{plan.price}</span>
+              {plan.period && (
+                <span className="text-sm text-text-muted">{plan.period}</span>
+              )}
+            </div>
+
+            <ul className="mb-6 space-y-2">
+              {plan.features.map((feature) => (
+                <li key={feature} className="flex items-start gap-2 text-sm text-text">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                  {feature}
+                </li>
+              ))}
+            </ul>
+
+            {plan.planKey === "free" ? (
+              <p className="text-center text-sm text-text-muted">No credit card required</p>
+            ) : (
+              <button
+                type="button"
+                onClick={() => handleUpgrade(plan.planKey as "pro" | "premium")}
+                disabled={upgrading === plan.planKey}
+                className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
+                  plan.popular
+                    ? "bg-primary text-white hover:bg-primary-hover"
+                    : "border border-primary text-primary hover:bg-primary/5"
+                } disabled:opacity-50`}
+              >
+                {upgrading === plan.planKey ? "Processing..." : `Upgrade to ${plan.name}`}
+              </button>
+            )}
+          </div>
+        ))}
       </div>
 
       <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-6">

@@ -13,8 +13,24 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/resume-analyzer") ||
     pathname.startsWith("/job-match") ||
+    pathname.startsWith("/job-finder") ||
+    pathname.startsWith("/auto-apply") ||
+    pathname.startsWith("/smart-apply") ||
+    pathname.startsWith("/tailor-resume") ||
     pathname.startsWith("/cover-letter") ||
     pathname.startsWith("/interview-prep") ||
+    pathname.startsWith("/import-linkedin") ||
+    pathname.startsWith("/job-board") ||
+    pathname.startsWith("/applications") ||
+    pathname.startsWith("/analytics") ||
+    pathname.startsWith("/activity") ||
+    pathname.startsWith("/salary-insights") ||
+    pathname.startsWith("/skill-demand") ||
+    pathname.startsWith("/resume-performance") ||
+    pathname.startsWith("/career-coach") ||
+    pathname.startsWith("/streak-rewards") ||
+    pathname.startsWith("/select-role") ||
+    pathname.startsWith("/recruiter") ||
     pathname.startsWith("/history") ||
     pathname.startsWith("/pricing") ||
     pathname.startsWith("/settings") ||
