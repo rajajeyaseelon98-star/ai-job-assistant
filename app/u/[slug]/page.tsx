@@ -65,15 +65,15 @@ export default async function PublicProfilePage({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      <div className="mx-auto max-w-2xl px-4 py-12">
+      <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Profile Header */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-start gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/70 text-2xl font-bold text-white">
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4">
+            <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/70 text-xl sm:text-2xl font-bold text-white shrink-0">
               {(user.name || "?")[0].toUpperCase()}
             </div>
-            <div className="flex-1">
-              <h1 className="text-xl font-bold text-gray-900">{user.name || "Professional"}</h1>
+            <div className="flex-1 text-center sm:text-left">
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900">{user.name || "Professional"}</h1>
               {user.headline && (
                 <p className="text-sm text-gray-600 mt-0.5">{user.headline}</p>
               )}
@@ -132,8 +132,8 @@ export default async function PublicProfilePage({
 
         {/* Skill Badges */}
         {skillBadges.length > 0 && (
-          <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
+          <div className="mt-4 sm:mt-6 rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2 mb-3 sm:mb-4">
               <GraduationCap className="h-5 w-5" /> Skills & Expertise
             </h2>
 
@@ -194,15 +194,15 @@ export default async function PublicProfilePage({
         )}
 
         {/* CTA */}
-        <div className="mt-6 rounded-2xl border border-primary/20 bg-primary/5 p-6 text-center">
-          <Briefcase className="mx-auto h-8 w-8 text-primary mb-2" />
-          <h3 className="text-lg font-bold text-gray-900">Get Your Own AI Career Profile</h3>
-          <p className="text-sm text-gray-600 mt-1 mb-4">
+        <div className="mt-4 sm:mt-6 rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-6 text-center">
+          <Briefcase className="mx-auto h-7 w-7 sm:h-8 sm:w-8 text-primary mb-2" />
+          <h3 className="text-base sm:text-lg font-bold text-gray-900">Get Your Own AI Career Profile</h3>
+          <p className="text-xs sm:text-sm text-gray-600 mt-1 mb-3 sm:mb-4">
             Upload your resume, get an ATS score, skill badges, and auto-apply to jobs.
           </p>
           <a
             href="/signup"
-            className="inline-block rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white hover:bg-primary/90"
+            className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white hover:bg-primary/90 min-h-[44px] w-full sm:w-auto active:scale-[0.98] transition-transform"
           >
             Create Free Account
           </a>

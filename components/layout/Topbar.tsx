@@ -73,25 +73,29 @@ export function Topbar({ planType, usage: initialUsage }: TopbarProps) {
   const limitJob = usage?.job_match?.limit ?? 1;
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-gray-200 bg-card px-6">
-      <div className="flex items-center gap-4">
-        <span className="text-text-muted hidden text-sm md:inline">
-          Usage: Resume {usedResume}/{limitResume === -1 ? "∞" : limitResume} · Job match {usedJob}/{limitJob === -1 ? "∞" : limitJob}
+    <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-gray-200 bg-card px-4 sm:px-6">
+      {/* Left side: spacer for hamburger on mobile + usage info */}
+      <div className="flex items-center gap-2 sm:gap-4">
+        {/* Spacer for hamburger button on mobile */}
+        <div className="w-8 lg:hidden" />
+        <span className="hidden text-xs text-text-muted sm:text-sm md:inline">
+          Resume {usedResume}/{limitResume === -1 ? "\u221E" : limitResume} · Jobs {usedJob}/{limitJob === -1 ? "\u221E" : limitJob}
         </span>
-        {(planType === "free") && (
+        {planType === "free" && (
           <Link
             href="/pricing"
-            className="rounded-lg bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/20"
+            className="rounded-lg bg-primary/10 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/20 sm:px-3 sm:py-1.5 sm:text-sm"
           >
-            Upgrade to Pro
+            Upgrade
           </Link>
         )}
       </div>
+      {/* Right side: user dropdown */}
       <div className="relative" ref={ref}>
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-gray-100"
+          className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 hover:bg-gray-100 active:bg-gray-200 sm:gap-2"
         >
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
             <User className="h-4 w-4" />
@@ -102,14 +106,14 @@ export function Topbar({ planType, usage: initialUsage }: TopbarProps) {
           <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-gray-200 bg-card py-1 shadow-lg">
             <Link
               href="/settings"
-              className="flex items-center gap-2 px-4 py-2 text-sm text-text hover:bg-gray-50"
+              className="flex items-center gap-2 px-4 py-2.5 text-sm text-text hover:bg-gray-50 active:bg-gray-100"
               onClick={() => setOpen(false)}
             >
               <User className="h-4 w-4" /> Profile
             </Link>
             <Link
               href="/pricing"
-              className="flex items-center gap-2 px-4 py-2 text-sm text-text hover:bg-gray-50"
+              className="flex items-center gap-2 px-4 py-2.5 text-sm text-text hover:bg-gray-50 active:bg-gray-100"
               onClick={() => setOpen(false)}
             >
               <CreditCard className="h-4 w-4" /> Billing
@@ -120,7 +124,7 @@ export function Topbar({ planType, usage: initialUsage }: TopbarProps) {
                 setOpen(false);
                 handleLogout();
               }}
-              className="flex w-full items-center gap-2 px-4 py-2 text-sm text-text hover:bg-gray-50"
+              className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-text hover:bg-gray-50 active:bg-gray-100"
             >
               <LogOut className="h-4 w-4" /> Logout
             </button>

@@ -71,14 +71,14 @@ export function SettingsForm({
 
   return (
     <>
-      <section className="rounded-xl border border-gray-200 bg-card p-6 shadow-sm">
+      <section className="rounded-xl border border-gray-200 bg-card p-4 sm:p-6 shadow-sm">
         <h2 className="font-semibold text-text">Profile</h2>
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
             <label className="block text-sm font-medium text-text-muted">Name</label>
             <input
               type="text"
-              className="mt-1 w-full max-w-md rounded-lg border border-gray-300 px-3 py-2 text-text"
+              className="mt-1 w-full max-w-md min-h-[44px] rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm text-text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
@@ -91,7 +91,7 @@ export function SettingsForm({
           <div>
             <label className="block text-sm font-medium text-text-muted">Experience level</label>
             <select
-              className="mt-1 w-full max-w-md rounded-lg border border-gray-300 px-3 py-2 text-text"
+              className="mt-1 w-full max-w-md min-h-[44px] rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm text-text"
               value={experienceLevel}
               onChange={(e) => setExperienceLevel(e.target.value)}
             >
@@ -104,21 +104,21 @@ export function SettingsForm({
           <button
             type="submit"
             disabled={saving}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+            className="w-full sm:w-auto min-h-[44px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover active:bg-primary-hover disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save"}
           </button>
         </form>
       </section>
 
-      <section className="rounded-xl border border-gray-200 bg-card p-6 shadow-sm">
+      <section className="rounded-xl border border-gray-200 bg-card p-4 sm:p-6 shadow-sm">
         <h2 className="font-semibold text-text">Career preferences</h2>
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
             <label className="block text-sm font-medium text-text-muted">Preferred role</label>
             <input
               type="text"
-              className="mt-1 w-full max-w-md rounded-lg border border-gray-300 px-3 py-2 text-text"
+              className="mt-1 w-full max-w-md min-h-[44px] rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm text-text"
               value={preferredRole}
               onChange={(e) => setPreferredRole(e.target.value)}
               placeholder="e.g. Frontend Developer"
@@ -128,7 +128,7 @@ export function SettingsForm({
             <label className="block text-sm font-medium text-text-muted">Preferred location</label>
             <input
               type="text"
-              className="mt-1 w-full max-w-md rounded-lg border border-gray-300 px-3 py-2 text-text"
+              className="mt-1 w-full max-w-md min-h-[44px] rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm text-text"
               value={preferredLocation}
               onChange={(e) => setPreferredLocation(e.target.value)}
               placeholder="e.g. Remote, Bangalore"
@@ -138,7 +138,7 @@ export function SettingsForm({
             <label className="block text-sm font-medium text-text-muted">Salary expectation</label>
             <input
               type="text"
-              className="mt-1 w-full max-w-md rounded-lg border border-gray-300 px-3 py-2 text-text"
+              className="mt-1 w-full max-w-md min-h-[44px] rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm text-text"
               value={salaryExpectation}
               onChange={(e) => setSalaryExpectation(e.target.value)}
               placeholder="e.g. 8-12 LPA"
@@ -147,21 +147,21 @@ export function SettingsForm({
           <button
             type="submit"
             disabled={saving}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+            className="w-full sm:w-auto min-h-[44px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover active:bg-primary-hover disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save preferences"}
           </button>
         </form>
       </section>
 
-      <section className="rounded-xl border border-gray-200 bg-card p-6 shadow-sm">
+      <section className="rounded-xl border border-gray-200 bg-card p-4 sm:p-6 shadow-sm">
         <h2 className="font-semibold text-text">Subscription</h2>
         <p className="mt-2 text-sm text-text-muted">
           Current plan: <span className="capitalize font-medium text-text">{planType}</span>
         </p>
         <Link
           href="/pricing"
-          className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
+          className="mt-4 inline-block min-h-[44px] leading-[44px] text-sm font-medium text-primary hover:underline"
         >
           Upgrade or change plan →
         </Link>
@@ -169,7 +169,7 @@ export function SettingsForm({
 
       <DevPlanSwitcher currentPlan={planType as "free" | "pro" | "premium"} />
 
-      <section className="rounded-xl border border-red-200 bg-red-50/50 p-6 shadow-sm">
+      <section className="rounded-xl border border-red-200 bg-red-50/50 p-4 sm:p-6 shadow-sm">
         <h2 className="font-semibold text-red-800">Danger zone</h2>
         <p className="mt-2 text-sm text-red-700">
           Delete your account and all your data. This cannot be undone.
@@ -178,7 +178,7 @@ export function SettingsForm({
           type="button"
           onClick={handleDeleteAccount}
           disabled={deleting}
-          className="mt-4 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+          className="mt-4 w-full sm:w-auto min-h-[44px] rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 active:bg-red-100 disabled:opacity-50"
         >
           {deleting ? "Deleting…" : "Delete account"}
         </button>

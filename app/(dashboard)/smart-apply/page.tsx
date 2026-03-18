@@ -125,12 +125,12 @@ export default function SmartApplyPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-4 sm:space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-text">
-          <Zap className="h-6 w-6 text-yellow-500" /> Smart Auto-Apply
+        <h1 className="flex items-center gap-2 text-xl sm:text-2xl lg:text-3xl font-bold text-text">
+          <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500" /> Smart Auto-Apply
         </h1>
-        <p className="mt-1 text-sm text-text-muted">
+        <p className="mt-1 text-xs sm:text-sm text-text-muted">
           Set your rules once. Our AI finds and applies to matching jobs automatically every day.
           You&apos;ll get notified for every application.
         </p>
@@ -142,14 +142,14 @@ export default function SmartApplyPage() {
       {/* Active Rules Status */}
       {rules.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-text flex items-center gap-2">
-            <Settings2 className="h-5 w-5" /> Active Rules
+          <h2 className="text-base sm:text-lg font-semibold text-text flex items-center gap-2">
+            <Settings2 className="h-4 w-4 sm:h-5 sm:w-5" /> Active Rules
           </h2>
           {rules.map((rule) => (
-            <div key={rule.id} className={`rounded-xl border p-4 ${
+            <div key={rule.id} className={`rounded-xl border p-3 sm:p-4 ${
               rule.enabled ? "border-green-200 bg-green-50" : "border-gray-200 bg-card"
             }`}>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
                     {rule.enabled ? (
@@ -178,7 +178,7 @@ export default function SmartApplyPage() {
                 </div>
                 <button
                   onClick={() => handleToggle(rule.id, !rule.enabled)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
+                  className={`min-h-[44px] sm:min-h-0 rounded-lg px-3 py-1.5 text-xs font-medium active:scale-[0.98] ${
                     rule.enabled
                       ? "bg-red-100 text-red-700 hover:bg-red-200"
                       : "bg-green-100 text-green-700 hover:bg-green-200"
@@ -193,8 +193,8 @@ export default function SmartApplyPage() {
       )}
 
       {/* Configuration Form */}
-      <form onSubmit={handleSave} className="rounded-xl border border-gray-200 bg-card p-5 space-y-4">
-        <h2 className="text-lg font-semibold text-text">
+      <form onSubmit={handleSave} className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 space-y-4">
+        <h2 className="text-base sm:text-lg font-semibold text-text">
           {rules.length > 0 ? "Update Rules" : "Set Up Smart Auto-Apply"}
         </h2>
 
@@ -206,7 +206,7 @@ export default function SmartApplyPage() {
             <select
               value={resumeId}
               onChange={(e) => setResumeId(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
+              className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none"
             >
               {resumes.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -246,7 +246,7 @@ export default function SmartApplyPage() {
               value={minSalary}
               onChange={(e) => setMinSalary(e.target.value)}
               placeholder="e.g., 50000"
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
+              className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none"
             />
           </div>
           <div>
@@ -256,7 +256,7 @@ export default function SmartApplyPage() {
               value={maxSalary}
               onChange={(e) => setMaxSalary(e.target.value)}
               placeholder="e.g., 150000"
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
+              className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none"
             />
           </div>
         </div>
@@ -269,7 +269,7 @@ export default function SmartApplyPage() {
             value={roles}
             onChange={(e) => setRoles(e.target.value)}
             placeholder="e.g., Software Engineer, Full Stack Developer"
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
+            className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none"
           />
         </div>
 
@@ -281,7 +281,7 @@ export default function SmartApplyPage() {
             value={locations}
             onChange={(e) => setLocations(e.target.value)}
             placeholder="e.g., Chennai, Bangalore, New York"
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
+            className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none"
           />
         </div>
 
@@ -302,7 +302,7 @@ export default function SmartApplyPage() {
             <select
               value={maxPerDay}
               onChange={(e) => setMaxPerDay(Number(e.target.value))}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
+              className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none"
             >
               {[1, 2, 3, 5, 10, 15, 20].map((n) => (
                 <option key={n} value={n}>{n}</option>
@@ -314,7 +314,7 @@ export default function SmartApplyPage() {
             <select
               value={maxPerWeek}
               onChange={(e) => setMaxPerWeek(Number(e.target.value))}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
+              className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none"
             >
               {[5, 10, 20, 30, 50, 100].map((n) => (
                 <option key={n} value={n}>{n}</option>
@@ -326,7 +326,7 @@ export default function SmartApplyPage() {
         <button
           type="submit"
           disabled={saving || !resumeId}
-          className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
+          className="w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
           {saving ? "Saving..." : rules.length > 0 ? "Update & Activate" : "Activate Smart Auto-Apply"}
@@ -334,7 +334,7 @@ export default function SmartApplyPage() {
       </form>
 
       {/* How it works */}
-      <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 space-y-2">
+      <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 sm:p-4 space-y-2">
         <h3 className="text-sm font-semibold text-blue-900">How Smart Auto-Apply works</h3>
         <ol className="list-decimal list-inside space-y-1 text-xs text-blue-800">
           <li>You set your match criteria (score, salary, roles, locations)</li>

@@ -74,17 +74,17 @@ export default function SalaryInsightsPage() {
       : "text-gray-600";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-text">Salary Intelligence</h1>
-        <p className="text-sm text-text-muted">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Salary Intelligence</h1>
+        <p className="text-sm sm:text-base text-text-muted">
           Research salary ranges, trends, and comparisons for any role
         </p>
       </div>
 
       {/* Search Form */}
-      <form onSubmit={handleSearch} className="rounded-xl border border-gray-200 bg-card p-6">
-        <div className="grid gap-4 sm:grid-cols-4">
+      <form onSubmit={handleSearch} className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-6">
+        <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="sm:col-span-2">
             <label className="mb-1 block text-sm font-medium text-text">Job Title</label>
             <div className="relative">
@@ -94,7 +94,7 @@ export default function SalaryInsightsPage() {
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
                 placeholder="e.g. Software Engineer, Data Scientist"
-                className="w-full rounded-lg border border-gray-200 py-2 pl-10 pr-4 text-sm focus:border-primary focus:outline-none"
+                className="w-full min-h-[44px] rounded-lg border border-gray-200 py-2 pl-10 pr-4 text-base sm:text-sm focus:border-primary focus:outline-none"
                 required
               />
             </div>
@@ -108,7 +108,7 @@ export default function SalaryInsightsPage() {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. Bangalore"
-                className="w-full rounded-lg border border-gray-200 py-2 pl-10 pr-4 text-sm focus:border-primary focus:outline-none"
+                className="w-full min-h-[44px] rounded-lg border border-gray-200 py-2 pl-10 pr-4 text-base sm:text-sm focus:border-primary focus:outline-none"
               />
             </div>
           </div>
@@ -117,7 +117,7 @@ export default function SalaryInsightsPage() {
             <select
               value={experience}
               onChange={(e) => setExperience(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary focus:outline-none"
+              className="w-full min-h-[44px] rounded-lg border border-gray-200 px-3 py-2 text-base sm:text-sm focus:border-primary focus:outline-none"
             >
               <option value="">Any</option>
               <option value="0">0-2 years</option>
@@ -130,7 +130,7 @@ export default function SalaryInsightsPage() {
         <button
           type="submit"
           disabled={loading || !jobTitle.trim()}
-          className="mt-4 flex items-center gap-2 rounded-lg bg-primary px-6 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+          className="mt-4 w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2 text-sm font-medium text-white hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
           Search Salaries
@@ -145,11 +145,11 @@ export default function SalaryInsightsPage() {
       )}
 
       {!loading && searched && insight && (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Salary Range Card */}
-          <div className="rounded-xl border border-gray-200 bg-card p-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-text">{insight.job_title}</h2>
+          <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2">
+              <h2 className="text-lg sm:text-xl font-semibold text-text truncate">{insight.job_title}</h2>
               <div className={`flex items-center gap-1 text-sm font-medium ${trendColor}`}>
                 <TrendIcon className="h-4 w-4" />
                 {insight.trend === "rising" ? "Rising" : insight.trend === "declining" ? "Declining" : "Stable"}
@@ -166,25 +166,25 @@ export default function SalaryInsightsPage() {
 
             {insight.salary_range.avg > 0 ? (
               <>
-                <div className="mt-6 grid grid-cols-3 gap-4 text-center">
+                <div className="mt-4 sm:mt-6 grid grid-cols-3 gap-2 sm:gap-4 text-center">
                   <div>
-                    <div className="text-sm text-text-muted">Minimum</div>
-                    <div className="text-xl font-bold text-text flex items-center justify-center">
-                      <IndianRupee className="h-4 w-4" />
+                    <div className="text-xs sm:text-sm text-text-muted">Minimum</div>
+                    <div className="text-lg sm:text-xl font-bold text-text flex items-center justify-center">
+                      <IndianRupee className="h-3 w-3 sm:h-4 sm:w-4" />
                       {formatSalary(insight.salary_range.min)}
                     </div>
                   </div>
                   <div className="border-x border-gray-200">
-                    <div className="text-sm text-text-muted">Average</div>
-                    <div className="text-2xl font-bold text-primary flex items-center justify-center">
-                      <IndianRupee className="h-5 w-5" />
+                    <div className="text-xs sm:text-sm text-text-muted">Average</div>
+                    <div className="text-xl sm:text-2xl font-bold text-primary flex items-center justify-center">
+                      <IndianRupee className="h-4 w-4 sm:h-5 sm:w-5" />
                       {formatSalary(insight.salary_range.avg)}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-text-muted">Maximum</div>
-                    <div className="text-xl font-bold text-text flex items-center justify-center">
-                      <IndianRupee className="h-4 w-4" />
+                    <div className="text-xs sm:text-sm text-text-muted">Maximum</div>
+                    <div className="text-lg sm:text-xl font-bold text-text flex items-center justify-center">
+                      <IndianRupee className="h-3 w-3 sm:h-4 sm:w-4" />
                       {formatSalary(insight.salary_range.max)}
                     </div>
                   </div>
@@ -226,18 +226,18 @@ export default function SalaryInsightsPage() {
 
           {/* Comparable Roles */}
           {insight.comparable_roles.length > 0 && (
-            <div className="rounded-xl border border-gray-200 bg-card p-6">
-              <h3 className="mb-4 font-semibold text-text flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-primary" />
+            <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-6">
+              <h3 className="mb-3 sm:mb-4 text-lg sm:text-xl font-semibold text-text flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 Comparable Roles
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 {insight.comparable_roles.map((role) => (
                   <div
                     key={role.title}
-                    className="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3"
+                    className="flex items-center justify-between rounded-lg bg-gray-50 px-3 sm:px-4 py-2.5 sm:py-3"
                   >
-                    <span className="text-sm font-medium text-text">{role.title}</span>
+                    <span className="text-sm font-medium text-text truncate">{role.title}</span>
                     <span className="text-sm font-bold text-text flex items-center">
                       <IndianRupee className="h-3 w-3" />
                       {formatSalary(role.avg_salary)}

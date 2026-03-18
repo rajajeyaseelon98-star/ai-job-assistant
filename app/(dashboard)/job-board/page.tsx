@@ -226,11 +226,11 @@ export default function JobBoardPage() {
   /* ---------------------------------------------------------------- */
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-text">Job Board</h1>
-        <p className="mt-1 text-text-muted">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Job Board</h1>
+        <p className="mt-1 text-xs sm:text-sm text-text-muted">
           Browse and apply to open positions from recruiters.
         </p>
       </div>
@@ -246,7 +246,7 @@ export default function JobBoardPage() {
               placeholder="Search job titles..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-background py-2.5 pl-10 pr-4 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full min-h-[44px] rounded-xl border border-gray-200 bg-background py-2.5 pl-10 pr-4 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
 
@@ -258,14 +258,14 @@ export default function JobBoardPage() {
               placeholder="Location..."
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-background py-2.5 pl-10 pr-4 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full min-h-[44px] rounded-xl border border-gray-200 bg-background py-2.5 pl-10 pr-4 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
 
           {/* Search button */}
           <button
             type="submit"
-            className="flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-primary/90"
+            className="w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80"
           >
             <Search className="h-4 w-4" />
             Search
@@ -280,7 +280,7 @@ export default function JobBoardPage() {
               setWorkType(e.target.value);
               setPage(1);
             }}
-            className="rounded-xl border border-gray-200 bg-background px-3 py-2 text-sm text-text"
+            className="min-h-[44px] rounded-xl border border-gray-200 bg-background px-3 py-2 text-base sm:text-sm text-text"
           >
             <option value="">All work types</option>
             {Object.entries(WORK_TYPE_LABELS).map(([val, label]) => (
@@ -296,7 +296,7 @@ export default function JobBoardPage() {
               setEmploymentType(e.target.value);
               setPage(1);
             }}
-            className="rounded-xl border border-gray-200 bg-background px-3 py-2 text-sm text-text"
+            className="min-h-[44px] rounded-xl border border-gray-200 bg-background px-3 py-2 text-base sm:text-sm text-text"
           >
             <option value="">All employment types</option>
             {Object.entries(EMPLOYMENT_TYPE_LABELS).map(([val, label]) => (
@@ -316,7 +316,7 @@ export default function JobBoardPage() {
                 setEmploymentType("");
                 setPage(1);
               }}
-              className="flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-2 text-sm text-text-muted hover:text-text"
+              className="min-h-[44px] flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-2 text-sm text-text-muted hover:text-text active:bg-gray-100"
             >
               <X className="h-3.5 w-3.5" />
               Clear filters
@@ -355,7 +355,7 @@ export default function JobBoardPage() {
                 setSelectedJob(job);
                 setShowApplyForm(false);
               }}
-              className="group relative rounded-xl border border-gray-200 bg-card p-5 text-left shadow-sm transition-shadow hover:shadow-md"
+              className="group relative rounded-xl border border-gray-200 bg-card p-3 sm:p-5 text-left shadow-sm transition-shadow hover:shadow-md active:bg-gray-50"
             >
               {/* Applied badge */}
               {appliedJobIds.has(job.id) && (
@@ -384,7 +384,7 @@ export default function JobBoardPage() {
               )}
 
               {/* Title */}
-              <h3 className="text-base font-semibold text-text group-hover:text-primary">
+              <h3 className="text-sm sm:text-base font-semibold text-text group-hover:text-primary truncate">
                 {job.title}
               </h3>
 
@@ -409,7 +409,7 @@ export default function JobBoardPage() {
 
               {/* Salary */}
               {formatSalary(job.salary_min, job.salary_max, job.salary_currency) && (
-                <p className="mt-2 text-sm font-medium text-text">
+                <p className="mt-2 text-xs sm:text-sm font-medium text-text">
                   {formatSalary(job.salary_min, job.salary_max, job.salary_currency)}
                 </p>
               )}
@@ -449,7 +449,7 @@ export default function JobBoardPage() {
           <button
             disabled={page <= 1}
             onClick={() => setPage((p) => p - 1)}
-            className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-text disabled:opacity-40"
+            className="min-h-[44px] flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-text disabled:opacity-40 active:bg-gray-100"
           >
             <ChevronLeft className="h-4 w-4" />
             Prev
@@ -460,7 +460,7 @@ export default function JobBoardPage() {
           <button
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
-            className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-text disabled:opacity-40"
+            className="min-h-[44px] flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-text disabled:opacity-40 active:bg-gray-100"
           >
             Next
             <ChevronRight className="h-4 w-4" />
@@ -473,14 +473,14 @@ export default function JobBoardPage() {
       {/* ============================================================ */}
       {selectedJob && (
         <div
-          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 pt-16"
+          className="fixed inset-0 z-50 flex items-start sm:items-start justify-center overflow-y-auto bg-black/50 p-0 sm:p-4 sm:pt-16"
           onClick={() => {
             setSelectedJob(null);
             setShowApplyForm(false);
           }}
         >
           <div
-            className="relative w-full max-w-2xl rounded-2xl border border-gray-200 bg-card p-6 shadow-xl"
+            className="relative w-full max-w-2xl sm:rounded-2xl border border-gray-200 bg-card p-4 sm:p-6 shadow-xl min-h-screen sm:min-h-0"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close */}
@@ -519,7 +519,7 @@ export default function JobBoardPage() {
               </div>
             )}
 
-            <h2 className="text-xl font-bold text-text">{selectedJob.title}</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-text">{selectedJob.title}</h2>
 
             {/* Meta */}
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-text-muted">
@@ -608,7 +608,7 @@ export default function JobBoardPage() {
               ) : !showApplyForm ? (
                 <button
                   onClick={() => setShowApplyForm(true)}
-                  className="flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-primary/90"
+                  className="w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80"
                 >
                   <FileText className="h-4 w-4" />
                   Apply Now
@@ -635,7 +635,7 @@ export default function JobBoardPage() {
                       <select
                         value={selectedResume}
                         onChange={(e) => setSelectedResume(e.target.value)}
-                        className="w-full rounded-xl border border-gray-200 bg-background px-3 py-2 text-sm text-text"
+                        className="w-full min-h-[44px] rounded-xl border border-gray-200 bg-background px-3 py-2 text-base sm:text-sm text-text"
                       >
                         <option value="">No resume</option>
                         {resumes.map((r) => (
@@ -666,11 +666,11 @@ export default function JobBoardPage() {
                     <p className="text-sm text-red-600">{applyError}</p>
                   )}
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                     <button
                       onClick={handleApply}
                       disabled={applying}
-                      className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-60"
+                      className="min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80 disabled:opacity-60"
                     >
                       {applying ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -682,7 +682,7 @@ export default function JobBoardPage() {
                     <button
                       type="button"
                       onClick={() => setShowApplyForm(false)}
-                      className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-text-muted hover:text-text"
+                      className="min-h-[44px] rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-text-muted hover:text-text active:bg-gray-100"
                     >
                       Cancel
                     </button>

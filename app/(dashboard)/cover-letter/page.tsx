@@ -31,14 +31,14 @@ function CoverLetterContent() {
   }, [idFromUrl]);
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-text">Cover Letter Generator</h1>
-      <p className="text-text-muted">
+    <div className="space-y-4 sm:space-y-6 md:space-y-8">
+      <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Cover Letter Generator</h1>
+      <p className="text-sm sm:text-base text-text-muted">
         Enter company, role, job description, and your resume to generate a professional cover letter.
       </p>
 
-      <section className="rounded-xl border border-gray-200 bg-card p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-text">Generate cover letter</h2>
+      <section className="rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 shadow-sm">
+        <h2 className="mb-4 text-lg sm:text-xl font-semibold text-text">Generate cover letter</h2>
         <CoverLetterForm
           defaultCompanyName={generated?.companyName ?? ""}
           defaultRole={generated?.jobTitle ?? ""}
@@ -50,7 +50,7 @@ function CoverLetterContent() {
 
       {generated && (
         <section>
-          <h2 className="mb-4 text-lg font-semibold text-text">Generated cover letter</h2>
+          <h2 className="mb-4 text-lg sm:text-xl font-semibold text-text">Generated cover letter</h2>
           <CoverLetterResult
             id={generated.id}
             text={generated.coverLetter}
@@ -64,7 +64,7 @@ function CoverLetterContent() {
 
 export default function CoverLetterPage() {
   return (
-    <Suspense fallback={<div className="space-y-8"><h1 className="text-2xl font-bold text-text">Cover Letter Generator</h1><p className="text-text-muted">Loading…</p></div>}>
+    <Suspense fallback={<div className="space-y-4 sm:space-y-6"><h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Cover Letter Generator</h1><p className="text-text-muted">Loading…</p></div>}>
       <CoverLetterContent />
     </Suspense>
   );

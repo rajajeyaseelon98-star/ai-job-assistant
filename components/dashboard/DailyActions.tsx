@@ -102,7 +102,7 @@ export function DailyActions() {
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-card p-6 animate-pulse">
+      <div className="rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 animate-pulse">
         <div className="h-32" />
       </div>
     );
@@ -113,21 +113,21 @@ export function DailyActions() {
   return (
     <div className="rounded-xl border border-gray-200 bg-card">
       {/* Header with progress */}
-      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 border-b border-gray-100 px-4 sm:px-5 md:px-6 py-3 sm:py-4">
         <div>
-          <h3 className="font-semibold text-text">Today&apos;s Action Plan</h3>
-          <p className="text-xs text-text-muted">
+          <h3 className="text-sm sm:text-base md:text-lg font-semibold text-text">Today&apos;s Action Plan</h3>
+          <p className="text-xs sm:text-sm text-text-muted">
             {progress.completed}/{progress.total} completed
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="h-2 w-20 rounded-full bg-gray-200">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="h-2 w-full sm:w-24 md:w-28 rounded-full bg-gray-200">
             <div
               className="h-2 rounded-full bg-green-500 transition-all"
               style={{ width: `${progress.percentage}%` }}
             />
           </div>
-          <span className="text-xs font-medium text-text-muted">{progress.percentage}%</span>
+          <span className="text-xs sm:text-sm font-medium text-text-muted shrink-0">{progress.percentage}%</span>
         </div>
       </div>
 
@@ -141,7 +141,7 @@ export function DailyActions() {
           return (
             <div
               key={action.id}
-              className={`flex items-start gap-3 px-4 py-3 transition-colors ${
+              className={`flex items-start gap-2 sm:gap-3 md:gap-4 px-4 sm:px-5 md:px-6 py-3 sm:py-4 transition-colors ${
                 action.completed ? "opacity-60" : ""
               } ${PRIORITY_STYLES[action.priority] || PRIORITY_STYLES[0]}`}
             >
@@ -149,36 +149,36 @@ export function DailyActions() {
               <button
                 onClick={() => !action.completed && handleComplete(action.id)}
                 disabled={action.completed || isCompleting}
-                className="mt-0.5 shrink-0"
+                className="mt-0.5 shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center active:opacity-70 active:bg-gray-100 rounded-md transition-colors"
               >
                 {isCompleting ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-primary" />
                 ) : action.completed ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
                 ) : (
-                  <Circle className="h-5 w-5 text-gray-300 hover:text-primary" />
+                  <Circle className="h-4 w-4 sm:h-5 sm:w-5 text-gray-300 hover:text-primary" />
                 )}
               </button>
 
-              {/* Icon */}
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                <Icon className="h-4 w-4 text-primary" />
+              {/* Icon - hidden on smallest screens */}
+              <div className="hidden sm:flex h-8 w-8 md:h-9 md:w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                <Icon className="h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5 text-primary" />
               </div>
 
               {/* Content */}
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <p className={`text-sm font-medium ${action.completed ? "line-through text-text-muted" : "text-text"}`}>
+                <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                  <p className={`text-sm sm:text-base font-medium truncate ${action.completed ? "line-through text-text-muted" : "text-text"}`}>
                     {action.title}
                   </p>
                   {priorityLabel.text && (
-                    <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${priorityLabel.color}`}>
+                    <span className={`rounded px-1.5 py-0.5 text-[10px] sm:text-xs font-medium shrink-0 ${priorityLabel.color}`}>
                       {priorityLabel.text}
                     </span>
                   )}
                 </div>
                 {action.description && (
-                  <p className="mt-0.5 text-xs text-text-muted line-clamp-1">{action.description}</p>
+                  <p className="mt-0.5 text-xs sm:text-sm text-text-muted line-clamp-1 sm:line-clamp-2">{action.description}</p>
                 )}
               </div>
 
@@ -186,9 +186,9 @@ export function DailyActions() {
               {!action.completed && action.action_url && (
                 <Link
                   href={action.action_url}
-                  className="flex shrink-0 items-center gap-1 rounded-lg bg-primary/10 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/20"
+                  className="flex shrink-0 items-center gap-1 rounded-lg bg-primary/10 px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-primary hover:bg-primary/20 active:bg-primary/30 min-h-[44px] min-w-[44px] justify-center transition-colors"
                 >
-                  Go <ArrowRight className="h-3 w-3" />
+                  <span className="hidden sm:inline">Go</span> <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Link>
               )}
             </div>
@@ -198,9 +198,9 @@ export function DailyActions() {
 
       {/* Completion message */}
       {progress.percentage === 100 && (
-        <div className="border-t border-gray-100 bg-green-50 px-4 py-3 text-center">
-          <p className="text-sm font-medium text-green-700">
-            🎉 All tasks completed! Your streak grows stronger.
+        <div className="border-t border-gray-100 bg-green-50 px-4 sm:px-5 md:px-6 py-3 sm:py-4 text-center rounded-b-xl">
+          <p className="text-sm sm:text-base font-medium text-green-700">
+            All tasks completed! Your streak grows stronger.
           </p>
         </div>
       )}

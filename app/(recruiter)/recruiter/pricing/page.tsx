@@ -96,19 +96,19 @@ export default function RecruiterPricingPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
+    <div className="mx-auto max-w-5xl space-y-4 sm:space-y-6 md:space-y-8">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-text">Recruiter Plans</h1>
+        <h1 className="text-xl font-bold text-text sm:text-2xl lg:text-3xl">Recruiter Plans</h1>
         <p className="mt-2 text-sm text-text-muted">
           Choose the plan that fits your hiring needs. Scale as you grow.
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-3">
         {PLANS.map((plan) => (
           <div
             key={plan.name}
-            className={`relative rounded-2xl border bg-card p-6 shadow-sm transition-shadow hover:shadow-md ${
+            className={`relative rounded-2xl border bg-card p-4 sm:p-5 md:p-6 shadow-sm transition-shadow hover:shadow-md ${
               plan.popular ? "border-primary ring-2 ring-primary/20" : "border-gray-200"
             }`}
           >
@@ -128,12 +128,12 @@ export default function RecruiterPricingPage() {
               </div>
             </div>
 
-            <div className="mb-6">
-              <span className="text-3xl font-bold text-text">{plan.price}</span>
+            <div className="mb-4 sm:mb-6">
+              <span className="text-2xl font-bold text-text sm:text-3xl">{plan.price}</span>
               <span className="text-sm text-text-muted">{plan.period}</span>
             </div>
 
-            <ul className="mb-6 space-y-2">
+            <ul className="mb-4 sm:mb-6 space-y-2">
               {plan.features.map((feature) => (
                 <li key={feature} className="flex items-start gap-2 text-sm text-text">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
@@ -144,12 +144,12 @@ export default function RecruiterPricingPage() {
 
             <button
               onClick={() => handleSelectPlan(plan.name)}
-              className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
+              className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium transition-colors min-h-[44px] ${
                 selectedPlan === plan.name
-                  ? "bg-green-600 text-white"
+                  ? "bg-green-600 text-white active:bg-green-700"
                   : plan.popular
-                    ? "bg-primary text-white hover:bg-primary/90"
-                    : "border border-gray-300 text-text hover:bg-gray-50"
+                    ? "bg-primary text-white hover:bg-primary/90 active:bg-primary/80"
+                    : "border border-gray-300 text-text hover:bg-gray-50 active:bg-gray-100"
               }`}
             >
               {selectedPlan === plan.name ? "Selected" : "Get Started"}
@@ -159,7 +159,7 @@ export default function RecruiterPricingPage() {
       </div>
 
       {selectedPlan && (
-        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-center">
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 sm:p-4 text-center">
           <p className="text-sm text-blue-800">
             You selected the <strong>{selectedPlan}</strong> plan. Payment integration coming soon.
             For now, all features are available during the beta period.
@@ -167,9 +167,9 @@ export default function RecruiterPricingPage() {
         </div>
       )}
 
-      <div className="rounded-xl border border-gray-200 bg-card p-6">
-        <h3 className="mb-4 text-lg font-semibold text-text">All Plans Include</h3>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 lg:p-6">
+        <h3 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">All Plans Include</h3>
+        <div className="grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {[
             "Role-based access control",
             "Secure data handling",
@@ -181,7 +181,7 @@ export default function RecruiterPricingPage() {
             "Job description AI generator",
           ].map((item) => (
             <div key={item} className="flex items-center gap-2 text-sm text-text-muted">
-              <Check className="h-4 w-4 text-green-500" />
+              <Check className="h-4 w-4 shrink-0 text-green-500" />
               {item}
             </div>
           ))}

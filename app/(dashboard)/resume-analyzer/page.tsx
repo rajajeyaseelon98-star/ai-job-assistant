@@ -185,8 +185,8 @@ function ResumeAnalyzerContent() {
   }
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-text">Resume Analyzer</h1>
+    <div className="space-y-4 sm:space-y-6 md:space-y-8">
+      <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Resume Analyzer</h1>
       {analysisId && analysis && (
         <p className="text-sm text-text-muted">Viewing past analysis from history.</p>
       )}
@@ -202,26 +202,26 @@ function ResumeAnalyzerContent() {
       )}
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-text">Upload resume</h2>
+        <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Upload resume</h2>
         <ResumeUpload onUploadComplete={handleUploadComplete} />
       </section>
 
       {resumeText && (
         <section>
-          <h2 className="mb-4 text-lg font-semibold text-text">Resume text</h2>
+          <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Resume text</h2>
           <textarea
-            className="w-full rounded-lg border border-gray-300 p-3 text-sm text-text"
+            className="w-full rounded-lg border border-gray-300 p-3 text-base sm:text-sm text-text min-h-[44px]"
             rows={6}
             value={resumeText}
             onChange={(e) => setResumeText(e.target.value)}
             placeholder="Paste or edit resume text…"
           />
-          <div className="mt-4 flex items-center gap-4">
+          <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
             <button
               type="button"
               onClick={runAnalysis}
               disabled={loading}
-              className="rounded-lg bg-primary px-4 py-2 font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+              className="w-full sm:w-auto min-h-[44px] rounded-lg bg-primary px-4 py-2 font-medium text-sm sm:text-base text-white hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50"
             >
               {loading ? "Analyzing…" : "Analyze resume"}
             </button>
@@ -233,29 +233,29 @@ function ResumeAnalyzerContent() {
 
       {analysis && (
         <section>
-          <h2 className="mb-4 text-lg font-semibold text-text">Resume analysis</h2>
+          <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Resume analysis</h2>
           <ResumeAnalysisResult data={analysis} />
-          <div className="mt-6 flex flex-col gap-3">
-            <p className="text-sm font-medium text-text">Optional: tailor for a specific job</p>
+          <div className="mt-4 sm:mt-6 flex flex-col gap-3">
+            <p className="text-xs sm:text-sm font-medium text-text">Optional: tailor for a specific job</p>
             <input
               type="text"
               placeholder="Job title (e.g. Frontend Developer)"
               value={improveJobTitle}
               onChange={(e) => setImproveJobTitle(e.target.value)}
-              className="max-w-md rounded-lg border border-gray-300 px-3 py-2 text-sm text-text"
+              className="w-full max-w-md rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm text-text min-h-[44px]"
             />
             <textarea
               placeholder="Paste job description for better optimization (optional)"
               value={improveJobDescription}
               onChange={(e) => setImproveJobDescription(e.target.value)}
               rows={3}
-              className="max-w-2xl rounded-lg border border-gray-300 p-3 text-sm text-text"
+              className="w-full max-w-2xl rounded-lg border border-gray-300 p-3 text-base sm:text-sm text-text min-h-[44px]"
             />
             <button
               type="button"
               onClick={handleImproveResume}
               disabled={improving}
-              className="w-fit rounded-lg bg-primary px-4 py-2 font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+              className="w-full sm:w-fit min-h-[44px] rounded-lg bg-primary px-4 py-2 font-medium text-sm sm:text-base text-white hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50"
             >
               {improving ? "AI generating improved resume…" : "Improve my resume"}
             </button>
@@ -274,9 +274,9 @@ function ResumeAnalyzerContent() {
 
       {improvedContent && (
         <section>
-          <h2 className="mb-4 text-lg font-semibold text-text">Improved resume</h2>
+          <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Improved resume</h2>
           {(analysisForRecheck ?? analysis) && (
-            <div className="mb-4 rounded-lg border border-primary/30 bg-primary/5 p-4">
+            <div className="mb-4 rounded-lg border border-primary/30 bg-primary/5 p-3 sm:p-4">
               <p className="mb-3 text-sm font-medium text-text">
                 Verify improvement — re-score against the same feedback you just fixed
               </p>
@@ -284,7 +284,7 @@ function ResumeAnalyzerContent() {
                 type="button"
                 onClick={handleRecheckImproved}
                 disabled={recheckLoading}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+                className="w-full sm:w-auto min-h-[44px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50"
               >
                 {recheckLoading ? "Re-analyzing…" : "Re-analyze improved resume"}
               </button>
@@ -302,7 +302,7 @@ function ResumeAnalyzerContent() {
 
 export default function ResumeAnalyzerPage() {
   return (
-    <Suspense fallback={<div className="space-y-8"><h1 className="text-2xl font-bold text-text">Resume Analyzer</h1><p className="text-text-muted">Loading…</p></div>}>
+    <Suspense fallback={<div className="space-y-4 sm:space-y-6 md:space-y-8"><h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Resume Analyzer</h1><p className="text-text-muted">Loading…</p></div>}>
       <ResumeAnalyzerContent />
     </Suspense>
   );

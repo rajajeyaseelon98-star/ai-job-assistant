@@ -58,38 +58,38 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <h1 className="text-2xl font-bold text-text">Messages</h1>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <h1 className="text-xl font-bold text-text sm:text-2xl lg:text-3xl">Messages</h1>
         <button
           onClick={() => setShowCompose(!showCompose)}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+          className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80 min-h-[44px] w-full sm:w-auto"
         >
           <Send className="h-4 w-4" /> Compose
         </button>
       </div>
 
       {showCompose && (
-        <form onSubmit={handleSend} className="rounded-xl border border-gray-200 bg-card p-5 shadow-sm space-y-3">
+        <form onSubmit={handleSend} className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 shadow-sm space-y-3">
           <h3 className="font-semibold text-text">New Message</h3>
           <input
             type="text" value={receiverId} onChange={(e) => setReceiverId(e.target.value)}
             placeholder="Recipient User ID (from candidate search)"
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none min-h-[44px]"
           />
           <input
             type="text" value={subject} onChange={(e) => setSubject(e.target.value)}
             placeholder="Subject (optional)"
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none min-h-[44px]"
           />
           <textarea
             value={content} onChange={(e) => setContent(e.target.value)}
             rows={4} placeholder="Write your message..."
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
           />
           {error && <p className="text-sm text-red-600">{error}</p>}
           <button type="submit" disabled={sending}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50">
+            className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 min-h-[44px] w-full sm:w-auto">
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             Send
           </button>
@@ -106,10 +106,10 @@ export default function MessagesPage() {
       ) : (
         <div className="space-y-2">
           {messages.map((msg) => (
-            <div key={msg.id} className={`rounded-lg border bg-card p-4 ${msg.is_read ? "border-gray-200" : "border-primary/30 bg-primary/5"}`}>
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  {msg.subject && <h4 className="text-sm font-semibold text-text">{msg.subject}</h4>}
+            <div key={msg.id} className={`rounded-lg border bg-card p-3 sm:p-4 ${msg.is_read ? "border-gray-200" : "border-primary/30 bg-primary/5"}`}>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 flex-1">
+                  {msg.subject && <h4 className="text-sm font-semibold text-text truncate">{msg.subject}</h4>}
                   <p className="text-sm text-text mt-1">{msg.content}</p>
                 </div>
                 <span className="shrink-0 text-xs text-text-muted">

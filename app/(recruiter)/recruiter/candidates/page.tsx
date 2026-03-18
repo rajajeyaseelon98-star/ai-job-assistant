@@ -44,24 +44,24 @@ export default function CandidateSearchPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-text">Candidate Search</h1>
-      <p className="text-text-muted">Search our resume database to find matching candidates.</p>
+    <div className="space-y-4 sm:space-y-6">
+      <h1 className="text-xl font-bold text-text sm:text-2xl lg:text-3xl">Candidate Search</h1>
+      <p className="text-sm text-text-muted sm:text-base">Search our resume database to find matching candidates.</p>
 
-      <form onSubmit={handleSearch} className="rounded-xl border border-gray-200 bg-card p-5 shadow-sm space-y-4">
-        <div className="grid gap-4 sm:grid-cols-3">
+      <form onSubmit={handleSearch} className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 shadow-sm space-y-3 sm:space-y-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Skills</label>
             <input
               type="text" value={skills} onChange={(e) => setSkills(e.target.value)}
               placeholder="React, Node.js, Python..."
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[44px]"
             />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Experience Level</label>
             <select value={experience} onChange={(e) => setExperience(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none">
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]">
               <option value="">Any</option>
               <option value="junior">Junior</option>
               <option value="mid">Mid-level</option>
@@ -74,12 +74,12 @@ export default function CandidateSearchPage() {
             <input
               type="text" value={location} onChange={(e) => setLocation(e.target.value)}
               placeholder="Chennai, Remote..."
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[44px]"
             />
           </div>
         </div>
         <button type="submit" disabled={loading}
-          className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50">
+          className="flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 min-h-[44px] w-full sm:w-auto">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
           Search Candidates
         </button>
@@ -93,7 +93,7 @@ export default function CandidateSearchPage() {
           ) : (
             <div className="space-y-3">
               {results.map((c) => (
-                <div key={c.id} className="rounded-xl border border-gray-200 bg-card p-5 shadow-sm">
+                <div key={c.id} className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 shadow-sm">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">

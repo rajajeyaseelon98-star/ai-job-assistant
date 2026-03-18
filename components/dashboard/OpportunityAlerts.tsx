@@ -67,11 +67,11 @@ export function OpportunityAlerts() {
   if (loading || alerts.length === 0) return null;
 
   return (
-    <div className="space-y-2">
-      <h3 className="flex items-center gap-2 text-sm font-semibold text-text">
-        <AlertTriangle className="h-4 w-4 text-orange-500" />
-        Opportunities
-        <span className="rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] font-medium text-orange-600">
+    <div className="space-y-2 sm:space-y-3">
+      <h3 className="flex items-center gap-2 text-lg sm:text-xl md:text-2xl font-semibold text-text">
+        <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500 shrink-0" />
+        <span className="truncate">Opportunities</span>
+        <span className="rounded-full bg-orange-100 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-medium text-orange-600 shrink-0">
           {alerts.length}
         </span>
       </h3>
@@ -83,27 +83,27 @@ export function OpportunityAlerts() {
         return (
           <div
             key={alert.id}
-            className={`flex items-start gap-3 rounded-lg border ${style.border} ${style.bg} p-3`}
+            className={`flex items-start gap-2 sm:gap-3 md:gap-4 rounded-xl border ${style.border} ${style.bg} px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6`}
           >
-            <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${style.icon}`} />
+            <Icon className={`mt-0.5 h-4 w-4 sm:h-5 sm:w-5 shrink-0 ${style.icon}`} />
             <div className="min-w-0 flex-1">
-              <p className={`text-sm font-medium ${style.text}`}>{alert.title}</p>
-              <p className="mt-0.5 text-xs text-text-muted line-clamp-2">{alert.message}</p>
+              <p className={`text-sm sm:text-base font-medium ${style.text} truncate`}>{alert.title}</p>
+              <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-text-muted line-clamp-2">{alert.message}</p>
               {alert.action_url && (
                 <Link
                   href={alert.action_url}
-                  className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                  className="mt-1.5 sm:mt-2 inline-flex items-center gap-1 text-xs sm:text-sm font-medium text-primary hover:underline active:opacity-70 active:bg-white/30 rounded-md min-h-[44px] transition-colors"
                 >
-                  Take action <ChevronRight className="h-3 w-3" />
+                  Take action <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Link>
               )}
             </div>
             <button
               onClick={() => dismiss(alert.id)}
-              className="shrink-0 rounded p-0.5 hover:bg-white/50"
+              className="shrink-0 rounded-md hover:bg-white/50 active:bg-white/70 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors"
               aria-label="Dismiss alert"
             >
-              <X className="h-3.5 w-3.5 text-text-muted" />
+              <X className="h-4 w-4 sm:h-5 sm:w-5 text-text-muted" />
             </button>
           </div>
         );

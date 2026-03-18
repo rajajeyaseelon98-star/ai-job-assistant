@@ -80,18 +80,18 @@ export function LinkedInImportForm({ onResult }: LinkedInImportFormProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Instructions */}
-      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
-        <h3 className="mb-2 text-sm font-semibold text-blue-800">How to get your LinkedIn data</h3>
-        <ol className="space-y-1 text-sm text-blue-700">
+      <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6">
+        <h3 className="mb-2 text-lg sm:text-xl font-semibold text-blue-800">How to get your LinkedIn data</h3>
+        <ol className="space-y-1.5 sm:space-y-1 text-xs sm:text-sm text-blue-700">
           <li><strong>Option 1:</strong> Go to your LinkedIn profile, select all text (Ctrl+A), and copy-paste it below.</li>
           <li><strong>Option 2:</strong> On LinkedIn, click &quot;More&quot; on your profile, then &quot;Save to PDF&quot;. Upload the PDF here.</li>
           <li><strong>Option 3:</strong> Go to LinkedIn Settings &rarr; Data Privacy &rarr; Get a copy of your data. Upload the exported file.</li>
         </ol>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6">
         {/* File upload for LinkedIn PDF */}
         <div>
           <label className="mb-1 block text-sm font-medium text-text">Upload LinkedIn PDF</label>
@@ -108,7 +108,7 @@ export function LinkedInImportForm({ onResult }: LinkedInImportFormProps) {
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="flex items-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm text-text-muted hover:border-primary hover:text-primary transition-colors"
+            className="w-full sm:w-auto min-h-[44px] flex items-center justify-center sm:justify-start gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm text-text-muted hover:border-primary hover:text-primary active:bg-gray-50 transition-colors"
           >
             <Upload className="h-4 w-4" />
             <span>Upload LinkedIn PDF export</span>
@@ -126,7 +126,7 @@ export function LinkedInImportForm({ onResult }: LinkedInImportFormProps) {
             onChange={(e) => setProfileText(e.target.value)}
             rows={8}
             placeholder={"Copy everything from your LinkedIn profile page and paste here...\n\nInclude: headline, about, experience, education, skills, certifications, projects, etc."}
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[120px]"
           />
           {profileText && (
             <p className="mt-1 text-xs text-text-muted">{profileText.length} characters</p>
@@ -147,7 +147,7 @@ export function LinkedInImportForm({ onResult }: LinkedInImportFormProps) {
         <button
           type="submit"
           disabled={loading || !profileText.trim()}
-          className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+          className="w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50"
         >
           {loading ? (
             <>

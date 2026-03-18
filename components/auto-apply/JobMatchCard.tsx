@@ -12,20 +12,20 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
   const prob = job.interview_probability;
 
   return (
-    <div className={`rounded-xl border p-4 transition-colors ${
+    <div className={`rounded-xl border p-3 sm:p-4 transition-colors ${
       job.selected ? "border-primary bg-primary/5" : "border-gray-200 bg-card"
     } ${job.applied ? "opacity-60" : ""}`}>
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-text truncate">{job.title}</h3>
+            <h3 className="text-xs sm:text-sm font-semibold text-text truncate">{job.title}</h3>
             {job.url && (
-              <a href={job.url} target="_blank" rel="noopener noreferrer" className="shrink-0 text-text-muted hover:text-primary">
+              <a href={job.url} target="_blank" rel="noopener noreferrer" className="shrink-0 text-text-muted hover:text-primary active:text-primary/70 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center">
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
             )}
           </div>
-          <p className="text-sm text-text-muted">{job.company}</p>
+          <p className="text-xs sm:text-sm text-text-muted">{job.company}</p>
 
           <div className="mt-1.5 flex flex-wrap gap-2 text-xs text-text-muted">
             {job.location && (
@@ -49,9 +49,9 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
           )}
         </div>
 
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-row sm:flex-col items-center gap-3 sm:gap-2 border-t sm:border-t-0 pt-2 sm:pt-0">
           {/* Match Score */}
-          <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white ${
+          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${
             job.match_score >= 80 ? "bg-green-500" : job.match_score >= 60 ? "bg-yellow-500" : "bg-red-400"
           }`}>
             {job.match_score}
@@ -72,12 +72,12 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
           )}
 
           {!job.applied && (
-            <label className="flex items-center gap-1.5 cursor-pointer">
+            <label className="flex items-center gap-1.5 cursor-pointer min-h-[44px] sm:min-h-0">
               <input
                 type="checkbox"
                 checked={job.selected}
                 onChange={() => onToggleSelect(job.job_id)}
-                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                className="h-5 w-5 sm:h-4 sm:w-4 rounded border-gray-300 text-primary focus:ring-primary"
               />
               <span className="text-xs text-text-muted">Apply</span>
             </label>
@@ -90,8 +90,8 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
 
       {/* Interview Probability Details */}
       {prob && (
-        <div className="mt-3 rounded-lg border border-gray-100 bg-gray-50 p-3">
-          <div className="flex items-center justify-between mb-1.5">
+        <div className="mt-3 rounded-lg border border-gray-100 bg-gray-50 p-2 sm:p-3">
+          <div className="flex flex-wrap items-center justify-between gap-1 mb-1.5">
             <span className="text-xs font-semibold text-text flex items-center gap-1">
               <TrendingUp className="h-3 w-3" /> Interview Chance: {prob.score}%
             </span>

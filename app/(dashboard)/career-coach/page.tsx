@@ -91,17 +91,17 @@ export default function CareerCoachPage() {
   const StatusIcon = statusStyle.icon;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-text">
-          <Brain className="h-6 w-6 text-primary" />
+        <h1 className="flex items-center gap-2 text-xl sm:text-2xl lg:text-3xl font-bold text-text">
+          <Brain className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
           AI Career Coach
         </h1>
-        <p className="text-sm text-text-muted">Your personal career strategist — powered by your data</p>
+        <p className="text-sm sm:text-base text-text-muted">Your personal career strategist — powered by your data</p>
       </div>
 
       {/* Status Banner */}
-      <div className={`rounded-xl border ${statusStyle.border} ${statusStyle.bg} p-5`}>
+      <div className={`rounded-xl border ${statusStyle.border} ${statusStyle.bg} p-3 sm:p-5`}>
         <div className="flex items-start gap-3">
           <StatusIcon className={`mt-0.5 h-5 w-5 shrink-0 ${statusStyle.text}`} />
           <div>
@@ -113,12 +113,12 @@ export default function CareerCoachPage() {
       {/* Problems / Diagnosis */}
       {data.problems.length > 0 && (
         <div>
-          <h2 className="mb-3 text-lg font-semibold text-text">
+          <h2 className="mb-3 text-lg sm:text-xl font-semibold text-text">
             {data.status === "thriving" ? "Optimization Tips" : "Why You're Not Getting Interviews"}
           </h2>
           <div className="space-y-3">
             {data.problems.map((p, i) => (
-              <div key={i} className={`rounded-lg border p-4 ${SEVERITY_STYLES[p.severity] || SEVERITY_STYLES.info}`}>
+              <div key={i} className={`rounded-lg border p-3 sm:p-4 ${SEVERITY_STYLES[p.severity] || SEVERITY_STYLES.info}`}>
                 <p className="text-sm font-medium text-text">{p.issue}</p>
                 <div className="mt-2 flex items-start gap-2">
                   <Zap className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
@@ -132,18 +132,18 @@ export default function CareerCoachPage() {
 
       {/* Weekly Summary */}
       {data.weekly_summary && (
-        <div className="rounded-xl border border-gray-200 bg-card p-5">
+        <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-5">
           <h2 className="mb-3 flex items-center gap-2 font-semibold text-text">
             <BarChart3 className="h-4 w-4" />
             This Week&apos;s Performance
           </h2>
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
             <div>
-              <div className="text-2xl font-bold text-text">{data.weekly_summary.applications_sent}</div>
+              <div className="text-xl sm:text-2xl font-bold text-text">{data.weekly_summary.applications_sent}</div>
               <div className="text-xs text-text-muted">Applications</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-green-600">{data.weekly_summary.interviews_earned}</div>
+              <div className="text-xl sm:text-2xl font-bold text-green-600">{data.weekly_summary.interviews_earned}</div>
               <div className="text-xs text-text-muted">Interviews</div>
             </div>
             <div>
@@ -155,7 +155,7 @@ export default function CareerCoachPage() {
                 ) : (
                   <Minus className="h-4 w-4 text-gray-400" />
                 )}
-                <span className={`text-2xl font-bold ${
+                <span className={`text-xl sm:text-2xl font-bold ${
                   data.weekly_summary.interview_rate_change > 0 ? "text-green-600" :
                   data.weekly_summary.interview_rate_change < 0 ? "text-red-600" : "text-text"
                 }`}>
@@ -174,11 +174,11 @@ export default function CareerCoachPage() {
       {/* Career Direction */}
       {data.career_direction.length > 0 && (
         <div>
-          <h2 className="mb-3 text-lg font-semibold text-text">Career Direction</h2>
+          <h2 className="mb-3 text-lg sm:text-xl font-semibold text-text">Career Direction</h2>
           <div className="space-y-2">
             {data.career_direction.map((d) => (
-              <div key={d.role} className="flex items-center justify-between rounded-lg border border-gray-200 bg-card px-4 py-3">
-                <div className="flex items-center gap-3">
+              <div key={d.role} className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-card px-3 sm:px-4 py-3">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                   <span className={`h-2 w-2 rounded-full ${
                     d.match_level === "strong" ? "bg-green-500" :
                     d.match_level === "moderate" ? "bg-yellow-500" : "bg-red-400"
@@ -204,11 +204,11 @@ export default function CareerCoachPage() {
       {/* Skill ROI */}
       {data.skill_roi.length > 0 && (
         <div>
-          <h2 className="mb-3 text-lg font-semibold text-text">Skill ROI — What to Learn Next</h2>
+          <h2 className="mb-3 text-lg sm:text-xl font-semibold text-text">Skill ROI — What to Learn Next</h2>
           <div className="space-y-2">
             {data.skill_roi.map((s) => (
-              <div key={s.skill} className="flex items-center justify-between rounded-lg border border-gray-200 bg-card px-4 py-3">
-                <div className="flex items-center gap-3">
+              <div key={s.skill} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-lg border border-gray-200 bg-card px-3 sm:px-4 py-3">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                   {s.action === "highlight" ? (
                     <Star className="h-4 w-4 text-yellow-500" />
                   ) : s.action === "learn" ? (
@@ -246,7 +246,7 @@ export default function CareerCoachPage() {
       )}
 
       {/* Score Transparency */}
-      <div className="rounded-xl border border-gray-200 bg-card p-5">
+      <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-5">
         <h2 className="mb-3 flex items-center gap-2 font-semibold text-text">
           <Target className="h-4 w-4" />
           Why Your Scores Are What They Are
@@ -255,7 +255,7 @@ export default function CareerCoachPage() {
         {data.score_explanation.interview_probability_breakdown && (
           <div className="mb-4">
             <h3 className="mb-2 text-sm font-medium text-text-muted">Interview Probability Weights</h3>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {Object.entries(data.score_explanation.interview_probability_breakdown).map(([key, value]) => (
                 <div key={key} className="rounded-lg bg-gray-50 p-2 text-center">
                   <div className="text-lg font-bold text-primary">{value}%</div>
@@ -272,7 +272,7 @@ export default function CareerCoachPage() {
         {data.score_explanation.ats_breakdown && (
           <div>
             <h3 className="mb-2 text-sm font-medium text-text-muted">ATS Score Breakdown</h3>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {Object.entries(data.score_explanation.ats_breakdown).map(([key, value]) => (
                 <div key={key} className="rounded-lg bg-gray-50 p-2 text-center">
                   <div className="text-lg font-bold text-text">{value}</div>
@@ -285,22 +285,22 @@ export default function CareerCoachPage() {
       </div>
 
       {/* CTA */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3">
         <Link
           href="/auto-apply"
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
+          className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 min-h-[44px] text-sm font-medium text-white hover:bg-primary-hover active:scale-[0.98]"
         >
           Start Auto-Apply <ArrowRight className="h-4 w-4" />
         </Link>
         <Link
           href="/resume-analyzer"
-          className="flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-text hover:bg-gray-50"
+          className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 px-4 py-2 min-h-[44px] text-sm font-medium text-text hover:bg-gray-50 active:scale-[0.98]"
         >
           Improve Resume <ChevronRight className="h-4 w-4" />
         </Link>
         <Link
           href="/analytics"
-          className="flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-text hover:bg-gray-50"
+          className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 px-4 py-2 min-h-[44px] text-sm font-medium text-text hover:bg-gray-50 active:scale-[0.98]"
         >
           Full Analytics <ChevronRight className="h-4 w-4" />
         </Link>

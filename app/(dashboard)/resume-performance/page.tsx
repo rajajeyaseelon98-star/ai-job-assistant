@@ -115,18 +115,18 @@ export default function ResumePerformancePage() {
   const topPct = 100 - benchmark.percentile;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-text">Resume Performance</h1>
-          <p className="text-sm text-text-muted">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Resume Performance</h1>
+          <p className="text-xs sm:text-sm text-text-muted">
             Track which resume gets the most interviews
           </p>
         </div>
         <button
           onClick={shareBenchmark}
           disabled={sharing}
-          className="flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+          className="w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover active:bg-primary-hover disabled:opacity-50"
         >
           <Share2 className="h-4 w-4" />
           Share Your Rank
@@ -134,39 +134,39 @@ export default function ResumePerformancePage() {
       </div>
 
       {/* Hiring Benchmark */}
-      <div className="grid gap-4 sm:grid-cols-4">
-        <div className="rounded-xl border border-purple-200 bg-purple-50 p-4 text-center">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        <div className="rounded-xl border border-purple-200 bg-purple-50 p-3 sm:p-4 text-center">
           <Crown className="mx-auto mb-1 h-5 w-5 text-purple-600" />
-          <div className="text-2xl font-bold text-purple-700">Top {topPct}%</div>
+          <div className="text-xl sm:text-2xl font-bold text-purple-700">Top {topPct}%</div>
           <div className="text-xs text-purple-600">Your Ranking</div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-card p-4 text-center">
+        <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 text-center">
           <Star className="mx-auto mb-1 h-5 w-5 text-yellow-500" />
-          <div className="text-2xl font-bold text-text">{benchmark.your_score}</div>
+          <div className="text-xl sm:text-2xl font-bold text-text">{benchmark.your_score}</div>
           <div className="text-xs text-text-muted">Your Score</div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-card p-4 text-center">
+        <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 text-center">
           <BarChart3 className="mx-auto mb-1 h-5 w-5 text-blue-500" />
-          <div className="text-2xl font-bold text-text">{benchmark.avg_score}</div>
+          <div className="text-xl sm:text-2xl font-bold text-text">{benchmark.avg_score}</div>
           <div className="text-xs text-text-muted">Average Score</div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-card p-4 text-center">
+        <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 text-center">
           <Target className="mx-auto mb-1 h-5 w-5 text-green-500" />
-          <div className="text-2xl font-bold text-text">{performance.optimal_daily_apply_count}</div>
+          <div className="text-xl sm:text-2xl font-bold text-text">{performance.optimal_daily_apply_count}</div>
           <div className="text-xs text-text-muted">Optimal Daily Apps</div>
         </div>
       </div>
 
       {/* Benchmark insight */}
-      <div className="rounded-lg bg-gray-50 p-4 text-sm text-text-muted">
+      <div className="rounded-lg bg-gray-50 px-4 py-4 sm:px-5 sm:py-5 text-xs sm:text-sm text-text-muted">
         {benchmark.top_factor}
       </div>
 
       {/* AI Insights */}
       {performance.insights.length > 0 && (
-        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
-          <h3 className="flex items-center gap-2 font-semibold text-blue-900">
-            <Zap className="h-4 w-4" />
+        <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-4 sm:px-5 sm:py-5">
+          <h3 className="flex items-center gap-2 text-sm sm:text-base font-semibold text-blue-900">
+            <Zap className="h-4 w-4 sm:h-5 sm:w-5" />
             AI Insights
           </h3>
           <ul className="mt-2 space-y-1">
@@ -182,9 +182,9 @@ export default function ResumePerformancePage() {
 
       {/* Score Threshold Insight */}
       {performance.score_threshold_insight && (
-        <div className="rounded-xl border border-green-200 bg-green-50 p-4">
-          <p className="flex items-center gap-2 text-sm font-medium text-green-800">
-            <Award className="h-4 w-4" />
+        <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-4 sm:px-5 sm:py-5">
+          <p className="flex items-center gap-2 text-xs sm:text-sm font-medium text-green-800">
+            <Award className="h-4 w-4 sm:h-5 sm:w-5" />
             {performance.score_threshold_insight}
           </p>
         </div>
@@ -192,7 +192,7 @@ export default function ResumePerformancePage() {
 
       {/* Resume Versions */}
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-text">Resume Version Performance</h2>
+        <h2 className="mb-3 text-base sm:text-lg font-semibold text-text">Resume Version Performance</h2>
         {performance.resume_versions.length === 0 ? (
           <p className="text-sm text-text-muted">No resume versions to compare yet.</p>
         ) : (
@@ -202,7 +202,7 @@ export default function ResumePerformancePage() {
               return (
                 <div
                   key={v.resume_id}
-                  className={`rounded-xl border p-4 ${
+                  className={`rounded-xl border p-3 sm:p-4 ${
                     isBest ? "border-green-300 bg-green-50" : "border-gray-200 bg-card"
                   }`}
                 >
@@ -267,15 +267,15 @@ export default function ResumePerformancePage() {
       {/* Role Recommendations */}
       {performance.role_recommendations.length > 0 && (
         <div>
-          <h2 className="mb-3 text-lg font-semibold text-text">Role Performance</h2>
+          <h2 className="mb-3 text-base sm:text-lg font-semibold text-text">Role Performance</h2>
           <div className="space-y-2">
             {performance.role_recommendations.map((r) => (
               <div
                 key={r.role}
-                className="flex items-center justify-between rounded-lg border border-gray-200 bg-card px-4 py-3"
+                className="flex items-center justify-between rounded-lg border border-gray-200 bg-card px-3 py-3 sm:px-4"
               >
-                <span className="text-sm font-medium text-text">{r.role}</span>
-                <span className={`flex items-center gap-1 text-sm font-bold ${
+                <span className="text-xs sm:text-sm font-medium text-text truncate mr-2">{r.role}</span>
+                <span className={`flex items-center gap-1 text-xs sm:text-sm font-bold shrink-0 ${
                   r.interview_rate >= 30 ? "text-green-600" : r.interview_rate >= 10 ? "text-yellow-600" : "text-red-500"
                 }`}>
                   {r.interview_rate >= 30 ? <ArrowUp className="h-3 w-3" /> : r.interview_rate < 10 ? <ArrowDown className="h-3 w-3" /> : null}

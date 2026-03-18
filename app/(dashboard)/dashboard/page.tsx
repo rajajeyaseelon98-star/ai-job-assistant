@@ -82,13 +82,13 @@ export default async function DashboardPage() {
     .slice(0, 8);
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-text">
+    <div className="space-y-4 sm:space-y-5 md:space-y-6">
+      <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">
         Welcome back{user?.profile?.name ? `, ${user.profile.name}` : user?.profile?.email ? `, ${user.profile.email.split("@")[0]}` : ""} 👋
       </h1>
 
       {/* Streak + Score Cards Row */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 md:gap-6">
         <StreakWidget />
         <ScoreCard score={latestScore} />
         <JobMatchAvgCard avgScore={avgMatchScore} />
@@ -107,12 +107,12 @@ export default async function DashboardPage() {
       <DailyActions />
 
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-text">Quick Actions</h2>
+        <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Quick Actions</h2>
         <QuickActions />
       </div>
 
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-text">Recent Activity</h2>
+        <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Recent Activity</h2>
         <ActivityList items={activityItems} />
       </div>
     </div>

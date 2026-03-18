@@ -103,17 +103,17 @@ export default async function SEOSalaryPage({
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
-          <Link href="/" className="text-xl font-semibold text-blue-600">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 sm:px-6 lg:px-8 py-4">
+          <Link href="/" className="text-lg sm:text-xl font-semibold text-blue-600">
             AI Job Assistant
           </Link>
-          <nav className="flex gap-3">
-            <Link href="/jobs" className="text-sm text-gray-600 hover:text-gray-900">
+          <nav className="flex items-center gap-2 sm:gap-3">
+            <Link href="/jobs" className="text-sm text-gray-600 hover:text-gray-900 hidden sm:inline">
               Browse Jobs
             </Link>
             <Link
               href="/signup"
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+              className="rounded-lg bg-blue-600 px-3 sm:px-4 py-2 text-sm text-white hover:bg-blue-700 min-h-[44px] inline-flex items-center active:scale-[0.98] transition-transform"
             >
               Sign Up Free
             </Link>
@@ -121,42 +121,42 @@ export default async function SEOSalaryPage({
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 capitalize">
+      <main className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 capitalize">
           {title} Salary{locationStr} (2026)
         </h1>
-        <p className="mt-2 text-gray-600">
+        <p className="mt-2 text-sm sm:text-base text-gray-600">
           Salary data based on {n} data point{n !== 1 ? "s" : ""} from job postings and market research
         </p>
 
         {hasData ? (
           <>
             {/* Salary Range Card */}
-            <div className="mt-8 rounded-2xl bg-white p-8 shadow-sm">
-              <div className="grid grid-cols-3 gap-6 text-center">
-                <div>
-                  <div className="text-sm text-gray-500">Minimum</div>
-                  <div className="mt-1 text-2xl font-bold text-gray-900">
+            <div className="mt-6 sm:mt-8 rounded-2xl bg-white p-4 sm:p-6 md:p-8 shadow-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 text-center">
+                <div className="py-2 sm:py-0">
+                  <div className="text-xs sm:text-sm text-gray-500">Minimum</div>
+                  <div className="mt-1 text-xl sm:text-2xl font-bold text-gray-900">
                     {formatSalary(minSalary)}
                   </div>
                 </div>
-                <div className="border-x border-gray-100">
-                  <div className="text-sm text-gray-500">Average</div>
-                  <div className="mt-1 text-3xl font-bold text-blue-600">
+                <div className="border-y sm:border-y-0 sm:border-x border-gray-100 py-2 sm:py-0">
+                  <div className="text-xs sm:text-sm text-gray-500">Average</div>
+                  <div className="mt-1 text-2xl sm:text-3xl font-bold text-blue-600">
                     {formatSalary(avgSalary)}
                   </div>
                 </div>
-                <div>
-                  <div className="text-sm text-gray-500">Maximum</div>
-                  <div className="mt-1 text-2xl font-bold text-gray-900">
+                <div className="py-2 sm:py-0">
+                  <div className="text-xs sm:text-sm text-gray-500">Maximum</div>
+                  <div className="mt-1 text-xl sm:text-2xl font-bold text-gray-900">
                     {formatSalary(maxSalary)}
                   </div>
                 </div>
               </div>
 
-              <div className="mt-6 border-t border-gray-100 pt-4">
+              <div className="mt-4 sm:mt-6 border-t border-gray-100 pt-4">
                 <h3 className="text-sm font-semibold text-gray-700">Salary Percentiles</h3>
-                <div className="mt-2 flex justify-between text-sm text-gray-600">
+                <div className="mt-2 flex flex-col sm:flex-row justify-between gap-1 sm:gap-0 text-xs sm:text-sm text-gray-600">
                   <span>25th: {formatSalary(p25)}</span>
                   <span>50th (Median): {formatSalary(p50)}</span>
                   <span>75th: {formatSalary(p75)}</span>
@@ -166,8 +166,8 @@ export default async function SEOSalaryPage({
 
             {/* Common Skills */}
             {topSkills.length > 0 && (
-              <div className="mt-8 rounded-2xl bg-white p-8 shadow-sm">
-                <h2 className="text-lg font-semibold text-gray-900">
+              <div className="mt-6 sm:mt-8 rounded-2xl bg-white p-4 sm:p-6 md:p-8 shadow-sm">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">
                   Common Skills for {title}
                 </h2>
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -184,34 +184,34 @@ export default async function SEOSalaryPage({
             )}
           </>
         ) : (
-          <div className="mt-8 rounded-2xl bg-white p-12 text-center shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900">
+          <div className="mt-6 sm:mt-8 rounded-2xl bg-white p-6 sm:p-8 md:p-12 text-center shadow-sm">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900">
               No salary data yet
             </h2>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-xs sm:text-sm text-gray-600">
               Salary data for this role is being collected. Sign up to contribute and access salary insights.
             </p>
           </div>
         )}
 
         {/* CTA */}
-        <div className="mt-8 rounded-xl border border-blue-200 bg-blue-50 p-6 text-center">
-          <h3 className="text-lg font-bold text-gray-900">
+        <div className="mt-6 sm:mt-8 rounded-xl border border-blue-200 bg-blue-50 p-4 sm:p-6 text-center">
+          <h3 className="text-base sm:text-lg font-bold text-gray-900">
             Know Your Worth
           </h3>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-xs sm:text-sm text-gray-600">
             Get personalized salary insights, ATS resume scoring, and AI job matching
           </p>
           <Link
             href="/signup"
-            className="mt-4 inline-block rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700"
+            className="mt-4 inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700 min-h-[44px] w-full sm:w-auto active:scale-[0.98] transition-transform"
           >
             Get Started Free
           </Link>
         </div>
       </main>
 
-      <footer className="border-t border-gray-200 py-8 text-center text-sm text-gray-400">
+      <footer className="border-t border-gray-200 py-6 sm:py-8 text-center text-xs sm:text-sm text-gray-400 px-4">
         © {new Date().getFullYear()} AI Job Assistant | Salary Data
       </footer>
     </div>

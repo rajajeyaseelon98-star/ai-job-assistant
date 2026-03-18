@@ -67,26 +67,27 @@ export function CoverLetterResult({ id, text, onSaved }: CoverLetterResultProps)
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
+    <div className="space-y-3 sm:space-y-4">
+      <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-text">Your Cover Letter</h3>
+      <div className="flex flex-col sm:flex-row flex-wrap gap-2">
         <button
           type="button"
           onClick={copy}
-          className="rounded-lg border border-gray-300 bg-card px-4 py-2 text-sm font-medium text-text hover:bg-gray-50"
+          className="w-full sm:w-auto min-h-[44px] rounded-lg border border-gray-300 bg-card px-4 py-2 text-sm sm:text-base font-medium text-text hover:bg-gray-50 active:bg-gray-100 transition-colors"
         >
           {copied ? "Copied!" : "Copy"}
         </button>
         <button
           type="button"
           onClick={downloadTxt}
-          className="rounded-lg border border-gray-300 bg-card px-4 py-2 text-sm font-medium text-text hover:bg-gray-50"
+          className="w-full sm:w-auto min-h-[44px] rounded-lg border border-gray-300 bg-card px-4 py-2 text-sm sm:text-base font-medium text-text hover:bg-gray-50 active:bg-gray-100 transition-colors"
         >
           Download TXT
         </button>
         <button
           type="button"
           onClick={downloadPdf}
-          className="rounded-lg border border-gray-300 bg-card px-4 py-2 text-sm font-medium text-text hover:bg-gray-50"
+          className="w-full sm:w-auto min-h-[44px] rounded-lg border border-gray-300 bg-card px-4 py-2 text-sm sm:text-base font-medium text-text hover:bg-gray-50 active:bg-gray-100 transition-colors"
         >
           Download PDF
         </button>
@@ -97,14 +98,14 @@ export function CoverLetterResult({ id, text, onSaved }: CoverLetterResultProps)
                 type="button"
                 onClick={saveEdit}
                 disabled={saving}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+                className="w-full sm:w-auto min-h-[44px] rounded-lg bg-primary px-4 py-2 text-sm sm:text-base font-medium text-white hover:bg-primary-hover active:bg-primary/80 disabled:opacity-50 transition-colors"
               >
-                {saving ? "Saving…" : "Save"}
+                {saving ? "Saving..." : "Save"}
               </button>
               <button
                 type="button"
                 onClick={() => { setEditing(false); setContent(text); }}
-                className="rounded-lg border border-gray-300 bg-card px-4 py-2 text-sm font-medium text-text hover:bg-gray-50"
+                className="w-full sm:w-auto min-h-[44px] rounded-lg border border-gray-300 bg-card px-4 py-2 text-sm sm:text-base font-medium text-text hover:bg-gray-50 active:bg-gray-100 transition-colors"
               >
                 Cancel
               </button>
@@ -113,7 +114,7 @@ export function CoverLetterResult({ id, text, onSaved }: CoverLetterResultProps)
             <button
               type="button"
               onClick={() => { setEditing(true); setContent(displayText); }}
-              className="rounded-lg border border-gray-300 bg-card px-4 py-2 text-sm font-medium text-text hover:bg-gray-50"
+              className="w-full sm:w-auto min-h-[44px] rounded-lg border border-gray-300 bg-card px-4 py-2 text-sm sm:text-base font-medium text-text hover:bg-gray-50 active:bg-gray-100 transition-colors"
             >
               Edit
             </button>
@@ -123,12 +124,12 @@ export function CoverLetterResult({ id, text, onSaved }: CoverLetterResultProps)
       <div ref={printRef}>
         {editing ? (
           <textarea
-            className="w-full rounded-xl border border-gray-200 bg-card p-6 text-sm text-text min-h-[300px]"
+            className="w-full rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 text-sm sm:text-base leading-relaxed text-text min-h-[300px] sm:min-h-[400px]"
             value={content}
             onChange={(e) => setContent(e.target.value)}
           />
         ) : (
-          <div className="whitespace-pre-wrap rounded-xl border border-gray-200 bg-card p-6 text-sm text-text">
+          <div className="whitespace-pre-wrap rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 text-sm sm:text-base leading-relaxed text-text overflow-x-auto">
             {displayText}
           </div>
         )}

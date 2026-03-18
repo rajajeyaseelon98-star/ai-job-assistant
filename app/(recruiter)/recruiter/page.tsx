@@ -64,12 +64,12 @@ export default function RecruiterDashboardPage() {
   }, []);
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-start justify-between gap-4">
-        <h1 className="text-2xl font-bold text-text">Recruiter Dashboard</h1>
+    <div className="space-y-4 sm:space-y-6 md:space-y-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <h1 className="text-xl font-bold text-text sm:text-2xl lg:text-3xl">Recruiter Dashboard</h1>
         <Link
           href="/recruiter/jobs/new"
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+          className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80 min-h-[44px] w-full sm:w-auto"
         >
           <Plus className="h-4 w-4" />
           Post New Job
@@ -77,8 +77,8 @@ export default function RecruiterDashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Link href="/recruiter/jobs" className="rounded-xl border border-gray-200 bg-card p-5 shadow-sm hover:shadow-md transition-shadow">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 md:gap-6">
+        <Link href="/recruiter/jobs" className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
               <Briefcase className="h-5 w-5 text-blue-600" />
@@ -90,7 +90,7 @@ export default function RecruiterDashboardPage() {
           </div>
         </Link>
 
-        <Link href="/recruiter/applications" className="rounded-xl border border-gray-200 bg-card p-5 shadow-sm hover:shadow-md transition-shadow">
+        <Link href="/recruiter/applications" className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
               <ClipboardList className="h-5 w-5 text-green-600" />
@@ -102,7 +102,7 @@ export default function RecruiterDashboardPage() {
           </div>
         </Link>
 
-        <Link href="/recruiter/applications?stage=applied" className="rounded-xl border border-gray-200 bg-card p-5 shadow-sm hover:shadow-md transition-shadow">
+        <Link href="/recruiter/applications?stage=applied" className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100">
               <TrendingUp className="h-5 w-5 text-yellow-600" />
@@ -114,7 +114,7 @@ export default function RecruiterDashboardPage() {
           </div>
         </Link>
 
-        <Link href="/recruiter/messages" className="rounded-xl border border-gray-200 bg-card p-5 shadow-sm hover:shadow-md transition-shadow">
+        <Link href="/recruiter/messages" className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
               <MessageSquare className="h-5 w-5 text-purple-600" />
@@ -130,7 +130,7 @@ export default function RecruiterDashboardPage() {
       {/* Quick Actions */}
       <div>
         <h2 className="mb-4 text-lg font-semibold text-text">Quick Actions</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 md:gap-6">
           {[
             { href: "/recruiter/jobs/new", label: "Post a Job", icon: Briefcase, color: "bg-blue-50 text-blue-600" },
             { href: "/recruiter/candidates", label: "Search Candidates", icon: Users, color: "bg-green-50 text-green-600" },
@@ -140,7 +140,7 @@ export default function RecruiterDashboardPage() {
             <Link
               key={action.href}
               href={action.href}
-              className="flex items-center gap-3 rounded-xl border border-gray-200 bg-card p-4 shadow-sm hover:shadow-md transition-shadow"
+              className="flex items-center gap-3 rounded-xl border border-gray-200 bg-card p-3 sm:p-4 shadow-sm hover:shadow-md active:shadow-sm transition-shadow min-h-[44px]"
             >
               <div className={`flex h-10 w-10 items-center justify-center rounded-full ${action.color}`}>
                 <action.icon className="h-5 w-5" />
@@ -163,9 +163,9 @@ export default function RecruiterDashboardPage() {
         ) : (
           <div className="space-y-2">
             {recentApps.map((app) => (
-              <div key={app.id as string} className="flex items-center justify-between rounded-lg border border-gray-200 bg-card px-4 py-3">
-                <div>
-                  <p className="text-sm font-medium text-text">
+              <div key={app.id as string} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-gray-200 bg-card px-3 py-3 sm:px-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-text truncate">
                     {String((app.candidate as Record<string, unknown>)?.name || (app.candidate as Record<string, unknown>)?.email || "Candidate")}
                   </p>
                   <p className="text-xs text-text-muted">

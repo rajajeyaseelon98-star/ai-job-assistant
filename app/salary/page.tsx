@@ -61,22 +61,23 @@ export default async function SalaryIndexPage() {
   const locations = [...new Set(roles.map((r) => r.location).filter(Boolean))].slice(0, 8) as string[];
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12">
-      <header className="mb-4 flex items-center justify-between">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <header className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <Link href="/" className="text-sm text-blue-600 hover:underline">&larr; Home</Link>
-        <Link href="/signup" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+        <Link href="/signup" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 min-h-[44px] inline-flex items-center w-full sm:w-auto justify-center active:scale-[0.98] transition-transform">
           Get 3x More Interviews
         </Link>
       </header>
 
-      <h1 className="text-3xl font-bold md:text-4xl">Highest Paying Tech Roles in 2026</h1>
-      <p className="mt-2 text-gray-600">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Highest Paying Tech Roles in 2026</h1>
+      <p className="mt-2 text-sm sm:text-base text-gray-600">
         Salary data from {roles.reduce((s, r) => s + r.sample_size, 0).toLocaleString()} data points. See what you should be earning.
       </p>
 
-      {/* Role Salary Table */}
-      <section className="mt-8">
-        <div className="overflow-x-auto">
+      {/* Role Salary — Table on desktop, stacked cards on mobile */}
+      <section className="mt-6 sm:mt-8">
+        {/* Desktop table */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b text-left text-gray-500">
@@ -102,18 +103,36 @@ export default async function SalaryIndexPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Mobile stacked cards */}
+        <div className="sm:hidden space-y-3">
+          {aggregated.map((r) => (
+            <div key={r.role} className="rounded-lg border p-3">
+              <div className="flex items-center justify-between">
+                <span className="font-medium capitalize text-sm">{r.role}</span>
+                <span className="font-semibold text-blue-600 text-sm">
+                  ₹{(r.avg / 100000).toFixed(1)}L
+                </span>
+              </div>
+              <div className="mt-1.5 flex items-center justify-between text-xs text-gray-500">
+                <span>₹{(r.min / 100000).toFixed(0)}L – ₹{(r.max / 100000).toFixed(0)}L</span>
+                <span>{r.samples} data pts</span>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* By Location */}
       {locations.length > 0 && (
-        <section className="mt-10">
-          <h2 className="text-xl font-bold">Salaries by City</h2>
+        <section className="mt-8 sm:mt-10">
+          <h2 className="text-lg sm:text-xl font-bold">Salaries by City</h2>
           <div className="mt-4 flex flex-wrap gap-2">
             {locations.map((loc) => (
               <Link
                 key={loc}
                 href={`/salary/${encodeURIComponent(loc.toLowerCase().replace(/\s+/g, "-"))}`}
-                className="rounded-full border px-4 py-1.5 text-sm hover:bg-gray-50"
+                className="rounded-full border px-4 py-1.5 text-xs sm:text-sm hover:bg-gray-50 min-h-[36px] inline-flex items-center"
               >
                 {loc}
               </Link>
@@ -123,20 +142,20 @@ export default async function SalaryIndexPage() {
       )}
 
       {/* CTA */}
-      <section className="mt-12 rounded-xl bg-blue-50 p-8 text-center">
-        <h2 className="text-xl font-bold">Know Your Worth. Get Paid More.</h2>
-        <p className="mt-2 text-gray-600">
+      <section className="mt-10 sm:mt-12 rounded-xl bg-blue-50 p-6 sm:p-8 text-center">
+        <h2 className="text-lg sm:text-xl font-bold">Know Your Worth. Get Paid More.</h2>
+        <p className="mt-2 text-sm sm:text-base text-gray-600">
           Our AI matches you to jobs that pay what you deserve — and auto-applies for you.
         </p>
         <Link
           href="/signup"
-          className="mt-4 inline-block rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+          className="mt-4 inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700 min-h-[44px] w-full sm:w-auto active:scale-[0.98] transition-transform text-sm sm:text-base"
         >
           Get 3x More Interviews — Free
         </Link>
       </section>
 
-      <footer className="mt-8 border-t pt-6 text-center text-sm text-gray-400">
+      <footer className="mt-6 sm:mt-8 border-t pt-6 text-center text-xs sm:text-sm text-gray-400">
         Salary data sourced from job postings. Updated monthly. &copy; {new Date().getFullYear()} AI Job Assistant
       </footer>
     </div>

@@ -20,8 +20,8 @@ export default async function SettingsPage() {
     .single();
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-text">Settings</h1>
+    <div className="space-y-4 sm:space-y-5 md:space-y-6">
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-text">Settings</h1>
 
       <SettingsForm
         name={profile?.name ?? ""}

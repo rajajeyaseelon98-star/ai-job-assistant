@@ -26,9 +26,9 @@ export function AIProgressIndicator({ message }: AIProgressIndicatorProps) {
   }, [message]);
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+    <div className="flex items-center gap-2 sm:gap-3 rounded-lg border border-primary/20 bg-primary/5 px-3 sm:px-4 py-3 w-full">
       <svg
-        className="h-5 w-5 animate-spin text-primary"
+        className="h-4 w-4 sm:h-5 sm:w-5 shrink-0 animate-spin text-primary"
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
@@ -47,7 +47,7 @@ export function AIProgressIndicator({ message }: AIProgressIndicatorProps) {
           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
         />
       </svg>
-      <span className="text-sm font-medium text-primary">
+      <span className="text-xs sm:text-sm font-medium text-primary">
         {message || MESSAGES[msgIndex]}
       </span>
     </div>

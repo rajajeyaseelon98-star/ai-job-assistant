@@ -54,8 +54,8 @@ export function AutoApplyForm({ onStart, loading }: AutoApplyFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-gray-200 bg-card p-5 space-y-4">
-      <h2 className="text-lg font-semibold text-text">Configure Auto-Apply</h2>
+    <form onSubmit={handleSubmit} className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 space-y-4">
+      <h2 className="text-base sm:text-lg font-semibold text-text">Configure Auto-Apply</h2>
 
       <div>
         <label className="mb-1 block text-sm font-medium text-text">Resume *</label>
@@ -67,7 +67,7 @@ export function AutoApplyForm({ onStart, loading }: AutoApplyFormProps) {
           <select
             value={resumeId}
             onChange={(e) => setResumeId(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
+            className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
           >
             {resumes.map((r) => (
               <option key={r.id} value={r.id}>
@@ -78,7 +78,7 @@ export function AutoApplyForm({ onStart, loading }: AutoApplyFormProps) {
         )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-sm font-medium text-text">Preferred Location</label>
           <input
@@ -86,7 +86,7 @@ export function AutoApplyForm({ onStart, loading }: AutoApplyFormProps) {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="e.g., Remote, Chennai, New York"
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
+            className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
           />
         </div>
         <div>
@@ -96,7 +96,7 @@ export function AutoApplyForm({ onStart, loading }: AutoApplyFormProps) {
             value={minSalary}
             onChange={(e) => setMinSalary(e.target.value)}
             placeholder="e.g., 50000"
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
+            className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
           />
         </div>
       </div>
@@ -108,7 +108,7 @@ export function AutoApplyForm({ onStart, loading }: AutoApplyFormProps) {
           value={roles}
           onChange={(e) => setRoles(e.target.value)}
           placeholder="e.g., Software Engineer, Full Stack Developer"
-          className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
+          className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
         />
         <p className="mt-1 text-xs text-text-muted">Leave blank to auto-detect from resume</p>
       </div>
@@ -118,7 +118,7 @@ export function AutoApplyForm({ onStart, loading }: AutoApplyFormProps) {
         <select
           value={maxResults}
           onChange={(e) => setMaxResults(e.target.value)}
-          className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
+          className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
         >
           <option value="5">5 jobs</option>
           <option value="10">10 jobs</option>
@@ -129,7 +129,7 @@ export function AutoApplyForm({ onStart, loading }: AutoApplyFormProps) {
       <button
         type="submit"
         disabled={loading || !resumeId}
-        className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
+        className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 min-h-[44px] text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 transition-colors"
       >
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
         {loading ? "Starting..." : "Start Auto-Apply"}

@@ -39,24 +39,24 @@ export default function JobsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <h1 className="text-2xl font-bold text-text">Job Postings</h1>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <h1 className="text-xl font-bold text-text sm:text-2xl lg:text-3xl">Job Postings</h1>
         <Link
           href="/recruiter/jobs/new"
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+          className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80 min-h-[44px] w-full sm:w-auto"
         >
           <Plus className="h-4 w-4" /> New Job
         </Link>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {["all", "active", "paused", "draft", "closed"].map((s) => (
           <button
             key={s}
             onClick={() => setFilter(s)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium capitalize ${
-              filter === s ? "bg-primary text-white" : "bg-gray-100 text-text-muted hover:bg-gray-200"
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium capitalize min-h-[44px] sm:min-h-0 ${
+              filter === s ? "bg-primary text-white" : "bg-gray-100 text-text-muted hover:bg-gray-200 active:bg-gray-300"
             }`}
           >
             {s}
@@ -74,9 +74,9 @@ export default function JobsPage() {
       ) : (
         <div className="space-y-3">
           {filtered.map((job) => (
-            <div key={job.id} className="rounded-xl border border-gray-200 bg-card p-5 shadow-sm">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
+            <div key={job.id} className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 shadow-sm">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                <div className="flex-1 min-w-0">
                   <Link href={`/recruiter/jobs/${job.id}`} className="text-base font-semibold text-text hover:text-primary">
                     {job.title}
                   </Link>
@@ -95,7 +95,7 @@ export default function JobsPage() {
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 self-start">
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${
                     job.status === "active" ? "bg-green-100 text-green-700" :
                     job.status === "paused" ? "bg-yellow-100 text-yellow-700" :
@@ -105,13 +105,13 @@ export default function JobsPage() {
                     {job.status}
                   </span>
 
-                  <button onClick={() => toggleStatus(job)} className="rounded p-1 text-text-muted hover:text-primary">
+                  <button onClick={() => toggleStatus(job)} className="rounded p-2 sm:p-1 text-text-muted hover:text-primary min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center">
                     {job.status === "active" ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
-                  <Link href={`/recruiter/jobs/${job.id}`} className="rounded p-1 text-text-muted hover:text-primary">
+                  <Link href={`/recruiter/jobs/${job.id}`} className="rounded p-2 sm:p-1 text-text-muted hover:text-primary min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center">
                     <Pencil className="h-4 w-4" />
                   </Link>
-                  <button onClick={() => deleteJob(job.id)} className="rounded p-1 text-text-muted hover:text-red-500">
+                  <button onClick={() => deleteJob(job.id)} className="rounded p-2 sm:p-1 text-text-muted hover:text-red-500 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>

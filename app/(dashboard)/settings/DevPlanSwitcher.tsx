@@ -43,17 +43,17 @@ export function DevPlanSwitcher({ currentPlan }: DevPlanSwitcherProps) {
   }
 
   return (
-    <section className="rounded-xl border border-amber-200 bg-amber-50/50 p-6 shadow-sm">
+    <section className="rounded-xl border border-amber-200 bg-amber-50/50 p-4 sm:p-6 shadow-sm">
       <h2 className="font-semibold text-amber-900">Local testing: switch plan</h2>
       <p className="mt-1 text-sm text-amber-800">
         Only works when running locally (<code className="rounded bg-amber-100 px-1">npm run dev</code>). Use this to test Free vs Pro vs Premium behavior.
       </p>
-      <div className="mt-4 flex items-center gap-3">
+      <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <select
           value={plan}
           onChange={handleChange}
           disabled={loading}
-          className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm text-text disabled:opacity-50"
+          className="min-h-[44px] rounded-lg border border-amber-300 bg-white px-3 py-2 text-base sm:text-sm text-text disabled:opacity-50"
         >
           <option value="free">Free (limits apply)</option>
           <option value="pro">Pro (unlimited)</option>

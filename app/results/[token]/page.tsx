@@ -83,8 +83,8 @@ export default async function SharedResultPage({
   const createdAt = new Date(data.created_at).toLocaleDateString();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md space-y-6 rounded-2xl bg-white p-8 shadow-lg">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-4 sm:space-y-6 rounded-2xl bg-white p-5 sm:p-8 shadow-lg">
         {d.share_type === "interview_probability" && (
           <InterviewProbabilityCard
             userName={userName}
@@ -120,7 +120,7 @@ export default async function SharedResultPage({
           <p className="text-xs text-gray-400">Created with AI Job Assistant</p>
           <Link
             href="/signup"
-            className="mt-3 inline-block rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+            className="mt-3 inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700 min-h-[44px] w-full sm:w-auto active:scale-[0.98] transition-transform"
           >
             Check Your Score Free
           </Link>
@@ -140,14 +140,14 @@ function InterviewProbabilityCard({
   return (
     <>
       <div className="text-center">
-        <h1 className="text-lg font-bold text-gray-900">Interview Probability</h1>
-        <p className="text-sm text-gray-500">{userName}{jobTitle ? ` for ${jobTitle}` : ""}</p>
+        <h1 className="text-base sm:text-lg font-bold text-gray-900">Interview Probability</h1>
+        <p className="text-xs sm:text-sm text-gray-500 truncate">{userName}{jobTitle ? ` for ${jobTitle}` : ""}</p>
         <p className="text-xs text-gray-400">{date}</p>
       </div>
       <div className="flex justify-center">
-        <div className={`flex h-28 w-28 items-center justify-center rounded-full ${color}`}>
+        <div className={`flex h-24 w-24 sm:h-28 sm:w-28 items-center justify-center rounded-full ${color}`}>
           <div className="text-center">
-            <span className="text-3xl font-bold">{score}%</span>
+            <span className="text-2xl sm:text-3xl font-bold">{score}%</span>
             <div className="text-xs font-medium">{level}</div>
           </div>
         </div>
@@ -174,14 +174,14 @@ function HiringBenchmarkCard({
   return (
     <>
       <div className="text-center">
-        <h1 className="text-lg font-bold text-gray-900">Hiring Benchmark</h1>
-        <p className="text-sm text-gray-500">{userName}</p>
+        <h1 className="text-base sm:text-lg font-bold text-gray-900">Hiring Benchmark</h1>
+        <p className="text-xs sm:text-sm text-gray-500">{userName}</p>
         <p className="text-xs text-gray-400">{date}</p>
       </div>
       <div className="flex justify-center">
-        <div className="flex h-28 w-28 items-center justify-center rounded-full bg-purple-100 text-purple-600">
+        <div className="flex h-24 w-24 sm:h-28 sm:w-28 items-center justify-center rounded-full bg-purple-100 text-purple-600">
           <div className="text-center">
-            <span className="text-3xl font-bold">Top {topPct}%</span>
+            <span className="text-2xl sm:text-3xl font-bold">Top {topPct}%</span>
           </div>
         </div>
       </div>
@@ -210,13 +210,13 @@ function ATSScoreCard({
   return (
     <>
       <div className="text-center">
-        <h1 className="text-lg font-bold text-gray-900">ATS Resume Score</h1>
-        <p className="text-sm text-gray-500">{userName}</p>
+        <h1 className="text-base sm:text-lg font-bold text-gray-900">ATS Resume Score</h1>
+        <p className="text-xs sm:text-sm text-gray-500">{userName}</p>
         <p className="text-xs text-gray-400">{date}</p>
       </div>
       <div className="flex justify-center">
-        <div className={`flex h-28 w-28 items-center justify-center rounded-full ${color}`}>
-          <span className="text-4xl font-bold">{score}</span>
+        <div className={`flex h-24 w-24 sm:h-28 sm:w-28 items-center justify-center rounded-full ${color}`}>
+          <span className="text-3xl sm:text-4xl font-bold">{score}</span>
         </div>
       </div>
       {roles && roles.length > 0 && (

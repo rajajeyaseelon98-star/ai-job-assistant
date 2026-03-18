@@ -63,11 +63,11 @@ export default function RecruiterAlertsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-text">Saved Alerts</h1>
+    <div className="mx-auto max-w-2xl space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-xl font-bold text-text sm:text-2xl lg:text-3xl">Saved Alerts</h1>
         <button onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90">
+          className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80 min-h-[44px] w-full sm:w-auto">
           <Plus className="h-4 w-4" /> New Alert
         </button>
       </div>
@@ -77,22 +77,22 @@ export default function RecruiterAlertsPage() {
       </p>
 
       {showForm && (
-        <form onSubmit={handleCreate} className="rounded-xl border border-gray-200 bg-card p-4 space-y-3">
+        <form onSubmit={handleCreate} className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 space-y-3">
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Alert Name *</label>
             <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Senior React Devs in Chennai"
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none" />
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]" />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Skills (comma-separated)</label>
             <input type="text" value={skills} onChange={(e) => setSkills(e.target.value)} placeholder="React, TypeScript, Node.js..."
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none" />
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]" />
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-text">Experience Level</label>
               <select value={experience} onChange={(e) => setExperience(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none">
+                className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]">
                 <option value="">Any</option>
                 <option value="entry">Entry</option>
                 <option value="mid">Mid</option>
@@ -103,11 +103,11 @@ export default function RecruiterAlertsPage() {
             <div>
               <label className="mb-1 block text-sm font-medium text-text">Location</label>
               <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g., Chennai"
-                className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none" />
+                className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]" />
             </div>
           </div>
           <button type="submit" disabled={creating}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50">
+            className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 min-h-[44px] w-full sm:w-auto">
             {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Save Alert
           </button>
@@ -126,8 +126,8 @@ export default function RecruiterAlertsPage() {
           {alerts.map((alert) => {
             const filters = alert.filters as Record<string, unknown>;
             return (
-              <div key={alert.id} className="flex items-center justify-between rounded-xl border border-gray-200 bg-card p-4">
-                <div>
+              <div key={alert.id} className="flex items-start justify-between gap-3 rounded-xl border border-gray-200 bg-card p-3 sm:p-4">
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-text">{alert.name}</p>
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     {Array.isArray(filters.skills) && (filters.skills as string[]).map((s) => (
@@ -142,8 +142,8 @@ export default function RecruiterAlertsPage() {
                   </div>
                   <p className="mt-1 text-xs text-text-muted">Created {new Date(alert.created_at).toLocaleDateString()}</p>
                 </div>
-                <button onClick={() => handleDelete(alert.id)} className="rounded-lg p-2 text-text-muted hover:bg-red-50 hover:text-red-600">
-                  <Trash2 className="h-4 w-4" />
+                <button onClick={() => handleDelete(alert.id)} className="shrink-0 rounded-lg p-2 text-text-muted hover:bg-red-50 hover:text-red-600 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center">
+                  <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
               </div>
             );

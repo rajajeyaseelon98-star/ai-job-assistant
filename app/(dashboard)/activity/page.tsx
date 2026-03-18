@@ -97,17 +97,17 @@ export default function ActivityFeedPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-text">Activity Feed</h1>
-        <p className="text-sm text-text-muted">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Activity Feed</h1>
+        <p className="text-sm sm:text-base text-text-muted">
           Track your journey and see community milestones
         </p>
       </div>
 
       {/* Platform Stats (Social Proof) */}
       {stats && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
           {[
             { label: "Users", value: stats.total_users.toLocaleString(), icon: Users },
             { label: "Applications", value: stats.total_applications.toLocaleString(), icon: Send },
@@ -120,19 +120,19 @@ export default function ActivityFeedPage() {
               key={stat.label}
               className="rounded-xl border border-gray-200 bg-card p-3 text-center"
             >
-              <stat.icon className="mx-auto mb-1 h-5 w-5 text-primary" />
-              <div className="text-lg font-bold text-text">{stat.value}</div>
-              <div className="text-xs text-text-muted">{stat.label}</div>
+              <stat.icon className="mx-auto mb-1 h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              <div className="text-base sm:text-lg font-bold text-text">{stat.value}</div>
+              <div className="text-xs text-text-muted truncate">{stat.label}</div>
             </div>
           ))}
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-gray-200">
+      <div className="flex gap-2 border-b border-gray-200 overflow-x-auto">
         <button
           onClick={() => setTab("my")}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
+          className={`min-h-[44px] px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
             tab === "my"
               ? "border-b-2 border-primary text-primary"
               : "text-text-muted hover:text-text"
@@ -142,7 +142,7 @@ export default function ActivityFeedPage() {
         </button>
         <button
           onClick={() => setTab("public")}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
+          className={`min-h-[44px] px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
             tab === "public"
               ? "border-b-2 border-primary text-primary"
               : "text-text-muted hover:text-text"
@@ -176,15 +176,15 @@ export default function ActivityFeedPage() {
             return (
               <div
                 key={item.id}
-                className="flex items-start gap-4 rounded-xl border border-gray-200 bg-card p-4"
+                className="flex items-start gap-3 sm:gap-4 rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5"
               >
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${color}`}>
-                  <Icon className="h-5 w-5" />
+                <div className={`flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full ${color}`}>
+                  <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-text">{item.title}</h3>
+                  <h3 className="text-sm sm:text-base font-medium text-text truncate">{item.title}</h3>
                   {item.description && (
-                    <p className="mt-0.5 text-sm text-text-muted">{item.description}</p>
+                    <p className="mt-0.5 text-xs sm:text-sm text-text-muted line-clamp-2">{item.description}</p>
                   )}
                   <span className="mt-1 text-xs text-text-muted">
                     {timeAgo(item.created_at)}

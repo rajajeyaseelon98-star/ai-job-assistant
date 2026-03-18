@@ -43,32 +43,32 @@ export default async function SkillsPage() {
     .slice(0, 10);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12">
-      <header className="mb-4 flex items-center justify-between">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <header className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <Link href="/" className="text-sm text-blue-600 hover:underline">&larr; Home</Link>
-        <Link href="/signup" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+        <Link href="/signup" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 min-h-[44px] inline-flex items-center w-full sm:w-auto justify-center active:scale-[0.98] transition-transform">
           Get 3x More Interviews
         </Link>
       </header>
 
-      <h1 className="text-3xl font-bold md:text-4xl">Top Skills to Get Hired in 2026</h1>
-      <p className="mt-2 text-gray-600">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Top Skills to Get Hired in 2026</h1>
+      <p className="mt-2 text-sm sm:text-base text-gray-600">
         Real data from {allSkills.reduce((s, sk) => s + sk.demand_count, 0).toLocaleString()} job postings.
         Updated monthly.
       </p>
 
       {/* Skills That Guarantee Interviews */}
-      <section className="mt-10">
-        <h2 className="text-xl font-bold">Skills That Guarantee Interviews</h2>
-        <p className="text-sm text-gray-500">Highest demand-to-supply ratio — few candidates, many jobs.</p>
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
+      <section className="mt-8 sm:mt-10">
+        <h2 className="text-lg sm:text-xl font-bold">Skills That Guarantee Interviews</h2>
+        <p className="text-xs sm:text-sm text-gray-500">Highest demand-to-supply ratio — few candidates, many jobs.</p>
+        <div className="mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2">
           {interviewGuarantee.map((s) => (
-            <div key={s.skill_name} className="flex items-center justify-between rounded-lg border p-4">
+            <div key={s.skill_name} className="flex items-center justify-between rounded-lg border p-3 sm:p-4">
               <div>
-                <span className="font-medium">{s.skill_name}</span>
+                <span className="text-sm sm:text-base font-medium">{s.skill_name}</span>
                 <p className="text-xs text-gray-500">{s.demand_count} jobs · {s.supply_count} candidates</p>
               </div>
-              <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+              <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700 whitespace-nowrap ml-2">
                 {s.ratio.toFixed(1)}x demand
               </span>
             </div>
@@ -77,13 +77,13 @@ export default async function SkillsPage() {
       </section>
 
       {/* Highest Paying */}
-      <section className="mt-10">
-        <h2 className="text-xl font-bold">Highest Paying Skills</h2>
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
+      <section className="mt-8 sm:mt-10">
+        <h2 className="text-lg sm:text-xl font-bold">Highest Paying Skills</h2>
+        <div className="mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2">
           {highestPaying.map((s) => (
-            <div key={s.skill_name} className="flex items-center justify-between rounded-lg border p-4">
-              <span className="font-medium">{s.skill_name}</span>
-              <span className="text-sm font-semibold text-blue-600">
+            <div key={s.skill_name} className="flex items-center justify-between rounded-lg border p-3 sm:p-4">
+              <span className="text-sm sm:text-base font-medium">{s.skill_name}</span>
+              <span className="text-sm font-semibold text-blue-600 whitespace-nowrap ml-2">
                 ₹{Math.round((s.avg_salary || 0) / 100000)}L avg
               </span>
             </div>
@@ -92,13 +92,13 @@ export default async function SkillsPage() {
       </section>
 
       {/* Trending Skills */}
-      <section className="mt-10">
-        <h2 className="text-xl font-bold">Trending Skills (Growing Fast)</h2>
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
+      <section className="mt-8 sm:mt-10">
+        <h2 className="text-lg sm:text-xl font-bold">Trending Skills (Growing Fast)</h2>
+        <div className="mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2">
           {trending.map((s) => (
-            <div key={s.skill_name} className="flex items-center justify-between rounded-lg border p-4">
-              <span className="font-medium">{s.skill_name}</span>
-              <span className="rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-700">
+            <div key={s.skill_name} className="flex items-center justify-between rounded-lg border p-3 sm:p-4">
+              <span className="text-sm sm:text-base font-medium">{s.skill_name}</span>
+              <span className="rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-700 whitespace-nowrap ml-2">
                 +{s.demand_trend}% growth
               </span>
             </div>
@@ -107,11 +107,11 @@ export default async function SkillsPage() {
       </section>
 
       {/* Most In-Demand */}
-      <section className="mt-10">
-        <h2 className="text-xl font-bold">Most In-Demand Skills</h2>
+      <section className="mt-8 sm:mt-10">
+        <h2 className="text-lg sm:text-xl font-bold">Most In-Demand Skills</h2>
         <div className="mt-4 flex flex-wrap gap-2">
           {highDemand.map((s) => (
-            <span key={s.skill_name} className="rounded-full border px-3 py-1 text-sm">
+            <span key={s.skill_name} className="rounded-full border px-3 py-1 text-xs sm:text-sm">
               {s.skill_name} <span className="text-gray-400">({s.demand_count})</span>
             </span>
           ))}
@@ -119,20 +119,20 @@ export default async function SkillsPage() {
       </section>
 
       {/* CTA */}
-      <section className="mt-12 rounded-xl bg-blue-50 p-8 text-center">
-        <h2 className="text-xl font-bold">Get 3x More Interviews</h2>
-        <p className="mt-2 text-gray-600">
+      <section className="mt-10 sm:mt-12 rounded-xl bg-blue-50 p-6 sm:p-8 text-center">
+        <h2 className="text-lg sm:text-xl font-bold">Get 3x More Interviews</h2>
+        <p className="mt-2 text-sm sm:text-base text-gray-600">
           AI analyzes your skills, finds the best jobs, and auto-applies with a tailored resume.
         </p>
         <Link
           href="/signup"
-          className="mt-4 inline-block rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+          className="mt-4 inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700 min-h-[44px] w-full sm:w-auto active:scale-[0.98] transition-transform text-sm sm:text-base"
         >
           Start Free — No Credit Card
         </Link>
       </section>
 
-      <footer className="mt-8 border-t pt-6 text-center text-sm text-gray-400">
+      <footer className="mt-6 sm:mt-8 border-t pt-6 text-center text-xs sm:text-sm text-gray-400">
         Data sourced from job postings on our platform. Updated monthly. &copy; {new Date().getFullYear()} AI Job Assistant
       </footer>
     </div>

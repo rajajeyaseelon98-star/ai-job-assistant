@@ -21,6 +21,12 @@ const config: Config = {
           muted: "#6B7280",
         },
       },
+      screens: {
+        xs: "480px",
+      },
+      fontSize: {
+        "2xs": ["0.625rem", { lineHeight: "0.875rem" }],
+      },
     },
   },
   plugins: [],

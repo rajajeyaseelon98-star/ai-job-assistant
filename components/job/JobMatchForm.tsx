@@ -64,11 +64,11 @@ export function JobMatchForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6">
       <div>
-        <label className="block text-sm font-medium text-text">Resume text</label>
+        <label className="block text-sm font-medium text-text mb-1">Resume text</label>
         <textarea
-          className="mt-1 w-full rounded-lg border border-gray-300 p-3 text-sm text-text"
+          className="mt-1 w-full rounded-lg border border-gray-300 p-3 text-base sm:text-sm text-text min-h-[120px] focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           rows={6}
           value={resumeText}
           onChange={(e) => setResumeText(e.target.value)}
@@ -76,30 +76,30 @@ export function JobMatchForm({
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-text">Job title (optional)</label>
+        <label className="block text-sm font-medium text-text mb-1">Job title (optional)</label>
         <input
           type="text"
-          className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-text"
+          className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm text-text min-h-[44px] focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           value={jobTitle}
           onChange={(e) => setJobTitle(e.target.value)}
           placeholder="e.g. React Developer"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-text">Job description</label>
+        <label className="block text-sm font-medium text-text mb-1">Job description</label>
         <textarea
-          className="mt-1 w-full rounded-lg border border-gray-300 p-3 text-sm text-text"
+          className="mt-1 w-full rounded-lg border border-gray-300 p-3 text-base sm:text-sm text-text min-h-[120px] focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           rows={8}
           value={jobDescription}
           onChange={(e) => setJobDescription(e.target.value)}
           placeholder="Paste the job description…"
         />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-xs sm:text-sm text-red-600">{error}</p>}
       <button
         type="submit"
         disabled={loading}
-        className="rounded-lg bg-primary px-4 py-2 font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+        className="w-full sm:w-auto min-h-[44px] rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover active:bg-primary/80 disabled:opacity-50"
       >
         {loading ? "Matching…" : "Match resume"}
       </button>

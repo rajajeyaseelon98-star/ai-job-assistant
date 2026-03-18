@@ -86,12 +86,12 @@ export default function AutoApplyPage() {
   const showCompleted = currentRun && currentRun.status === "completed";
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-4 sm:space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-text">
-          <Rocket className="h-6 w-6 text-primary" /> AI Auto-Apply
+        <h1 className="flex items-center gap-2 text-xl sm:text-2xl lg:text-3xl font-bold text-text">
+          <Rocket className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> AI Auto-Apply
         </h1>
-        <p className="mt-1 text-sm text-text-muted">
+        <p className="mt-1 text-xs sm:text-sm text-text-muted">
           Upload your resume, and our AI will find matching jobs, tailor your application, and apply for you.
           You review and confirm before anything is sent.
         </p>
@@ -124,8 +124,8 @@ export default function AutoApplyPage() {
       {/* Past Runs */}
       {pastRuns.length > 0 && (
         <div className="space-y-3">
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-text">
-            <History className="h-5 w-5" /> Past Runs
+          <h2 className="flex items-center gap-2 text-base sm:text-lg font-semibold text-text">
+            <History className="h-4 w-4 sm:h-5 sm:w-5" /> Past Runs
           </h2>
           <div className="space-y-2">
             {pastRuns.slice(0, 10).map((run) => (
@@ -136,7 +136,7 @@ export default function AutoApplyPage() {
                     .then((r) => (r.ok ? r.json() : null))
                     .then((data) => { if (data) setCurrentRun(data); });
                 }}
-                className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-card px-4 py-3 text-left hover:bg-gray-50"
+                className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-card px-3 sm:px-4 py-3 text-left hover:bg-gray-50 active:scale-[0.98] min-h-[44px]"
               >
                 <div>
                   <p className="text-sm font-medium text-text">

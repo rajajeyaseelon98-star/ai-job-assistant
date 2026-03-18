@@ -121,19 +121,19 @@ export default function InstantShortlistPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-text">
-          <Zap className="h-6 w-6 text-yellow-500" />
+        <h1 className="flex items-center gap-2 text-xl font-bold text-text sm:text-2xl lg:text-3xl">
+          <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500" />
           Instant Shortlist
         </h1>
-        <p className="text-sm text-text-muted">
-          Top candidates matched in seconds — not hours
+        <p className="text-sm text-text-muted mt-1">
+          Top candidates matched in seconds -- not hours
         </p>
       </div>
 
       {/* Job Selector */}
-      <div className="rounded-xl border border-gray-200 bg-card p-5">
+      <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5">
         <h2 className="mb-3 flex items-center gap-2 font-semibold text-text">
           <Search className="h-4 w-4" />
           Select a Job Posting
@@ -143,11 +143,11 @@ export default function InstantShortlistPage() {
         ) : jobs.length === 0 ? (
           <p className="text-sm text-text-muted">No job postings with skills found. Post a job with required skills first.</p>
         ) : (
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
             <select
               value={selectedJob}
               onChange={(e) => setSelectedJob(e.target.value)}
-              className="flex-1 rounded-lg border border-gray-200 bg-background px-3 py-2 text-sm text-text"
+              className="flex-1 rounded-lg border border-gray-200 bg-background px-3 py-2 text-base sm:text-sm text-text min-h-[44px]"
             >
               <option value="">Choose a job...</option>
               {jobs.map((j) => (
@@ -159,7 +159,7 @@ export default function InstantShortlistPage() {
             <button
               onClick={findCandidates}
               disabled={!selectedJob || loading}
-              className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+              className="flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-primary-hover active:bg-primary/80 disabled:opacity-50 min-h-[44px] w-full sm:w-auto"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
               Find Candidates
@@ -172,9 +172,9 @@ export default function InstantShortlistPage() {
       {candidates.length > 0 && (
         <>
           {/* Results Header */}
-          <div className="flex items-center justify-between rounded-xl border-2 border-green-200 bg-green-50 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border-2 border-green-200 bg-green-50 p-3 sm:p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-lg">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-lg">
                 🔥
               </div>
               <div>
@@ -186,15 +186,13 @@ export default function InstantShortlistPage() {
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={messageAll}
-                className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-              >
-                <Send className="h-4 w-4" />
-                Message All
-              </button>
-            </div>
+            <button
+              onClick={messageAll}
+              className="flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 active:bg-green-800 min-h-[44px] w-full sm:w-auto"
+            >
+              <Send className="h-4 w-4" />
+              Message All
+            </button>
           </div>
 
           {/* Candidate Cards */}
@@ -202,17 +200,17 @@ export default function InstantShortlistPage() {
             {candidates.map((c, i) => (
               <div
                 key={c.user_id}
-                className={`rounded-xl border bg-card p-5 ${
+                className={`rounded-xl border bg-card p-3 sm:p-4 md:p-5 ${
                   c.is_boosted ? "border-yellow-300 bg-yellow-50/30" : "border-gray-200"
                 }`}
               >
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
                       #{i + 1}
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="font-semibold text-text">{c.name}</span>
                         {c.is_boosted && (
                           <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-[10px] font-medium text-yellow-700">
@@ -220,11 +218,11 @@ export default function InstantShortlistPage() {
                           </span>
                         )}
                       </div>
-                      {c.headline && <p className="text-sm text-text-muted">{c.headline}</p>}
+                      {c.headline && <p className="text-sm text-text-muted truncate">{c.headline}</p>}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-primary">{c.match_score}%</div>
+                  <div className="text-right shrink-0 self-end sm:self-start">
+                    <div className="text-xl font-bold text-primary sm:text-2xl">{c.match_score}%</div>
                     <div className="text-[10px] text-text-muted">match</div>
                   </div>
                 </div>
@@ -243,8 +241,8 @@ export default function InstantShortlistPage() {
                   ))}
                 </div>
 
-                {/* Score Breakdown (Trust Layer) */}
-                <div className="mt-3 flex gap-4 text-[11px] text-text-muted">
+                {/* Score Breakdown */}
+                <div className="mt-3 flex flex-wrap gap-3 sm:gap-4 text-[11px] text-text-muted">
                   <span>Profile: {c.profile_strength}%</span>
                   <span>Rank: {c.rank_score}</span>
                   <span>Skills: {c.skill_overlap.length}/{c.skill_overlap.length + c.missing_skills.length}</span>
@@ -260,7 +258,7 @@ export default function InstantShortlistPage() {
                     <button
                       onClick={() => sendPush(c.user_id)}
                       disabled={pushLoading === c.user_id}
-                      className="flex items-center gap-1 rounded-lg border border-primary px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/5 disabled:opacity-50"
+                      className="flex items-center gap-1 rounded-lg border border-primary px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/5 active:bg-primary/10 disabled:opacity-50 min-h-[44px] sm:min-h-0"
                     >
                       {pushLoading === c.user_id ? (
                         <Loader2 className="h-3 w-3 animate-spin" />
@@ -279,7 +277,7 @@ export default function InstantShortlistPage() {
 
       {/* Empty State */}
       {candidates.length === 0 && !loading && selectedJob && searchTime !== null && (
-        <div className="rounded-xl border border-gray-200 bg-card p-8 text-center">
+        <div className="rounded-xl border border-gray-200 bg-card p-6 sm:p-8 text-center">
           <Users className="mx-auto mb-2 h-10 w-10 text-text-muted" />
           <p className="font-medium text-text">No matching candidates found</p>
           <p className="text-sm text-text-muted">Try a different job or adjust required skills.</p>
@@ -287,9 +285,9 @@ export default function InstantShortlistPage() {
       )}
 
       {/* How It Works */}
-      <div className="rounded-xl border border-gray-200 bg-card p-5">
+      <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5">
         <h3 className="mb-2 font-medium text-text">How Instant Shortlist Works</h3>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-3">
           <div className="flex items-start gap-2">
             <Clock className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             <div>

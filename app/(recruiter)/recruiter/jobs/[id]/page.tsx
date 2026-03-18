@@ -120,9 +120,9 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   if (loading) return <p className="text-sm text-text-muted">Loading job...</p>;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between">
-        <button onClick={() => router.push("/recruiter/jobs")} className="flex items-center gap-1 text-sm text-text-muted hover:text-text">
+        <button onClick={() => router.push("/recruiter/jobs")} className="flex items-center gap-1 text-sm text-text-muted hover:text-text min-h-[44px]">
           <ArrowLeft className="h-4 w-4" /> Back to Jobs
         </button>
         <div className="flex items-center gap-2 text-xs text-text-muted">
@@ -130,13 +130,13 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
         </div>
       </div>
 
-      <h1 className="text-2xl font-bold text-text">Edit Job Posting</h1>
+      <h1 className="text-xl font-bold text-text sm:text-2xl lg:text-3xl">Edit Job Posting</h1>
 
-      <div className="space-y-5">
+      <div className="space-y-4 sm:space-y-5">
         <div>
           <label className="mb-1 block text-sm font-medium text-text">Job Title *</label>
           <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Senior React Developer"
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
+            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[44px]" />
         </div>
 
         <div>
@@ -149,26 +149,26 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
             </button>
           </div>
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={8}
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
+            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
         </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium text-text">Requirements</label>
           <textarea value={requirements} onChange={(e) => setRequirements(e.target.value)} rows={4}
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
+            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
         </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium text-text">Required Skills (comma-separated)</label>
           <input type="text" value={skills} onChange={(e) => setSkills(e.target.value)} placeholder="React, TypeScript, Node.js..."
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
+            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[44px]" />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Work Type</label>
             <select value={workType} onChange={(e) => setWorkType(e.target.value as WorkType)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none">
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]">
               <option value="onsite">On-site</option>
               <option value="remote">Remote</option>
               <option value="hybrid">Hybrid</option>
@@ -177,7 +177,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Employment Type</label>
             <select value={employmentType} onChange={(e) => setEmploymentType(e.target.value as EmploymentType)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none">
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]">
               <option value="full_time">Full Time</option>
               <option value="part_time">Part Time</option>
               <option value="contract">Contract</option>
@@ -187,7 +187,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Status</label>
             <select value={status} onChange={(e) => setStatus(e.target.value as JobStatus)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none">
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]">
               <option value="draft">Draft</option>
               <option value="active">Active</option>
               <option value="paused">Paused</option>
@@ -196,55 +196,53 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Location</label>
             <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g., Chennai, Remote"
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none" />
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none min-h-[44px]" />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Salary Currency</label>
             <input type="text" value={salaryCurrency} onChange={(e) => setSalaryCurrency(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none" />
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]" />
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Exp Min (yrs)</label>
             <input type="number" value={experienceMin} onChange={(e) => setExperienceMin(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none" />
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]" />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Exp Max (yrs)</label>
             <input type="number" value={experienceMax} onChange={(e) => setExperienceMax(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none" />
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]" />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Salary Min</label>
             <input type="number" value={salaryMin} onChange={(e) => setSalaryMin(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none" />
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]" />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Salary Max</label>
             <input type="number" value={salaryMax} onChange={(e) => setSalaryMax(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none" />
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]" />
           </div>
         </div>
 
         {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
         {success && <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-600">{success}</p>}
 
-        <div className="flex items-center justify-between">
-          <div className="flex gap-3">
-            <button type="button" onClick={handleSave} disabled={saving}
-              className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Save Changes
-            </button>
-          </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <button type="button" onClick={handleSave} disabled={saving}
+            className="flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 min-h-[44px] w-full sm:w-auto">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            Save Changes
+          </button>
           <button type="button" onClick={handleDelete}
-            className="flex items-center gap-2 rounded-lg border border-red-300 px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+            className="flex items-center justify-center gap-2 rounded-lg border border-red-300 px-4 py-2 text-sm text-red-600 hover:bg-red-50 active:bg-red-100 min-h-[44px] w-full sm:w-auto">
             <Trash2 className="h-4 w-4" /> Delete
           </button>
         </div>

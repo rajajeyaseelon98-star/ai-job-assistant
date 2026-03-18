@@ -56,17 +56,17 @@ export default function OptimizeJobPage({ params }: { params: Promise<{ id: stri
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-text-muted hover:text-text">
+    <div className="mx-auto max-w-3xl space-y-4 sm:space-y-6">
+      <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-text-muted hover:text-text min-h-[44px]">
         <ArrowLeft className="h-4 w-4" /> Back
       </button>
 
-      <h1 className="text-2xl font-bold text-text">AI Job Post Optimization</h1>
+      <h1 className="text-xl font-bold text-text sm:text-2xl lg:text-3xl">AI Job Post Optimization</h1>
       <p className="text-sm text-text-muted">Analyze your job posting for clarity, inclusivity, SEO, and attractiveness.</p>
 
       {!result && (
         <button onClick={handleOptimize} disabled={loading}
-          className="flex items-center gap-2 rounded-lg bg-purple-600 px-6 py-3 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50">
+          className="flex items-center justify-center gap-2 rounded-lg bg-purple-600 px-6 py-3 text-sm font-medium text-white hover:bg-purple-700 active:bg-purple-800 disabled:opacity-50 min-h-[44px] w-full sm:w-auto">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
           {loading ? "Analyzing..." : "Analyze & Optimize"}
         </button>
@@ -76,8 +76,8 @@ export default function OptimizeJobPage({ params }: { params: Promise<{ id: stri
 
       {result && (
         <div className="space-y-6">
-          <div className="flex items-center gap-4">
-            <div className={`flex h-16 w-16 items-center justify-center rounded-full text-xl font-bold text-white ${
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-4">
+            <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-xl font-bold text-white ${
               result.score >= 80 ? "bg-green-500" : result.score >= 60 ? "bg-yellow-500" : "bg-red-500"
             }`}>
               {result.score}
@@ -124,7 +124,7 @@ export default function OptimizeJobPage({ params }: { params: Promise<{ id: stri
 
           {(result.optimized_title || result.optimized_description) && (
             <button onClick={applyOptimizations} disabled={applying}
-              className="flex items-center gap-2 rounded-lg bg-green-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50">
+              className="flex items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-green-700 active:bg-green-800 disabled:opacity-50 min-h-[44px] w-full sm:w-auto">
               {applying ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
               Apply Optimizations
             </button>

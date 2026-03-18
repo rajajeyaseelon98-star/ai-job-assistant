@@ -48,31 +48,31 @@ export function HistoryCoverLetterSection({ items }: { items: Item[] }) {
 
   return (
     <section className="rounded-xl border border-gray-200 bg-card shadow-sm">
-      <div className="border-b border-gray-200 px-6 py-4">
+      <div className="border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4">
         <h2 className="font-semibold text-text">Cover Letters</h2>
       </div>
       <ul className="divide-y divide-gray-100">
         {items.length === 0 ? (
-          <li className="px-6 py-6 text-center text-sm text-text-muted">
+          <li className="px-4 sm:px-6 py-6 text-center text-sm text-text-muted">
             No cover letters yet.
           </li>
         ) : (
           items.map((c) => (
-            <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 px-6 py-4">
-              <span className="text-text">
+            <li key={c.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-4 sm:px-6 py-3 sm:py-4">
+              <span className="text-sm sm:text-base text-text truncate">
                 {c.company_name || c.job_title || "Cover letter"} – {dateStr(c.created_at)}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3 sm:gap-2">
                 <Link
                   href={`/cover-letter?id=${c.id}`}
-                  className="text-sm font-medium text-primary hover:underline"
+                  className="min-h-[44px] sm:min-h-0 flex items-center text-sm font-medium text-primary hover:underline active:text-primary-hover"
                 >
                   View
                 </Link>
                 <button
                   type="button"
                   onClick={() => handleDownload(c.id)}
-                  className="text-sm font-medium text-text-muted hover:text-text"
+                  className="min-h-[44px] sm:min-h-0 flex items-center text-sm font-medium text-text-muted hover:text-text active:text-text"
                 >
                   Download
                 </button>
@@ -80,7 +80,7 @@ export function HistoryCoverLetterSection({ items }: { items: Item[] }) {
                   type="button"
                   onClick={() => handleDelete(c.id)}
                   disabled={deletingId === c.id}
-                  className="text-sm font-medium text-red-600 hover:underline disabled:opacity-50"
+                  className="min-h-[44px] sm:min-h-0 flex items-center text-sm font-medium text-red-600 hover:underline active:text-red-700 disabled:opacity-50"
                 >
                   Delete
                 </button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -46,44 +46,70 @@ export function RecruiterSidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape") setOpen(false);
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
+
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed left-4 top-3 z-40 rounded-lg p-2 hover:bg-gray-100 lg:hidden"
+        className="fixed left-3 top-3 z-40 rounded-lg p-2 hover:bg-gray-100 active:bg-gray-200 lg:hidden"
         aria-label="Open menu"
       >
         <Menu className="h-5 w-5 text-text" />
       </button>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-40 bg-black/30 lg:hidden"
-          onClick={() => setOpen(false)}
-        />
-      )}
+      <div
+        className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 lg:pointer-events-none lg:hidden ${
+          open ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+        onClick={() => setOpen(false)}
+        aria-hidden="true"
+      />
 
       <aside
-        className={`fixed left-0 top-0 z-50 h-screen w-[240px] border-r border-gray-200 bg-card transition-transform lg:translate-x-0 ${
+        className={`fixed left-0 top-0 z-50 flex h-screen w-[260px] flex-col border-r border-gray-200 bg-card shadow-xl transition-transform duration-300 ease-in-out lg:w-[240px] lg:translate-x-0 lg:shadow-none ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex h-full flex-col p-4">
-          <div className="mb-6 flex items-center justify-between px-2">
-            <Link href="/recruiter" onClick={() => setOpen(false)}>
-              <span className="text-lg font-semibold text-primary">Recruiter Panel</span>
-            </Link>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="rounded-lg p-1 hover:bg-gray-100 lg:hidden"
-              aria-label="Close menu"
-            >
-              <X className="h-5 w-5 text-text-muted" />
-            </button>
-          </div>
-          <nav className="flex flex-1 flex-col gap-1">
+        <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 py-3 lg:border-b-0 lg:px-4 lg:py-4">
+          <Link href="/recruiter" className="min-w-0">
+            <span className="text-base font-semibold text-primary lg:text-lg">Recruiter Panel</span>
+          </Link>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="rounded-lg p-1.5 hover:bg-gray-100 active:bg-gray-200 lg:hidden"
+            aria-label="Close menu"
+          >
+            <X className="h-5 w-5 text-text-muted" />
+          </button>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto px-3 py-2">
+          <div className="flex flex-col gap-0.5">
             {nav.map((item) => {
               const isActive =
                 item.href === "/recruiter"
@@ -94,27 +120,27 @@ export function RecruiterSidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() => setOpen(false)}
                   className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                     isActive
                       ? "bg-primary/10 text-primary"
-                      : "text-text-muted hover:bg-gray-100 hover:text-text"
+                      : "text-text-muted hover:bg-gray-100 hover:text-text active:bg-gray-200"
                   }`}
                 >
-                  <Icon className="h-5 w-5 shrink-0" />
-                  {item.label}
+                  <Icon className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
+                  <span className="truncate">{item.label}</span>
                 </Link>
               );
             })}
-          </nav>
+          </div>
+        </nav>
 
-          {/* Switch to job seeker */}
+        <div className="shrink-0 border-t border-gray-100 px-3 py-3 safe-bottom">
           <Link
             href="/select-role?next=/dashboard"
-            className="mt-2 flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-text-muted hover:bg-gray-50 hover:text-text"
+            className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-text-muted hover:bg-gray-50 hover:text-text active:bg-gray-100"
           >
-            <ArrowLeftRight className="h-4 w-4" />
-            Switch to Job Seeker
+            <ArrowLeftRight className="h-4 w-4 shrink-0" />
+            <span className="truncate">Switch to Job Seeker</span>
           </Link>
         </div>
       </aside>

@@ -89,40 +89,40 @@ export default function StreakRewardsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-text">
-          <Gift className="h-6 w-6 text-primary" />
+        <h1 className="flex items-center gap-2 text-xl sm:text-2xl lg:text-3xl font-bold text-text">
+          <Gift className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
           Streak Rewards
         </h1>
-        <p className="text-sm text-text-muted">
+        <p className="text-xs sm:text-sm text-text-muted">
           Stay consistent. Earn real rewards that help you get more interviews.
         </p>
       </div>
 
       {/* Current Streak */}
       {streak && (
-        <div className="rounded-xl border-2 border-orange-200 bg-gradient-to-r from-orange-50 to-yellow-50 p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-100 text-2xl">
-                <Flame className="h-7 w-7 text-orange-500" />
+        <div className="rounded-xl border-2 border-orange-200 bg-gradient-to-r from-orange-50 to-yellow-50 p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-orange-100 text-2xl">
+                <Flame className="h-6 w-6 sm:h-7 sm:w-7 text-orange-500" />
               </div>
               <div>
-                <div className="text-3xl font-bold text-text">{streak.current_streak} days</div>
+                <div className="text-2xl sm:text-3xl font-bold text-text">{streak.current_streak} days</div>
                 <div className="text-sm text-text-muted">{streak.streak_level}</div>
               </div>
             </div>
-            <div className="text-right">
+            <div className="sm:text-right">
               <div className="text-sm text-text-muted">XP Points</div>
-              <div className="text-xl font-bold text-primary">{streak.xp_points}</div>
+              <div className="text-lg sm:text-xl font-bold text-primary">{streak.xp_points}</div>
               <div className="text-xs text-text-muted">{streak.streak_multiplier}x multiplier</div>
             </div>
           </div>
-          <div className="mt-4 flex items-center gap-4 text-sm text-text-muted">
+          <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-text-muted">
             <span>Longest: {streak.longest_streak} days</span>
             <span>·</span>
-            <span>Next reward at: {streak.next_reward_at} days</span>
+            <span>Next reward: {streak.next_reward_at} days</span>
             <span>·</span>
             <span>Freezes: {streak.streak_freeze_count}</span>
           </div>
@@ -145,7 +145,7 @@ export default function StreakRewardsPage() {
       )}
 
       {/* Rewards Grid */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
         {rewards.map((r) => {
           const Icon = REWARD_ICONS[r.reward_type] || Gift;
           const isUnlocked = streak && streak.current_streak >= r.streak_days;
@@ -154,7 +154,7 @@ export default function StreakRewardsPage() {
           return (
             <div
               key={r.streak_days}
-              className={`rounded-xl border p-5 transition-all ${
+              className={`rounded-xl border p-3 sm:p-5 transition-all ${
                 r.claimed
                   ? "border-green-200 bg-green-50/50"
                   : isUnlocked
@@ -188,7 +188,7 @@ export default function StreakRewardsPage() {
                         {r.streak_days} days
                       </span>
                     </div>
-                    <p className="mt-0.5 text-sm text-text-muted">{r.description}</p>
+                    <p className="mt-0.5 text-xs sm:text-sm text-text-muted line-clamp-2">{r.description}</p>
                   </div>
                 </div>
               </div>
@@ -197,7 +197,7 @@ export default function StreakRewardsPage() {
                 <button
                   onClick={() => claimReward(r.streak_days)}
                   disabled={claiming === r.streak_days}
-                  className="mt-3 w-full rounded-lg bg-primary py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+                  className="mt-3 w-full min-h-[44px] rounded-lg bg-primary py-2 text-sm font-medium text-white hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50"
                 >
                   {claiming === r.streak_days ? (
                     <Loader2 className="mx-auto h-4 w-4 animate-spin" />
@@ -217,8 +217,8 @@ export default function StreakRewardsPage() {
       </div>
 
       {/* Explanation */}
-      <div className="rounded-xl border border-gray-200 bg-card p-5 text-sm text-text-muted">
-        <h3 className="mb-2 font-medium text-text">How Streak Rewards Work</h3>
+      <div className="rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 text-xs sm:text-sm text-text-muted">
+        <h3 className="mb-2 text-sm sm:text-base font-medium text-text">How Streak Rewards Work</h3>
         <ul className="space-y-1">
           <li>• Complete any action daily (apply, analyze resume, prep interview) to maintain your streak</li>
           <li>• Missing a day resets your streak — use streak freeze tokens to protect it</li>

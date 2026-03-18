@@ -100,16 +100,16 @@ export default function NewJobPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="text-2xl font-bold text-text">Post New Job</h1>
+    <div className="mx-auto max-w-3xl space-y-4 sm:space-y-6">
+      <h1 className="text-xl font-bold text-text sm:text-2xl lg:text-3xl">Post New Job</h1>
 
-      <form className="space-y-5">
+      <form className="space-y-4 sm:space-y-5">
         <div>
           <label className="mb-1 block text-sm font-medium text-text">Job Title *</label>
           <input
             type="text" value={title} onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g., Senior React Developer"
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[44px]"
           />
         </div>
 
@@ -127,7 +127,7 @@ export default function NewJobPage() {
           <textarea
             value={description} onChange={(e) => setDescription(e.target.value)}
             rows={8} placeholder="Describe the role, responsibilities, and what you're looking for..."
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
 
@@ -136,7 +136,7 @@ export default function NewJobPage() {
           <textarea
             value={requirements} onChange={(e) => setRequirements(e.target.value)}
             rows={4} placeholder="Must-have qualifications, certifications..."
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
 
@@ -145,15 +145,15 @@ export default function NewJobPage() {
           <input
             type="text" value={skills} onChange={(e) => setSkills(e.target.value)}
             placeholder="React, TypeScript, Node.js, AWS..."
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[44px]"
           />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Work Type</label>
             <select value={workType} onChange={(e) => setWorkType(e.target.value as WorkType)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none">
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]">
               <option value="onsite">On-site</option>
               <option value="remote">Remote</option>
               <option value="hybrid">Hybrid</option>
@@ -162,7 +162,7 @@ export default function NewJobPage() {
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Employment Type</label>
             <select value={employmentType} onChange={(e) => setEmploymentType(e.target.value as EmploymentType)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none">
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]">
               <option value="full_time">Full Time</option>
               <option value="part_time">Part Time</option>
               <option value="contract">Contract</option>
@@ -173,43 +173,43 @@ export default function NewJobPage() {
             <label className="mb-1 block text-sm font-medium text-text">Location</label>
             <input type="text" value={location} onChange={(e) => setLocation(e.target.value)}
               placeholder="e.g., Chennai, Remote"
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none" />
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none min-h-[44px]" />
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Exp Min (yrs)</label>
             <input type="number" value={experienceMin} onChange={(e) => setExperienceMin(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none" />
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]" />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Exp Max (yrs)</label>
             <input type="number" value={experienceMax} onChange={(e) => setExperienceMax(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none" />
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]" />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Salary Min</label>
             <input type="number" value={salaryMin} onChange={(e) => setSalaryMin(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none" />
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]" />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Salary Max</label>
             <input type="number" value={salaryMax} onChange={(e) => setSalaryMax(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none" />
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]" />
           </div>
         </div>
 
         {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
 
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <button type="button" onClick={(e) => handleSubmit(e, "active")} disabled={loading}
-            className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50">
+            className="flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 min-h-[44px] w-full sm:w-auto">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Publish Job
           </button>
           <button type="button" onClick={(e) => handleSubmit(e, "draft")} disabled={loading}
-            className="rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-medium text-text hover:bg-gray-50 disabled:opacity-50">
+            className="rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-medium text-text hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50 min-h-[44px] w-full sm:w-auto">
             Save as Draft
           </button>
         </div>

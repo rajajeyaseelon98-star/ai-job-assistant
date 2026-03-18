@@ -98,17 +98,17 @@ export default async function SEOJobPage({
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
-          <Link href="/" className="text-xl font-semibold text-blue-600">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 sm:px-6 lg:px-8 py-4">
+          <Link href="/" className="text-lg sm:text-xl font-semibold text-blue-600">
             AI Job Assistant
           </Link>
-          <nav className="flex gap-3">
-            <Link href="/jobs" className="text-sm text-gray-600 hover:text-gray-900">
+          <nav className="flex items-center gap-2 sm:gap-3">
+            <Link href="/jobs" className="text-sm text-gray-600 hover:text-gray-900 hidden sm:inline">
               Browse Jobs
             </Link>
             <Link
               href="/signup"
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+              className="rounded-lg bg-blue-600 px-3 sm:px-4 py-2 text-sm text-white hover:bg-blue-700 min-h-[44px] inline-flex items-center active:scale-[0.98] transition-transform"
             >
               Sign Up Free
             </Link>
@@ -116,12 +116,12 @@ export default async function SEOJobPage({
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-4 py-8">
-        <div className="rounded-2xl bg-white p-8 shadow-sm">
+      <main className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="rounded-2xl bg-white p-4 sm:p-6 md:p-8 shadow-sm">
           {/* Job Header */}
-          <div className="border-b border-gray-100 pb-6">
-            <h1 className="text-3xl font-bold text-gray-900">{j.title}</h1>
-            <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-600">
+          <div className="border-b border-gray-100 pb-4 sm:pb-6">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{j.title}</h1>
+            <div className="mt-2 flex flex-wrap gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
               {company && <span className="font-medium">{company.name}</span>}
               {j.location && <span>{j.location}</span>}
               {j.work_type && (
@@ -154,8 +154,8 @@ export default async function SEOJobPage({
 
           {/* Skills */}
           {j.skills_required && j.skills_required.length > 0 && (
-            <div className="mt-6">
-              <h2 className="text-lg font-semibold text-gray-900">Required Skills</h2>
+            <div className="mt-4 sm:mt-6">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">Required Skills</h2>
               <div className="mt-2 flex flex-wrap gap-2">
                 {j.skills_required.map((skill) => (
                   <span
@@ -170,18 +170,18 @@ export default async function SEOJobPage({
           )}
 
           {/* Description */}
-          <div className="mt-6">
-            <h2 className="text-lg font-semibold text-gray-900">Job Description</h2>
-            <div className="mt-2 whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">
+          <div className="mt-4 sm:mt-6">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Job Description</h2>
+            <div className="mt-2 whitespace-pre-wrap text-xs sm:text-sm text-gray-700 leading-relaxed">
               {j.description}
             </div>
           </div>
 
           {/* Requirements */}
           {j.requirements && (
-            <div className="mt-6">
-              <h2 className="text-lg font-semibold text-gray-900">Requirements</h2>
-              <div className="mt-2 whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">
+            <div className="mt-4 sm:mt-6">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">Requirements</h2>
+              <div className="mt-2 whitespace-pre-wrap text-xs sm:text-sm text-gray-700 leading-relaxed">
                 {j.requirements}
               </div>
             </div>
@@ -195,16 +195,16 @@ export default async function SEOJobPage({
           )}
 
           {/* CTA */}
-          <div className="mt-8 rounded-xl border border-blue-200 bg-blue-50 p-6 text-center">
-            <h3 className="text-lg font-bold text-gray-900">
+          <div className="mt-6 sm:mt-8 rounded-xl border border-blue-200 bg-blue-50 p-4 sm:p-6 text-center">
+            <h3 className="text-base sm:text-lg font-bold text-gray-900">
               Apply with AI-Powered Resume Matching
             </h3>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-xs sm:text-sm text-gray-600">
               Get your match score, interview probability, and AI-tailored cover letter
             </p>
             <Link
               href="/signup"
-              className="mt-4 inline-block rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700"
+              className="mt-4 inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700 min-h-[44px] w-full sm:w-auto active:scale-[0.98] transition-transform"
             >
               Sign Up & Apply Free
             </Link>
@@ -219,7 +219,7 @@ export default async function SEOJobPage({
         </div>
       </main>
 
-      <footer className="border-t border-gray-200 py-8 text-center text-sm text-gray-400">
+      <footer className="border-t border-gray-200 py-6 sm:py-8 text-center text-xs sm:text-sm text-gray-400 px-4">
         © {new Date().getFullYear()} AI Job Assistant
       </footer>
 

@@ -87,44 +87,44 @@ export default function CompanyProfilePage() {
   if (loading) return <p className="text-sm text-text-muted">Loading...</p>;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-2xl space-y-4 sm:space-y-6">
       <div className="flex items-center gap-3">
-        <Building2 className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold text-text">Company Profile</h1>
+        <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+        <h1 className="text-xl font-bold text-text sm:text-2xl lg:text-3xl">Company Profile</h1>
       </div>
 
-      <form onSubmit={handleSave} className="space-y-4">
+      <form onSubmit={handleSave} className="space-y-3 sm:space-y-4">
         <div>
           <label className="mb-1 block text-sm font-medium text-text">Company Name *</label>
           <input type="text" value={company.name} onChange={(e) => setCompany({ ...company, name: e.target.value })}
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
+            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[44px]" />
         </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium text-text">Description</label>
           <textarea value={company.description} onChange={(e) => setCompany({ ...company, description: e.target.value })}
             rows={4} placeholder="What does your company do?"
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none" />
+            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none" />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Website</label>
             <input type="url" value={company.website} onChange={(e) => setCompany({ ...company, website: e.target.value })}
-              placeholder="https://..." className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none" />
+              placeholder="https://..." className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none min-h-[44px]" />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Industry</label>
             <input type="text" value={company.industry} onChange={(e) => setCompany({ ...company, industry: e.target.value })}
-              placeholder="Technology, Finance..." className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none" />
+              placeholder="Technology, Finance..." className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none min-h-[44px]" />
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Company Size</label>
             <select value={company.size} onChange={(e) => setCompany({ ...company, size: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none">
+              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]">
               <option value="">Select</option>
               <option value="1-10">1-10</option>
               <option value="11-50">11-50</option>
@@ -137,7 +137,7 @@ export default function CompanyProfilePage() {
           <div>
             <label className="mb-1 block text-sm font-medium text-text">Location</label>
             <input type="text" value={company.location} onChange={(e) => setCompany({ ...company, location: e.target.value })}
-              placeholder="Chennai, India" className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none" />
+              placeholder="Chennai, India" className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none min-h-[44px]" />
           </div>
         </div>
 
@@ -145,21 +145,21 @@ export default function CompanyProfilePage() {
           <label className="mb-1 block text-sm font-medium text-text">Culture</label>
           <textarea value={company.culture} onChange={(e) => setCompany({ ...company, culture: e.target.value })}
             rows={3} placeholder="Describe your company culture..."
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none" />
+            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none" />
         </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium text-text">Benefits</label>
           <textarea value={company.benefits} onChange={(e) => setCompany({ ...company, benefits: e.target.value })}
             rows={3} placeholder="Health insurance, flexible hours, remote work..."
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none" />
+            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none" />
         </div>
 
         {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
         {success && <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-600">{success}</p>}
 
         <button type="submit" disabled={saving}
-          className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50">
+          className="flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 min-h-[44px] w-full sm:w-auto">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           Save Profile
         </button>

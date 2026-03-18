@@ -85,14 +85,14 @@ export function AutoApplyResults({ runId, results, status, onComplete }: AutoApp
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-text">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <h2 className="text-base sm:text-lg font-semibold text-text">
           {jobs.length} Matched Jobs
         </h2>
         <div className="flex gap-2">
-          <button onClick={selectAll} className="text-xs text-primary hover:underline">Select all</button>
-          <span className="text-xs text-text-muted">|</span>
-          <button onClick={deselectAll} className="text-xs text-text-muted hover:underline">Deselect all</button>
+          <button onClick={selectAll} className="text-xs text-primary hover:underline active:opacity-70 min-h-[44px] sm:min-h-0">Select all</button>
+          <span className="text-xs text-text-muted leading-[44px] sm:leading-normal">|</span>
+          <button onClick={deselectAll} className="text-xs text-text-muted hover:underline active:opacity-70 min-h-[44px] sm:min-h-0">Deselect all</button>
         </div>
       </div>
 
@@ -103,7 +103,7 @@ export function AutoApplyResults({ runId, results, status, onComplete }: AutoApp
       </div>
 
       {!confirmed && (
-        <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-card p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-gray-200 bg-card p-3 sm:p-4">
           <div className="flex-1">
             <p className="text-sm font-medium text-text">
               {selectedCount} job{selectedCount !== 1 ? "s" : ""} selected
@@ -112,11 +112,11 @@ export function AutoApplyResults({ runId, results, status, onComplete }: AutoApp
               Applications will be tracked in your Applications page
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto">
             <button
               onClick={handleSaveSelections}
               disabled={saving}
-              className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-text hover:bg-gray-50 disabled:opacity-50"
+              className="flex flex-1 sm:flex-none items-center justify-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 min-h-[44px] text-xs font-medium text-text hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50 transition-colors"
             >
               {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
               Save
@@ -124,7 +124,7 @@ export function AutoApplyResults({ runId, results, status, onComplete }: AutoApp
             <button
               onClick={handleConfirmApply}
               disabled={confirming || selectedCount === 0}
-              className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-primary/90 disabled:opacity-50"
+              className="flex flex-1 sm:flex-none items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 min-h-[44px] text-xs font-medium text-white hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 transition-colors"
             >
               {confirming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
               Apply to {selectedCount} Job{selectedCount !== 1 ? "s" : ""}
@@ -134,9 +134,9 @@ export function AutoApplyResults({ runId, results, status, onComplete }: AutoApp
       )}
 
       {confirmed && (
-        <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 p-4">
-          <CheckCircle className="h-5 w-5 text-green-600" />
-          <p className="text-sm font-medium text-green-800">
+        <div className="flex items-start sm:items-center gap-2 rounded-xl border border-green-200 bg-green-50 p-3 sm:p-4">
+          <CheckCircle className="h-5 w-5 shrink-0 text-green-600" />
+          <p className="text-xs sm:text-sm font-medium text-green-800">
             Applications submitted! Check your Applications page for tracking.
           </p>
         </div>

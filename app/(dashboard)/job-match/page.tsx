@@ -51,9 +51,9 @@ function JobMatchContent() {
   }, [matchId]);
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-text">Job Match</h1>
-      <p className="text-text-muted">
+    <div className="space-y-4 sm:space-y-6 md:space-y-8">
+      <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Job Match</h1>
+      <p className="text-sm sm:text-base text-text-muted">
         Paste your resume and a job description to see how well you match and which keywords to add.
       </p>
       {matchId && result && (
@@ -61,8 +61,8 @@ function JobMatchContent() {
       )}
       {pastLoading && <p className="text-sm text-text-muted">Loading past match…</p>}
 
-      <section className="rounded-xl border border-gray-200 bg-card p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-text">Paste job description</h2>
+      <section className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 lg:p-6 shadow-sm">
+        <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Paste job description</h2>
         <JobMatchForm
           defaultResumeText={formDefaults.resumeText}
           defaultJobTitle={formDefaults.jobTitle}
@@ -73,7 +73,7 @@ function JobMatchContent() {
 
       {result && (
         <section>
-          <h2 className="mb-4 text-lg font-semibold text-text">Match result</h2>
+          <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Match result</h2>
           <MatchResult
             match_score={result.match_score}
             matched_skills={result.matched_skills ?? []}
@@ -88,7 +88,7 @@ function JobMatchContent() {
 
 export default function JobMatchPage() {
   return (
-    <Suspense fallback={<div className="space-y-8"><h1 className="text-2xl font-bold text-text">Job Match</h1><p className="text-text-muted">Loading…</p></div>}>
+    <Suspense fallback={<div className="space-y-4 sm:space-y-6"><h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Job Match</h1><p className="text-text-muted">Loading…</p></div>}>
       <JobMatchContent />
     </Suspense>
   );

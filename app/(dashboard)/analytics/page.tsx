@@ -80,18 +80,18 @@ export default function AnalyticsPage() {
   const totalFunnel = funnel.applied + funnel.interviewing + funnel.offers + funnel.rejected + funnel.pending;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-4xl space-y-4 sm:space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-text">
-          <BarChart3 className="h-6 w-6 text-primary" /> Career Analytics
+        <h1 className="flex items-center gap-2 text-xl sm:text-2xl lg:text-3xl font-bold text-text">
+          <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Career Analytics
         </h1>
-        <p className="mt-1 text-sm text-text-muted">
+        <p className="mt-1 text-sm sm:text-base text-text-muted">
           AI-powered insights from your application history. The system learns and adapts.
         </p>
       </div>
 
       {/* Key Metrics */}
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         <MetricCard
           icon={<Briefcase className="h-5 w-5 text-blue-500" />}
           label="Applications"
@@ -122,17 +122,17 @@ export default function AnalyticsPage() {
 
       {/* Conversion Funnel */}
       {totalFunnel > 0 && (
-        <div className="rounded-xl border border-gray-200 bg-card p-5">
-          <h2 className="text-lg font-semibold text-text mb-4 flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" /> Conversion Funnel
+        <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5">
+          <h2 className="text-lg sm:text-xl font-semibold text-text mb-4 flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" /> Conversion Funnel
           </h2>
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-2">
             <FunnelStep label="Saved" count={funnel.pending} total={totalFunnel} color="bg-gray-400" />
-            <ArrowRight className="h-4 w-4 text-text-muted shrink-0" />
+            <ArrowRight className="h-4 w-4 text-text-muted shrink-0 rotate-90 sm:rotate-0" />
             <FunnelStep label="Applied" count={funnel.applied} total={totalFunnel} color="bg-blue-500" />
-            <ArrowRight className="h-4 w-4 text-text-muted shrink-0" />
+            <ArrowRight className="h-4 w-4 text-text-muted shrink-0 rotate-90 sm:rotate-0" />
             <FunnelStep label="Interview" count={funnel.interviewing} total={totalFunnel} color="bg-purple-500" />
-            <ArrowRight className="h-4 w-4 text-text-muted shrink-0" />
+            <ArrowRight className="h-4 w-4 text-text-muted shrink-0 rotate-90 sm:rotate-0" />
             <FunnelStep label="Offer" count={funnel.offers} total={totalFunnel} color="bg-green-500" />
           </div>
           {funnel.rejected > 0 && (
@@ -146,9 +146,9 @@ export default function AnalyticsPage() {
 
       {/* AI Recommendations */}
       {insights.recommendations.length > 0 && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
-          <h2 className="text-lg font-semibold text-amber-900 mb-3 flex items-center gap-2">
-            <Lightbulb className="h-5 w-5" /> AI Recommendations
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 sm:p-4 md:p-5">
+          <h2 className="text-lg sm:text-xl font-semibold text-amber-900 mb-3 flex items-center gap-2">
+            <Lightbulb className="h-4 w-4 sm:h-5 sm:w-5" /> AI Recommendations
           </h2>
           <ul className="space-y-2">
             {insights.recommendations.map((rec, i) => (
@@ -161,10 +161,10 @@ export default function AnalyticsPage() {
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:gap-6">
         {/* Best Performing Skills */}
         {insights.best_performing_skills.length > 0 && (
-          <div className="rounded-xl border border-gray-200 bg-card p-5">
+          <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5">
             <h3 className="text-sm font-semibold text-text mb-3 flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-green-500" /> Skills That Get Interviews
             </h3>
@@ -186,7 +186,7 @@ export default function AnalyticsPage() {
 
         {/* Worst Performing Roles */}
         {insights.worst_performing_roles.length > 0 && (
-          <div className="rounded-xl border border-gray-200 bg-card p-5">
+          <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5">
             <h3 className="text-sm font-semibold text-text mb-3 flex items-center gap-2">
               <TrendingDown className="h-4 w-4 text-red-400" /> Roles to Reconsider
             </h3>
@@ -208,7 +208,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Learning System Status */}
-      <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
+      <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 sm:p-4">
         <h3 className="text-sm font-semibold text-blue-900 mb-2">
           AI Learning System Active
         </h3>
@@ -241,7 +241,7 @@ function MetricCard({
   color: string;
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-card p-4">
+    <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4">
       <div className="flex items-center gap-2 mb-2">
         {icon}
         <span className="text-xs font-medium text-text-muted">{label}</span>

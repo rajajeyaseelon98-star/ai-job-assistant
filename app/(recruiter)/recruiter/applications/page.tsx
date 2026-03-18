@@ -69,17 +69,17 @@ export default function RecruiterApplicationsPage() {
   if (loading) return <p className="text-sm text-text-muted">Loading applications...</p>;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <h1 className="text-2xl font-bold text-text">Applications Pipeline</h1>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <h1 className="text-xl font-bold text-text sm:text-2xl lg:text-3xl">Applications Pipeline</h1>
         <div className="flex gap-2">
           <button
             onClick={() => setView("pipeline")}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium ${view === "pipeline" ? "bg-primary text-white" : "bg-gray-100 text-text-muted"}`}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium min-h-[44px] sm:min-h-0 ${view === "pipeline" ? "bg-primary text-white" : "bg-gray-100 text-text-muted active:bg-gray-200"}`}
           >Pipeline</button>
           <button
             onClick={() => setView("list")}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium ${view === "list" ? "bg-primary text-white" : "bg-gray-100 text-text-muted"}`}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium min-h-[44px] sm:min-h-0 ${view === "list" ? "bg-primary text-white" : "bg-gray-100 text-text-muted active:bg-gray-200"}`}
           >List</button>
         </div>
       </div>
@@ -89,11 +89,11 @@ export default function RecruiterApplicationsPage() {
           <p className="text-sm text-text-muted">No applications yet.</p>
         </div>
       ) : view === "pipeline" ? (
-        <div className="flex gap-3 overflow-x-auto pb-4">
+        <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-4 -mx-1 px-1">
           {PIPELINE_STAGES.map((stage) => {
             const stageApps = apps.filter((a) => a.stage === stage);
             return (
-              <div key={stage} className="min-w-[200px] flex-1">
+              <div key={stage} className="min-w-[180px] sm:min-w-[200px] flex-1">
                 <div className="mb-2 flex items-center gap-2">
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STAGE_COLORS[stage]}`}>
                     {STAGE_LABELS[stage]}
@@ -185,8 +185,8 @@ function AppCard({
       {/* Rating */}
       <div className="mt-2 flex items-center gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
-          <button key={star} onClick={() => onRate(app.id, star)} className="p-0">
-            <Star className={`h-3.5 w-3.5 ${star <= (app.recruiter_rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
+          <button key={star} onClick={() => onRate(app.id, star)} className="p-0.5 min-h-[28px] min-w-[28px] sm:min-h-0 sm:min-w-0 flex items-center justify-center">
+            <Star className={`h-4 w-4 sm:h-3.5 sm:w-3.5 ${star <= (app.recruiter_rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
           </button>
         ))}
       </div>
@@ -199,12 +199,12 @@ function AppCard({
         <button
           onClick={() => onScreen(app.id)}
           disabled={screeningId === app.id}
-          className="flex items-center gap-1 rounded bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700 hover:bg-purple-200 disabled:opacity-50"
+          className="flex items-center gap-1 rounded bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700 hover:bg-purple-200 active:bg-purple-300 disabled:opacity-50 min-h-[36px] sm:min-h-0"
         >
           {screeningId === app.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Brain className="h-3 w-3" />}
           AI Screen
         </button>
-        <button onClick={() => setExpanded(!expanded)} className="text-xs text-primary hover:underline flex items-center gap-0.5">
+        <button onClick={() => setExpanded(!expanded)} className="text-xs text-primary hover:underline flex items-center gap-0.5 min-h-[36px] sm:min-h-0">
           {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
           {expanded ? "Less" : "More"}
         </button>
@@ -215,7 +215,7 @@ function AppCard({
           <select
             value={app.stage}
             onChange={(e) => onStageChange(app.id, e.target.value as ApplicationStage)}
-            className="w-full rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-text"
+            className="w-full rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-base sm:text-xs text-text min-h-[44px] sm:min-h-0"
           >
             {PIPELINE_STAGES.map((s) => (
               <option key={s} value={s}>{STAGE_LABELS[s]}</option>

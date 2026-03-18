@@ -70,18 +70,18 @@ export function ApplicationForm({ initial, onSave, onCancel }: ApplicationFormPr
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-card p-5 shadow-sm">
+    <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-base font-semibold text-text">
+        <h3 className="text-sm sm:text-base font-semibold text-text">
           {isEdit ? "Edit Application" : "Add Application"}
         </h3>
-        <button type="button" onClick={onCancel} className="text-text-muted hover:text-text">
+        <button type="button" onClick={onCancel} className="text-text-muted hover:text-text active:text-text/70 min-h-[44px] min-w-[44px] flex items-center justify-center">
           <X className="h-5 w-5" />
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-xs font-medium text-text">Company *</label>
             <input
@@ -89,7 +89,7 @@ export function ApplicationForm({ initial, onSave, onCancel }: ApplicationFormPr
               value={company}
               onChange={(e) => setCompany(e.target.value)}
               placeholder="Google, Amazon..."
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
           <div>
@@ -99,18 +99,18 @@ export function ApplicationForm({ initial, onSave, onCancel }: ApplicationFormPr
               value={role}
               onChange={(e) => setRole(e.target.value)}
               placeholder="Senior Frontend Developer"
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
           <div>
             <label className="mb-1 block text-xs font-medium text-text">Status</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as ApplicationStatus)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             >
               {Object.entries(STATUS_LABELS).map(([val, label]) => (
                 <option key={val} value={val}>{label}</option>
@@ -123,7 +123,7 @@ export function ApplicationForm({ initial, onSave, onCancel }: ApplicationFormPr
               type="date"
               value={appliedDate}
               onChange={(e) => setAppliedDate(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
           <div>
@@ -133,12 +133,12 @@ export function ApplicationForm({ initial, onSave, onCancel }: ApplicationFormPr
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="Remote, NYC..."
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-xs font-medium text-text">Job URL</label>
             <input
@@ -146,7 +146,7 @@ export function ApplicationForm({ initial, onSave, onCancel }: ApplicationFormPr
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://..."
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
           <div>
@@ -156,7 +156,7 @@ export function ApplicationForm({ initial, onSave, onCancel }: ApplicationFormPr
               value={salary}
               onChange={(e) => setSalary(e.target.value)}
               placeholder="$120k - $150k"
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
         </div>
@@ -168,7 +168,7 @@ export function ApplicationForm({ initial, onSave, onCancel }: ApplicationFormPr
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
             placeholder="Recruiter name, interview feedback, next steps..."
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
 
@@ -176,11 +176,11 @@ export function ApplicationForm({ initial, onSave, onCancel }: ApplicationFormPr
           <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
         )}
 
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <button
             type="submit"
             disabled={loading}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
+            className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 min-h-[44px] text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 transition-colors"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -192,7 +192,7 @@ export function ApplicationForm({ initial, onSave, onCancel }: ApplicationFormPr
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-text hover:bg-gray-50"
+            className="rounded-lg border border-gray-300 px-4 py-2 min-h-[44px] text-sm font-medium text-text hover:bg-gray-50 active:bg-gray-100 transition-colors"
           >
             Cancel
           </button>

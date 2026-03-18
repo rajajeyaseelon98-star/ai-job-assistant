@@ -40,18 +40,18 @@ function ApplicationCard({
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+    <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-3 shadow-sm active:shadow-md transition-shadow">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <h4 className="text-sm font-semibold text-text truncate">{app.role}</h4>
+          <h4 className="text-xs sm:text-sm font-semibold text-text truncate">{app.role}</h4>
           <p className="text-xs text-text-muted truncate">{app.company}</p>
         </div>
         <div className="flex shrink-0 gap-1">
-          <button onClick={() => onEdit(app)} className="text-text-muted hover:text-primary p-0.5">
-            <Pencil className="h-3.5 w-3.5" />
+          <button onClick={() => onEdit(app)} className="text-text-muted hover:text-primary active:text-primary/70 p-1.5 sm:p-0.5 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center">
+            <Pencil className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           </button>
-          <button onClick={() => onDelete(app.id)} className="text-text-muted hover:text-red-500 p-0.5">
-            <Trash2 className="h-3.5 w-3.5" />
+          <button onClick={() => onDelete(app.id)} className="text-text-muted hover:text-red-500 active:text-red-400 p-1.5 sm:p-0.5 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center">
+            <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           </button>
         </div>
       </div>
@@ -83,7 +83,7 @@ function ApplicationCard({
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}
-          className="mt-2 flex items-center gap-1 text-xs text-primary hover:underline"
+          className="mt-2 flex items-center gap-1 text-xs text-primary hover:underline active:opacity-70 min-h-[44px] sm:min-h-0"
         >
           {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
           {expanded ? "Less" : "More"}
@@ -92,13 +92,13 @@ function ApplicationCard({
 
       {expanded && (
         <div className="mt-2 space-y-1.5">
-          {app.notes && <p className="text-xs text-text-muted">{app.notes}</p>}
+          {app.notes && <p className="text-xs text-text-muted break-words">{app.notes}</p>}
           {app.url && (
             <a
               href={app.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+              className="inline-flex items-center gap-1 text-xs text-primary hover:underline active:opacity-70 min-h-[44px] sm:min-h-0"
             >
               <ExternalLink className="h-3 w-3" /> View listing
             </a>
@@ -106,7 +106,7 @@ function ApplicationCard({
           <select
             value={app.status}
             onChange={(e) => onStatusChange(app.id, e.target.value as ApplicationStatus)}
-            className="w-full rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-text"
+            className="w-full min-h-[44px] sm:min-h-0 rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-text"
           >
             {Object.entries(STATUS_LABELS).map(([val, label]) => (
               <option key={val} value={val}>{label}</option>
@@ -135,32 +135,64 @@ export function ApplicationBoard({
 
   if (view === "board") {
     return (
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {BOARD_COLUMNS.map((status) => {
-          const items = applications.filter((a) => a.status === status);
-          return (
-            <div key={status} className="min-w-[220px] flex-1">
-              <div className="mb-2 flex items-center gap-2">
-                <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[status]}`}>
-                  {STATUS_LABELS[status]}
-                </span>
-                <span className="text-xs text-text-muted">{items.length}</span>
+      <>
+        {/* Mobile: stacked cards grouped by status */}
+        <div className="space-y-4 md:hidden">
+          {BOARD_COLUMNS.map((status) => {
+            const items = applications.filter((a) => a.status === status);
+            if (items.length === 0) return null;
+            return (
+              <div key={status}>
+                <div className="mb-2 flex items-center gap-2">
+                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[status]}`}>
+                    {STATUS_LABELS[status]}
+                  </span>
+                  <span className="text-xs text-text-muted">{items.length}</span>
+                </div>
+                <div className="space-y-2">
+                  {items.map((app) => (
+                    <ApplicationCard
+                      key={app.id}
+                      app={app}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                      onStatusChange={onStatusChange}
+                    />
+                  ))}
+                </div>
               </div>
-              <div className="space-y-2 rounded-lg bg-gray-50 p-2 min-h-[100px]">
-                {items.map((app) => (
-                  <ApplicationCard
-                    key={app.id}
-                    app={app}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    onStatusChange={onStatusChange}
-                  />
-                ))}
+            );
+          })}
+        </div>
+
+        {/* Desktop: horizontal kanban columns */}
+        <div className="hidden md:flex gap-4 overflow-x-auto pb-4">
+          {BOARD_COLUMNS.map((status) => {
+            const items = applications.filter((a) => a.status === status);
+            return (
+              <div key={status} className="min-w-[220px] flex-1">
+                <div className="mb-2 flex items-center gap-2">
+                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[status]}`}>
+                    {STATUS_LABELS[status]}
+                  </span>
+                  <span className="text-xs text-text-muted">{items.length}</span>
+                </div>
+                <div className="space-y-2 rounded-lg bg-gray-50 p-2 min-h-[100px]">
+                  {items.map((app) => (
+                    <ApplicationCard
+                      key={app.id}
+                      app={app}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                      onStatusChange={onStatusChange}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      </>
     );
   }
 

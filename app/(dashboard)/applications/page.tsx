@@ -76,18 +76,18 @@ export default function ApplicationsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-text">Application Tracker</h1>
-          <p className="mt-1 text-text-muted">Track your job applications in one place.</p>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Application Tracker</h1>
+          <p className="mt-1 text-sm sm:text-base text-text-muted">Track your job applications in one place.</p>
         </div>
         <button
           onClick={() => {
             setEditing(null);
             setShowForm(true);
           }}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+          className="w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 active:scale-[0.98]"
         >
           <Plus className="h-4 w-4" />
           Add
@@ -95,16 +95,16 @@ export default function ApplicationsPage() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         {[
           { label: "Total", value: stats.total, color: "text-text" },
           { label: "Applied", value: stats.applied, color: "text-blue-600" },
           { label: "Interviewing", value: stats.interviewing, color: "text-yellow-600" },
           { label: "Offers", value: stats.offers, color: "text-green-600" },
         ].map((s) => (
-          <div key={s.label} className="rounded-xl border border-gray-200 bg-card px-4 py-3 shadow-sm">
-            <p className="text-xs text-text-muted">{s.label}</p>
-            <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
+          <div key={s.label} className="rounded-xl border border-gray-200 bg-card px-4 py-3 sm:px-5 sm:py-4 shadow-sm">
+            <p className="text-xs sm:text-sm text-text-muted">{s.label}</p>
+            <p className={`text-xl sm:text-2xl font-bold ${s.color}`}>{s.value}</p>
           </div>
         ))}
       </div>
@@ -122,12 +122,12 @@ export default function ApplicationsPage() {
       )}
 
       {/* Controls */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-2">
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="rounded-lg border border-gray-300 bg-background px-2 py-1.5 text-sm text-text"
+            className="min-h-[44px] sm:min-h-0 rounded-lg border border-gray-300 bg-background px-2 py-1.5 text-base sm:text-sm text-text"
           >
             <option value="all">All statuses</option>
             {Object.entries(STATUS_LABELS).map(([val, label]) => (

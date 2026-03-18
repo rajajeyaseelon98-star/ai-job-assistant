@@ -22,13 +22,13 @@ export default function ResetPasswordPage() {
 
   if (sent) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4">
-        <div className="w-full max-w-md rounded-xl border border-gray-200 bg-card p-8 shadow-sm text-center">
-          <h1 className="text-2xl font-bold text-text">Check your email</h1>
-          <p className="mt-2 text-text-muted">
+      <div className="flex min-h-screen items-center justify-center bg-background px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md rounded-xl border border-gray-200 bg-card p-6 sm:p-8 shadow-sm text-center">
+          <h1 className="text-xl sm:text-2xl font-bold text-text">Check your email</h1>
+          <p className="mt-2 text-sm sm:text-base text-text-muted">
             If an account exists for {email}, we sent a password reset link.
           </p>
-          <Link href="/login" className="mt-6 inline-block text-primary hover:underline">
+          <Link href="/login" className="mt-6 inline-block text-primary hover:underline text-sm sm:text-base min-h-[44px] inline-flex items-center justify-center">
             Back to login
           </Link>
         </div>
@@ -37,12 +37,12 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md rounded-xl border border-gray-200 bg-card p-8 shadow-sm">
-        <h1 className="text-2xl font-bold text-text">Reset password</h1>
-        <p className="mt-1 text-text-muted">Enter your email to receive a reset link.</p>
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md rounded-xl border border-gray-200 bg-card p-6 sm:p-8 shadow-sm">
+        <h1 className="text-xl sm:text-2xl font-bold text-text">Reset password</h1>
+        <p className="mt-1 text-sm sm:text-base text-text-muted">Enter your email to receive a reset link.</p>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <form onSubmit={handleSubmit} className="mt-5 sm:mt-6 space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-text">
               Email
@@ -53,13 +53,13 @@ export default function ResetPasswordPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-text"
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 sm:py-2 text-base sm:text-sm text-text min-h-[44px]"
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-primary py-2 font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+            className="w-full rounded-lg bg-primary py-2.5 sm:py-2 font-medium text-white hover:bg-primary-hover disabled:opacity-50 min-h-[44px] active:scale-[0.98] transition-transform text-sm sm:text-base"
           >
             {loading ? "Sending…" : "Send reset link"}
           </button>

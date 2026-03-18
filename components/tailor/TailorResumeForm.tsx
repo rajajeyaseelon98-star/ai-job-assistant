@@ -91,11 +91,11 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
       {/* Resume Input */}
-      <div className="rounded-xl border border-gray-200 bg-card p-5 shadow-sm">
-        <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-text">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">1</span>
+      <div className="rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 shadow-sm">
+        <h3 className="mb-3 flex items-center gap-2 text-lg sm:text-xl font-semibold text-text">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary shrink-0">1</span>
           Your Resume
         </h3>
 
@@ -112,7 +112,7 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="mb-3 flex items-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-2 text-sm text-text-muted hover:border-primary hover:text-primary transition-colors"
+          className="mb-3 w-full sm:w-auto min-h-[44px] flex items-center justify-center sm:justify-start gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm text-text-muted hover:border-primary hover:text-primary active:bg-gray-50 transition-colors"
         >
           <Upload className="h-4 w-4" />
           Upload PDF/DOCX
@@ -123,18 +123,18 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
           onChange={(e) => setResumeText(e.target.value)}
           rows={5}
           placeholder="Or paste your full resume text here..."
-          className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[120px]"
         />
       </div>
 
       {/* Job Details */}
-      <div className="rounded-xl border border-gray-200 bg-card p-5 shadow-sm">
-        <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-text">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">2</span>
+      <div className="rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 shadow-sm">
+        <h3 className="mb-3 flex items-center gap-2 text-lg sm:text-xl font-semibold text-text">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary shrink-0">2</span>
           Target Job
         </h3>
 
-        <div className="mb-3">
+        <div className="mb-3 sm:mb-4">
           <label className="mb-1 block text-sm font-medium text-text">Job Title</label>
           <div className="relative">
             <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
@@ -143,7 +143,7 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
               value={jobTitle}
               onChange={(e) => setJobTitle(e.target.value)}
               placeholder="e.g., Senior Frontend Developer"
-              className="w-full rounded-lg border border-gray-300 bg-background py-2 pl-9 pr-3 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-lg border border-gray-300 bg-background py-2 pl-9 pr-3 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[44px]"
             />
           </div>
         </div>
@@ -157,7 +157,7 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
             onChange={(e) => setJobDescription(e.target.value)}
             rows={6}
             placeholder="Paste the full job description here. The more detail, the better the tailoring..."
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[120px]"
           />
         </div>
       </div>
@@ -176,7 +176,7 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
       <button
         type="submit"
         disabled={loading || !resumeText.trim() || !jobDescription.trim()}
-        className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
+        className="w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50"
       >
         {loading ? (
           <>

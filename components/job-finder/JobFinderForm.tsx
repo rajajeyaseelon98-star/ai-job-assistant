@@ -88,7 +88,7 @@ export function JobFinderForm({ onResult }: JobFinderFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6">
       {/* File upload */}
       <div>
         <label className="mb-1 block text-sm font-medium text-text">Upload Resume (PDF/DOCX)</label>
@@ -105,7 +105,7 @@ export function JobFinderForm({ onResult }: JobFinderFormProps) {
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="flex items-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-2 text-sm text-text-muted hover:border-primary hover:text-primary transition-colors"
+          className="w-full sm:w-auto min-h-[44px] flex items-center justify-center sm:justify-start gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm text-text-muted hover:border-primary hover:text-primary active:bg-gray-50 transition-colors"
         >
           <Upload className="h-4 w-4" />
           Choose file or drag & drop
@@ -122,7 +122,7 @@ export function JobFinderForm({ onResult }: JobFinderFormProps) {
           onChange={(e) => setResumeText(e.target.value)}
           rows={6}
           placeholder="Paste your full resume text here..."
-          className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[120px]"
         />
         {resumeText && (
           <p className="mt-1 text-xs text-text-muted">
@@ -143,7 +143,7 @@ export function JobFinderForm({ onResult }: JobFinderFormProps) {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="e.g., San Francisco, Remote, New York..."
-            className="w-full rounded-lg border border-gray-300 bg-background py-2 pl-9 pr-3 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full rounded-lg border border-gray-300 bg-background py-2 pl-9 pr-3 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[44px]"
           />
         </div>
       </div>
@@ -162,7 +162,7 @@ export function JobFinderForm({ onResult }: JobFinderFormProps) {
       <button
         type="submit"
         disabled={loading || !resumeText.trim()}
-        className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
+        className="w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50"
       >
         {loading ? (
           <>

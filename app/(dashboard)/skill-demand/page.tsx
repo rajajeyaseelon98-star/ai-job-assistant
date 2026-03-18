@@ -53,9 +53,9 @@ function SkillCard({ skill }: { skill: SkillDemandInfo }) {
   const StatusIcon = status.icon;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-card p-4">
-      <div className="flex items-center justify-between">
-        <h4 className="font-medium text-text capitalize">{skill.skill}</h4>
+    <div className="rounded-lg border border-gray-200 bg-card p-3 sm:p-4">
+      <div className="flex items-center justify-between gap-2">
+        <h4 className="font-medium text-text capitalize truncate">{skill.skill}</h4>
         <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${status.color}`}>
           <StatusIcon className="h-3 w-3" />
           {status.label}
@@ -127,10 +127,10 @@ export default function SkillDemandPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-text">Skill Demand Graph</h1>
-        <p className="text-sm text-text-muted">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Skill Demand Graph</h1>
+        <p className="text-sm sm:text-base text-text-muted">
           Discover which skills are in demand, trending, and highest paying
         </p>
       </div>
@@ -148,11 +148,11 @@ export default function SkillDemandPage() {
           {/* Your Skills Analysis */}
           {data!.your_skills_analysis.length > 0 && (
             <div>
-              <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-text">
-                <Zap className="h-5 w-5 text-primary" />
+              <h2 className="mb-3 flex items-center gap-2 text-lg sm:text-xl font-semibold text-text">
+                <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 Your Skills in the Market
               </h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {data!.your_skills_analysis.map((s) => (
                   <SkillCard key={s.skill} skill={s} />
                 ))}
@@ -163,11 +163,11 @@ export default function SkillDemandPage() {
           {/* Most In Demand */}
           {data!.most_in_demand.length > 0 && (
             <div>
-              <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-text">
-                <TrendingUp className="h-5 w-5 text-green-600" />
+              <h2 className="mb-3 flex items-center gap-2 text-lg sm:text-xl font-semibold text-text">
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                 Most In Demand
               </h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {data!.most_in_demand.map((s) => (
                   <SkillCard key={s.skill} skill={s} />
                 ))}
@@ -178,11 +178,11 @@ export default function SkillDemandPage() {
           {/* Trending */}
           {data!.trending_skills.length > 0 && (
             <div>
-              <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-text">
-                <Flame className="h-5 w-5 text-red-600" />
+              <h2 className="mb-3 flex items-center gap-2 text-lg sm:text-xl font-semibold text-text">
+                <Flame className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
                 Trending Up
               </h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {data!.trending_skills.map((s) => (
                   <SkillCard key={s.skill} skill={s} />
                 ))}
@@ -193,11 +193,11 @@ export default function SkillDemandPage() {
           {/* Highest Paying */}
           {data!.highest_paying.length > 0 && (
             <div>
-              <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-text">
-                <IndianRupee className="h-5 w-5 text-emerald-600" />
+              <h2 className="mb-3 flex items-center gap-2 text-lg sm:text-xl font-semibold text-text">
+                <IndianRupee className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                 Highest Paying Skills
               </h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {data!.highest_paying.map((s) => (
                   <SkillCard key={s.skill} skill={s} />
                 ))}
@@ -208,11 +208,11 @@ export default function SkillDemandPage() {
           {/* Declining */}
           {data!.declining_skills.length > 0 && (
             <div>
-              <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-text">
-                <TrendingDown className="h-5 w-5 text-orange-600" />
+              <h2 className="mb-3 flex items-center gap-2 text-lg sm:text-xl font-semibold text-text">
+                <TrendingDown className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
                 Declining Demand
               </h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {data!.declining_skills.map((s) => (
                   <SkillCard key={s.skill} skill={s} />
                 ))}

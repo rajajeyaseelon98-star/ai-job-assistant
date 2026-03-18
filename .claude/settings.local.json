@@ -19,7 +19,8 @@
       "Bash(grep -c \"kB$\")",
       "Bash(node _check_imports.js)",
       "Bash(node _check_circular.js)",
-      "Bash(node _check_multiline.js)"
+      "Bash(node _check_multiline.js)",
+      "Bash(grep -r \"useState\\\\|useRef\\\\|open\\\\|close\" /c/Users/Lenovo/ai-job-assistant/components --include=*.tsx -l)"
     ]
   }
 }

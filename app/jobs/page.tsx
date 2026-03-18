@@ -49,14 +49,14 @@ export default async function SEOJobsIndexPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link href="/" className="text-xl font-semibold text-blue-600">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8 py-4">
+          <Link href="/" className="text-lg sm:text-xl font-semibold text-blue-600">
             AI Job Assistant
           </Link>
           <nav className="flex gap-3">
             <Link
               href="/signup"
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+              className="rounded-lg bg-blue-600 px-3 sm:px-4 py-2 text-sm text-white hover:bg-blue-700 min-h-[44px] inline-flex items-center active:scale-[0.98] transition-transform"
             >
               Sign Up Free
             </Link>
@@ -64,18 +64,18 @@ export default async function SEOJobsIndexPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
             Developer Jobs in India
           </h1>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-sm sm:text-base text-gray-600">
             {jobList.length} active job{jobList.length !== 1 ? "s" : ""} — Apply with AI-powered resume matching
           </p>
         </div>
 
         {/* Job Cards */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {jobList.map((job) => {
             const companyRaw = job.companies as unknown as { name: string; industry: string } | { name: string; industry: string }[] | null;
             const company = companyRaw
@@ -90,12 +90,12 @@ export default async function SEOJobsIndexPage() {
               <Link
                 key={job.id}
                 href={`/jobs/${slugify(job.title + (job.location ? "-" + job.location : ""), job.id)}`}
-                className="block rounded-xl bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+                className="block rounded-xl bg-white p-4 sm:p-6 shadow-sm transition-shadow hover:shadow-md active:scale-[0.99]"
               >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900">{job.title}</h2>
-                    <div className="mt-1 flex flex-wrap gap-2 text-sm text-gray-600">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-base sm:text-lg font-semibold text-gray-900">{job.title}</h2>
+                    <div className="mt-1 flex flex-wrap gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-600">
                       {company && <span>{company.name}</span>}
                       {job.location && <span>| {job.location}</span>}
                       {job.work_type && (
@@ -105,7 +105,7 @@ export default async function SEOJobsIndexPage() {
                       )}
                     </div>
                   </div>
-                  <span className="text-xs text-gray-400">{posted}</span>
+                  <span className="text-xs text-gray-400 whitespace-nowrap">{posted}</span>
                 </div>
 
                 {(job.salary_min || job.salary_max) && (
@@ -138,9 +138,9 @@ export default async function SEOJobsIndexPage() {
         </div>
 
         {jobList.length === 0 && (
-          <div className="rounded-xl bg-white p-12 text-center shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900">No jobs posted yet</h2>
-            <p className="mt-2 text-sm text-gray-600">
+          <div className="rounded-xl bg-white p-6 sm:p-8 md:p-12 text-center shadow-sm">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900">No jobs posted yet</h2>
+            <p className="mt-2 text-xs sm:text-sm text-gray-600">
               Jobs will appear here as recruiters post them on the platform.
             </p>
           </div>
@@ -148,8 +148,8 @@ export default async function SEOJobsIndexPage() {
 
         {/* SEO: Popular Skills */}
         {skillSet.size > 0 && (
-          <div className="mt-12">
-            <h2 className="text-lg font-semibold text-gray-900">Popular Skills</h2>
+          <div className="mt-8 sm:mt-12">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Popular Skills</h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {[...skillSet].slice(0, 20).map((skill) => (
                 <span
@@ -165,8 +165,8 @@ export default async function SEOJobsIndexPage() {
 
         {/* SEO: Popular Locations */}
         {locationSet.size > 0 && (
-          <div className="mt-8">
-            <h2 className="text-lg font-semibold text-gray-900">Jobs by Location</h2>
+          <div className="mt-6 sm:mt-8">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Jobs by Location</h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {[...locationSet].slice(0, 15).map((loc) => (
                 <span
@@ -181,23 +181,23 @@ export default async function SEOJobsIndexPage() {
         )}
 
         {/* CTA */}
-        <div className="mt-12 rounded-xl border border-blue-200 bg-blue-50 p-8 text-center">
-          <h2 className="text-xl font-bold text-gray-900">
+        <div className="mt-8 sm:mt-12 rounded-xl border border-blue-200 bg-blue-50 p-4 sm:p-6 md:p-8 text-center">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">
             Apply Smarter with AI
           </h2>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-sm sm:text-base text-gray-600">
             Get AI-matched jobs, interview probability scores, and auto-apply to save hours
           </p>
           <Link
             href="/signup"
-            className="mt-4 inline-block rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700"
+            className="mt-4 inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700 min-h-[44px] w-full sm:w-auto active:scale-[0.98] transition-transform"
           >
             Get Started Free
           </Link>
         </div>
       </main>
 
-      <footer className="border-t border-gray-200 py-8 text-center text-sm text-gray-400">
+      <footer className="border-t border-gray-200 py-6 sm:py-8 text-center text-xs sm:text-sm text-gray-400 px-4">
         © {new Date().getFullYear()} AI Job Assistant | Developer Jobs in India
       </footer>
     </div>

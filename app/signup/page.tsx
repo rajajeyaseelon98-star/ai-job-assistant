@@ -35,12 +35,12 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md rounded-xl border border-gray-200 bg-card p-8 shadow-sm">
-        <h1 className="text-2xl font-bold text-text">Sign up</h1>
-        <p className="mt-1 text-text-muted">Create your AI Job Assistant account</p>
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md rounded-xl border border-gray-200 bg-card p-6 sm:p-8 shadow-sm">
+        <h1 className="text-xl sm:text-2xl font-bold text-text">Sign up</h1>
+        <p className="mt-1 text-sm sm:text-base text-text-muted">Create your AI Job Assistant account</p>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <form onSubmit={handleSubmit} className="mt-5 sm:mt-6 space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-text">
               Email
@@ -51,7 +51,7 @@ export default function SignupPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-text"
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 sm:py-2 text-base sm:text-sm text-text min-h-[44px]"
             />
           </div>
           <div>
@@ -65,7 +65,7 @@ export default function SignupPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-text"
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 sm:py-2 text-base sm:text-sm text-text min-h-[44px]"
             />
           </div>
           {message && (
@@ -78,7 +78,7 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-primary py-2 font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+            className="w-full rounded-lg bg-primary py-2.5 sm:py-2 font-medium text-white hover:bg-primary-hover disabled:opacity-50 min-h-[44px] active:scale-[0.98] transition-transform text-sm sm:text-base"
           >
             {loading ? "Creating account…" : "Sign up"}
           </button>
