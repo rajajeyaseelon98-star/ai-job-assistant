@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { validateTextLength } from "@/lib/validation";
 
 export async function GET() {
   const user = await getUser();
@@ -64,8 +65,17 @@ export async function POST(request: Request) {
       benefits?: string;
     };
 
-  if (!name?.trim()) {
-    return NextResponse.json({ error: "name is required" }, { status: 400 });
+  // Validate required + large text fields
+  const nameVal = validateTextLength(name, 200, "name");
+  if (!nameVal.valid) return NextResponse.json({ error: nameVal.error }, { status: 400 });
+  if (description && description.length > 5000) {
+    return NextResponse.json({ error: "description exceeds maximum length of 5000 characters" }, { status: 400 });
+  }
+  if (culture && culture.length > 5000) {
+    return NextResponse.json({ error: "culture exceeds maximum length of 5000 characters" }, { status: 400 });
+  }
+  if (benefits && benefits.length > 5000) {
+    return NextResponse.json({ error: "benefits exceeds maximum length of 5000 characters" }, { status: 400 });
   }
 
   const supabase = await createClient();
@@ -73,7 +83,7 @@ export async function POST(request: Request) {
     .from("companies")
     .insert({
       recruiter_id: user.id,
-      name: name.trim().slice(0, 200),
+      name: nameVal.text.slice(0, 200),
       description: description?.trim().slice(0, 5000) || null,
       website: website?.trim().slice(0, 500) || null,
       logo_url: logo_url?.trim().slice(0, 500) || null,

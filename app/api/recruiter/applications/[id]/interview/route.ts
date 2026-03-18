@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { isValidUUID } from "@/lib/validation";
+import { isValidUUID, validateTextLength } from "@/lib/validation";
 import { checkRateLimit } from "@/lib/rateLimit";
 
 export async function POST(
@@ -39,10 +39,12 @@ export async function POST(
     return NextResponse.json({ error: "interview_date must be in the future" }, { status: 400 });
   }
 
-  const interviewNotes =
-    typeof body.interview_notes === "string"
-      ? body.interview_notes.trim().slice(0, 5000)
-      : null;
+  let interviewNotes: string | null = null;
+  if (typeof body.interview_notes === "string" && body.interview_notes.trim()) {
+    const notesVal = validateTextLength(body.interview_notes, 5000, "interview_notes");
+    if (!notesVal.valid) return NextResponse.json({ error: notesVal.error }, { status: 400 });
+    interviewNotes = notesVal.text;
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -102,7 +104,11 @@ export async function PATCH(
   }
 
   if (typeof body.interview_notes === "string") {
-    updates.interview_notes = body.interview_notes.trim().slice(0, 5000);
+    // Allow empty string (clears notes) but enforce max length
+    if (body.interview_notes.length > 5000) {
+      return NextResponse.json({ error: "interview_notes exceeds maximum length of 5000 characters" }, { status: 400 });
+    }
+    updates.interview_notes = body.interview_notes.trim() || null;
   }
 
   if (Object.keys(updates).length === 1) {

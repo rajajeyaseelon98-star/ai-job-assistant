@@ -198,6 +198,11 @@ export async function runAutoApply(
   userId: string,
   config: AutoApplyConfig
 ): Promise<void> {
+  const TIMEOUT_MS = 120_000; // 2 minutes
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error("Auto-apply timed out after 2 minutes")), TIMEOUT_MS)
+  );
+
   const supabase = await createClient();
 
   const updateRun = async (updates: Record<string, unknown>) => {
@@ -208,7 +213,7 @@ export async function runAutoApply(
       .eq("user_id", userId);
   };
 
-  try {
+  const mainExecution = async () => {
     await updateRun({ status: "processing" });
 
     // Step 1: Get structured resume
@@ -243,13 +248,21 @@ export async function runAutoApply(
     const topN = config.max_results || 10;
     const ranked = rankJobs(structured, allJobs, topN, config.location);
 
+    // Pre-filter by salary BEFORE expensive AI calls
+    let salaryFiltered = ranked;
+    if (config.min_salary) {
+      salaryFiltered = ranked.filter(
+        (job) => !job.salary_max || job.salary_max >= config.min_salary!
+      );
+    }
+
     await updateRun({ jobs_found: allJobs.length });
 
     // Step 4: Deep match top candidates with AI
     const results: AutoApplyJobResult[] = [];
-    for (const job of ranked) {
+    for (const job of salaryFiltered) {
       const matched = await deepMatchJob(structured, job, userId);
-      // Apply salary filter if configured
+      // Apply salary filter as safety net (post-AI check)
       if (config.min_salary && matched.salary_max && matched.salary_max < config.min_salary) {
         continue;
       }
@@ -265,6 +278,10 @@ export async function runAutoApply(
       jobs_found: allJobs.length,
       jobs_matched: results.length,
     });
+  };
+
+  try {
+    await Promise.race([mainExecution(), timeoutPromise]);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     await updateRun({ status: "failed", error_message: message });

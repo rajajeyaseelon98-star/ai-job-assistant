@@ -212,20 +212,42 @@ async function awardXp(
   userId: string,
   amount: number
 ): Promise<void> {
-  try {
-    // Simple increment — use raw SQL via RPC if available, else read-update
-    const { data } = await supabase
-      .from("users")
-      .select("xp_points")
-      .eq("id", userId)
-      .single();
+  if (amount <= 0) return;
+  const maxRetries = 3;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const { data } = await supabase
+        .from("users")
+        .select("xp_points")
+        .eq("id", userId)
+        .single();
 
-    await supabase
-      .from("users")
-      .update({ xp_points: (data?.xp_points || 0) + amount })
-      .eq("id", userId);
-  } catch {
-    // Non-critical
+      const currentXp = data?.xp_points || 0;
+      const newXp = currentXp + amount;
+
+      // Use the current value as a condition to detect concurrent modifications
+      const { data: updated, error } = await supabase
+        .from("users")
+        .update({ xp_points: newXp })
+        .eq("id", userId)
+        .eq("xp_points", currentXp)
+        .select("id")
+        .single();
+
+      if (updated && !error) return; // Success
+      // If no row was updated, another request changed xp_points — retry
+      if (attempt < maxRetries - 1) continue;
+
+      // Final fallback: just do the update without the check (better than losing XP)
+      await supabase
+        .from("users")
+        .update({ xp_points: newXp })
+        .eq("id", userId);
+      return;
+    } catch {
+      // Non-critical — XP is best-effort
+      return;
+    }
   }
 }
 

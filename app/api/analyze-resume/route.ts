@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { canUseFeature, logUsage } from "@/lib/usage";
+import { checkAndLogUsage } from "@/lib/usage";
 import { cachedAiGenerateContent } from "@/lib/ai";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { recordDailyActivity } from "@/lib/streakSystem";
+import { validateTextLength } from "@/lib/validation";
 import type { ATSAnalysisResult } from "@/types/resume";
 
 const PROMPT = `You are an ATS resume analyzer.
@@ -65,15 +66,6 @@ export async function POST(request: Request) {
   const rl = await checkRateLimit(user.id);
   if (!rl.allowed) return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429 });
 
-  const planType = user.profile?.plan_type ?? "free";
-  const { allowed } = await canUseFeature(user.id, "resume_analysis", planType);
-  if (!allowed) {
-    return NextResponse.json(
-      { error: "Free limit reached for resume analysis. Upgrade to Pro for unlimited." },
-      { status: 403 }
-    );
-  }
-
   let body: Record<string, unknown>;
   try {
     body = await request.json();
@@ -91,14 +83,24 @@ export async function POST(request: Request) {
     recheckAfterImprovement?: boolean;
     previousAnalysis?: { atsScore?: number; missingSkills?: string[]; resumeImprovements?: string[] };
   };
-  if (!resumeText || typeof resumeText !== "string") {
+
+  // Validate input size to prevent memory exhaustion (max 50KB)
+  const textValidation = validateTextLength(resumeText, 50000, "resumeText");
+  if (!textValidation.valid) {
+    return NextResponse.json({ error: textValidation.error }, { status: 400 });
+  }
+
+  // Atomic usage check + log to prevent TOCTOU race condition (BUG-002 fix)
+  const planType = user.profile?.plan_type ?? "free";
+  const { allowed } = await checkAndLogUsage(user.id, "resume_analysis", planType);
+  if (!allowed) {
     return NextResponse.json(
-      { error: "resumeText is required" },
-      { status: 400 }
+      { error: "Free limit reached for resume analysis. Upgrade to Pro for unlimited." },
+      { status: 403 }
     );
   }
 
-  const text = resumeText.slice(0, 15000);
+  const text = textValidation.text.slice(0, 15000);
   let promptToUse = PROMPT + text;
   if (recheckAfterImprovement && previousAnalysis) {
     const prevScore = previousAnalysis.atsScore ?? 0;
@@ -143,7 +145,7 @@ export async function POST(request: Request) {
     );
   }
 
-  await logUsage(user.id, "resume_analysis");
+  // Usage already logged by checkAndLogUsage above
   recordDailyActivity(user.id, "resume_analyze").catch(() => {});
 
   const supabase = await createClient();

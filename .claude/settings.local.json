@@ -20,7 +20,20 @@
       "Bash(node _check_imports.js)",
       "Bash(node _check_circular.js)",
       "Bash(node _check_multiline.js)",
-      "Bash(grep -r \"useState\\\\|useRef\\\\|open\\\\|close\" /c/Users/Lenovo/ai-job-assistant/components --include=*.tsx -l)"
+      "Bash(grep -r \"useState\\\\|useRef\\\\|open\\\\|close\" /c/Users/Lenovo/ai-job-assistant/components --include=*.tsx -l)",
+      "Bash(xargs -I {} basename {})",
+      "Bash(grep -l \"checkAndLogUsage\" /c/Users/Lenovo/ai-job-assistant/app/api/*/route.ts)",
+      "Bash(find /c/Users/Lenovo/ai-job-assistant/app/api -name \"route.ts\" -exec grep -n \"logUsage\\\\|canUseFeature\" {} +)",
+      "Bash(for file:*)",
+      "Bash(do echo:*)",
+      "Read(//c/Users/Lenovo/ai-job-assistant/**)",
+      "Bash(done)",
+      "Bash(find /c/Users/Lenovo/ai-job-assistant/app/api -name \"route.ts\" -exec grep -n \"\\\\.logUsage\\\\|\\\\.canUseFeature\\\\|logUsage\\(\\\\|canUseFeature\\(\" {} +)",
+      "Bash(find /c/Users/Lenovo/ai-job-assistant/app/api -name \"route.ts\" -exec grep -l \"aiGenerate\\\\|cachedAi\" {})",
+      "Bash(while read:*)",
+      "Bash(do if:*)",
+      "Bash(then echo:*)",
+      "Bash(find /c/Users/Lenovo/ai-job-assistant/app/api -path \"*recruiter*\" -prune -o -name \"route.ts\" -type f -exec grep -l \"checkAndLogUsage\" {})"
     ]
   }
 }

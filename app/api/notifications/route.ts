@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { isValidUUID } from "@/lib/validation";
 
 export async function GET() {
   const user = await getUser();
@@ -48,6 +49,10 @@ export async function PATCH(request: Request) {
   }
 
   if (typeof body.id === "string") {
+    // Validate UUID format before querying DB
+    if (!isValidUUID(body.id)) {
+      return NextResponse.json({ error: "Invalid notification ID" }, { status: 400 });
+    }
     await supabase
       .from("notifications")
       .update({ read: true })

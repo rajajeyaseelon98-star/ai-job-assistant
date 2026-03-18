@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getUserStreak, recordDailyActivity } from "@/lib/streakSystem";
+import { isValidActionType } from "@/lib/validation";
 
 /**
  * GET /api/streak — Get current user's streak data
@@ -26,7 +27,13 @@ export async function POST(request: Request) {
   let actionType = "daily_login";
   try {
     const body = await request.json();
-    if (body.action_type) actionType = body.action_type;
+    if (body.action_type && typeof body.action_type === "string") {
+      // Validate action_type against known allowlist to prevent arbitrary DB entries
+      if (isValidActionType(body.action_type)) {
+        actionType = body.action_type;
+      }
+      // Invalid action types silently fall back to "daily_login"
+    }
   } catch {
     // Use default
   }

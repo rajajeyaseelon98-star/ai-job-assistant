@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { canUseFeature, logUsage } from "@/lib/usage";
+import { checkAndLogUsage } from "@/lib/usage";
 import { cachedAiGenerate } from "@/lib/ai";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { logActivity } from "@/lib/activityFeed";
 import { recordDailyActivity } from "@/lib/streakSystem";
+import { validateTextLength } from "@/lib/validation";
 import type { ImprovedResumeContent } from "@/types/analysis";
 
 const BASE_PROMPT = `You are an expert ATS resume writer for software developers.
@@ -67,15 +68,6 @@ export async function POST(request: Request) {
   const rl = await checkRateLimit(user.id);
   if (!rl.allowed) return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429 });
 
-  const planType = user.profile?.plan_type ?? "free";
-  const { allowed } = await canUseFeature(user.id, "resume_improve", planType);
-  if (!allowed) {
-    return NextResponse.json(
-      { error: "AI Resume Fixer is a Pro feature. Upgrade to use it." },
-      { status: 403 }
-    );
-  }
-
   let body: Record<string, unknown>;
   try {
     body = await request.json();
@@ -89,16 +81,27 @@ export async function POST(request: Request) {
   const previousAnalysis = body?.previousAnalysis as
     | { atsScore?: number; missingSkills?: string[]; resumeImprovements?: string[] }
     | undefined;
-  if (!resumeText || typeof resumeText !== "string") {
+
+  // Validate input size
+  const textVal = validateTextLength(resumeText as string | undefined, 50000, "resumeText");
+  if (!textVal.valid) {
+    return NextResponse.json({ error: textVal.error }, { status: 400 });
+  }
+
+  // Atomic usage check + log
+  const planType = user.profile?.plan_type ?? "free";
+  const { allowed } = await checkAndLogUsage(user.id, "resume_improve", planType);
+  if (!allowed) {
     return NextResponse.json(
-      { error: "resumeText is required" },
-      { status: 400 }
+      { error: "AI Resume Fixer is a Pro feature. Upgrade to use it." },
+      { status: 403 }
     );
   }
 
+  const safeResumeText = textVal.text;
   const jsonPart = SYSTEM_PROMPT.includes("Return ONLY") ? "Return ONLY" + SYSTEM_PROMPT.split("Return ONLY")[1] : SYSTEM_PROMPT;
   let prompt = SYSTEM_PROMPT;
-  let userContent = `Resume:\n\n${resumeText.slice(0, 12000)}`;
+  let userContent = `Resume:\n\n${safeResumeText.slice(0, 12000)}`;
 
   if (previousAnalysis && (previousAnalysis.missingSkills?.length || previousAnalysis.resumeImprovements?.length)) {
     const atsScore = previousAnalysis.atsScore ?? 0;
@@ -112,10 +115,10 @@ export async function POST(request: Request) {
       .replace("{{MISSING_SKILLS}}", missingStr)
       .replace("{{RESUME_IMPROVEMENTS}}", improvementsStr);
     prompt = BASE_PROMPT + analysisBlock + "\n\n" + jsonPart;
-    userContent = `Resume to improve:\n\n${resumeText.slice(0, 10000)}`;
+    userContent = `Resume to improve:\n\n${safeResumeText.slice(0, 10000)}`;
   } else if (jobTitle || jobDescription) {
     prompt = BASE_PROMPT + JOB_TAILOR_PROMPT + "\n\n" + jsonPart;
-    userContent = `Target role: ${jobTitle || "N/A"}\n\nJob description:\n${(jobDescription || "").slice(0, 4000)}\n\n---\n\nResume:\n\n${resumeText.slice(0, 10000)}`;
+    userContent = `Target role: ${jobTitle || "N/A"}\n\nJob description:\n${(jobDescription || "").slice(0, 4000)}\n\n---\n\nResume:\n\n${safeResumeText.slice(0, 10000)}`;
   }
 
   let content: ImprovedResumeContent;
@@ -138,7 +141,7 @@ export async function POST(request: Request) {
     );
   }
 
-  await logUsage(user.id, "resume_improve");
+  // Usage already logged by checkAndLogUsage above
   recordDailyActivity(user.id, "resume_improve").catch(() => {});
 
   const supabase = await createClient();

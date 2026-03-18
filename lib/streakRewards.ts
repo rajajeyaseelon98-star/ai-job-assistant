@@ -145,8 +145,29 @@ export async function claimStreakReward(
     case "profile_boost": {
       const multiplier = streakDays >= 50 ? 2.5 : 2.0;
       await activateBoost(userId, reward.value, multiplier);
-      // If 30-day reward, also give auto-apply credits
+      // If 30-day reward, also grant 3 auto-apply credits
       if (streakDays === 30) {
+        const autoApplyCredits = 3;
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const { data: recentLogs } = await supabase
+          .from("usage_logs")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("feature", "auto_apply")
+          .gte("timestamp", startOfMonth.toISOString())
+          .order("timestamp", { ascending: false })
+          .limit(autoApplyCredits);
+
+        if (recentLogs && recentLogs.length > 0) {
+          await supabase
+            .from("usage_logs")
+            .delete()
+            .in("id", recentLogs.map((l) => l.id));
+        }
+
         await createNotification(
           userId,
           "success",

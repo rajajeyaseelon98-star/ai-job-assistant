@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { validateTextLength } from "@/lib/validation";
 
 export async function GET(request: NextRequest) {
   const user = await getUser();
@@ -50,9 +51,13 @@ export async function POST(request: NextRequest) {
     template_name?: string;
   };
 
-  if (!receiver_id || !content?.trim()) {
-    return NextResponse.json({ error: "receiver_id and content are required" }, { status: 400 });
+  if (!receiver_id) {
+    return NextResponse.json({ error: "receiver_id is required" }, { status: 400 });
   }
+
+  // Validate text input sizes
+  const contentVal = validateTextLength(content, 5000, "content");
+  if (!contentVal.valid) return NextResponse.json({ error: contentVal.error }, { status: 400 });
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -62,7 +67,7 @@ export async function POST(request: NextRequest) {
       receiver_id,
       job_id: job_id || null,
       subject: subject?.trim().slice(0, 200) || null,
-      content: content.trim().slice(0, 5000),
+      content: contentVal.text.slice(0, 5000),
       template_name: template_name?.trim() || null,
     })
     .select()

@@ -95,6 +95,34 @@ export async function POST(request: Request) {
       console.error("Opportunity alerts scan error:", err);
     }
 
+    // 7. Cleanup stale rate_limit entries (older than 5 minutes) to prevent table bloat
+    let rateLimitCleaned = false;
+    try {
+      const supabaseCleanup = await createClient();
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      await supabaseCleanup
+        .from("usage_logs")
+        .delete()
+        .eq("feature", "rate_limit")
+        .lt("timestamp", fiveMinutesAgo);
+      rateLimitCleaned = true;
+    } catch (err) {
+      console.error("Rate limit cleanup error:", err);
+    }
+
+    // 8. Cleanup expired AI cache entries
+    let cacheEntriesCleaned = false;
+    try {
+      const supabaseCache = await createClient();
+      await supabaseCache
+        .from("ai_cache")
+        .delete()
+        .lt("expires_at", new Date().toISOString());
+      cacheEntriesCleaned = true;
+    } catch (err) {
+      console.error("AI cache cleanup error:", err);
+    }
+
     return NextResponse.json({
       success: true,
       smart_apply: {
@@ -117,6 +145,10 @@ export async function POST(request: Request) {
       },
       opportunity_alerts: {
         users_scanned: alertsScanned,
+      },
+      cleanup: {
+        rate_limit_cleaned: rateLimitCleaned,
+        cache_cleaned: cacheEntriesCleaned,
       },
       timestamp: new Date().toISOString(),
     });

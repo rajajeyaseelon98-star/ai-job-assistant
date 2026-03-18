@@ -35,41 +35,66 @@ export async function aiGenerate(
   return chatCompletion(systemPrompt, userContent, options);
 }
 
+/** Result type for cached AI calls, includes whether the result came from cache. */
+export interface CachedAiResult {
+  text: string;
+  fromCache: boolean;
+}
+
 /**
  * Cached version of aiGenerate. Checks cache first, stores result on miss.
+ * Returns { text, fromCache } so callers can skip usage logging on cache hits.
  */
 export async function cachedAiGenerate(
   systemPrompt: string,
   userContent: string,
   options?: { jsonMode?: boolean; cacheFeature?: string }
 ): Promise<string> {
+  const result = await cachedAiGenerateWithMeta(systemPrompt, userContent, options);
+  return result.text;
+}
+
+export async function cachedAiGenerateWithMeta(
+  systemPrompt: string,
+  userContent: string,
+  options?: { jsonMode?: boolean; cacheFeature?: string }
+): Promise<CachedAiResult> {
   const feature = options?.cacheFeature || "general";
   const hash = generateCacheKey(feature, systemPrompt + userContent);
 
   const cached = await getCachedResponse(hash);
-  if (cached) return cached;
+  if (cached) return { text: cached, fromCache: true };
 
   const result = await aiGenerate(systemPrompt, userContent, options);
   await setCachedResponse(hash, result, feature);
-  return result;
+  return { text: result, fromCache: false };
 }
 
 /**
  * Cached version of aiGenerateContent. Checks cache first, stores result on miss.
+ * Returns { text, fromCache } so callers can skip usage logging on cache hits.
  */
 export async function cachedAiGenerateContent(
   prompt: string,
   cacheFeature?: string
 ): Promise<string> {
+  const result = await cachedAiGenerateContentWithMeta(prompt, cacheFeature);
+  return result.text;
+}
+
+export async function cachedAiGenerateContentWithMeta(
+  prompt: string,
+  cacheFeature?: string
+): Promise<CachedAiResult> {
   const feature = cacheFeature || "general";
   const hash = generateCacheKey(feature, prompt);
 
   const cached = await getCachedResponse(hash);
-  if (cached) return cached;
+  if (cached) return { text: cached, fromCache: true };
 
   const result = await aiGenerateContent(prompt);
   await setCachedResponse(hash, result, feature);
-  return result;
+  return { text: result, fromCache: false };
 }
 
 export async function aiGenerateContent(prompt: string): Promise<string> {

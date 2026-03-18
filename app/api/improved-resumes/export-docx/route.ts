@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { buildImprovedResumeDocx } from "@/lib/buildDocx";
+import { checkRateLimit } from "@/lib/rateLimit";
 import type { ImprovedResumeContent } from "@/types/analysis";
 
 /**
@@ -10,6 +11,9 @@ import type { ImprovedResumeContent } from "@/types/analysis";
 export async function POST(request: Request) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const rl = await checkRateLimit(user.id);
+  if (!rl.allowed) return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429 });
 
   let body: { content?: ImprovedResumeContent };
   try {

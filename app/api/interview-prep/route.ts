@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { canUseFeature, logUsage } from "@/lib/usage";
+import { checkAndLogUsage } from "@/lib/usage";
 import { aiGenerate } from "@/lib/ai";
 import { checkRateLimit } from "@/lib/rateLimit";
 import type { InterviewPrepResponse } from "@/types/analysis";
@@ -29,9 +29,10 @@ export async function POST(request: Request) {
   const rl = await checkRateLimit(user.id);
   if (!rl.allowed) return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429 });
 
+  // Atomic usage check + log
   const planType = user.profile?.plan_type ?? "free";
-  const { allowed } = await canUseFeature(user.id, "interview_prep", planType);
-  if (!allowed && (planType === "free")) {
+  const { allowed } = await checkAndLogUsage(user.id, "interview_prep", planType);
+  if (!allowed) {
     return NextResponse.json(
       { error: "Interview prep is available on Pro or Premium plan only." },
       { status: 403 }
@@ -63,7 +64,7 @@ export async function POST(request: Request) {
     if (!Array.isArray(result.technical_questions)) result.technical_questions = [];
     if (!Array.isArray(result.behavioral_questions)) result.behavioral_questions = [];
     if (!Array.isArray(result.coding_questions)) result.coding_questions = [];
-    await logUsage(user.id, "interview_prep");
+    // Usage already logged by checkAndLogUsage above
 
     const supabase = await createClient();
     await supabase.from("interview_sessions").insert({

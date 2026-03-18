@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { aiGenerate } from "@/lib/ai";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { validateTextLength } from "@/lib/validation";
 import type { ImprovedResumeContent } from "@/types/analysis";
 
 const LINKEDIN_PARSE_PROMPT = `You are an expert resume creator. The user has provided their LinkedIn profile text (copied from their LinkedIn page or exported PDF).
@@ -58,16 +59,22 @@ export async function POST(request: Request) {
 
   const { profileText } = body as { profileText?: string };
 
-  if (!profileText || profileText.trim().length < 50) {
+  // Validate input size to prevent memory exhaustion (max 50KB)
+  const textVal = validateTextLength(profileText, 50000, "profileText");
+  if (!textVal.valid) {
+    return NextResponse.json({ error: textVal.error }, { status: 400 });
+  }
+  if (textVal.text.length < 50) {
     return NextResponse.json(
       { error: "Please provide your LinkedIn profile text (minimum 50 characters)" },
       { status: 400 }
     );
   }
 
+  const safeProfileText = textVal.text;
   let content: ImprovedResumeContent;
   try {
-    const raw = await aiGenerate(LINKEDIN_PARSE_PROMPT, profileText.slice(0, 12000), {
+    const raw = await aiGenerate(LINKEDIN_PARSE_PROMPT, safeProfileText.slice(0, 12000), {
       jsonMode: true,
     });
     let jsonStr = raw.trim();

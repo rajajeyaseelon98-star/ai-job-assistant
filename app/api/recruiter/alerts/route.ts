@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { validateTextLength } from "@/lib/validation";
 
 // Smart Job Alerts: Saved searches that can be used for notifications
 export async function GET() {
@@ -38,14 +39,15 @@ export async function POST(request: Request) {
   }
 
   const { name, filters } = body as { name?: string; filters?: Record<string, unknown> };
-  if (!name?.trim()) return NextResponse.json({ error: "name is required" }, { status: 400 });
+  const nameVal = validateTextLength(name, 200, "name");
+  if (!nameVal.valid) return NextResponse.json({ error: nameVal.error }, { status: 400 });
 
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("saved_searches")
     .insert({
       recruiter_id: user.id,
-      name: name.trim().slice(0, 200),
+      name: nameVal.text.slice(0, 200),
       filters: filters || {},
     })
     .select()

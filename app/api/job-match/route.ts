@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { canUseFeature, logUsage } from "@/lib/usage";
+import { checkAndLogUsage } from "@/lib/usage";
 import { cachedAiGenerate } from "@/lib/ai";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { validateTextLength } from "@/lib/validation";
 import type { JobMatchResult } from "@/types/jobMatch";
 
 const SYSTEM_PROMPT = `You are an expert job-resume matcher for software developers.
@@ -29,15 +30,6 @@ export async function POST(request: Request) {
   const rl = await checkRateLimit(user.id);
   if (!rl.allowed) return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429 });
 
-  const planType = user.profile?.plan_type ?? "free";
-  const { allowed } = await canUseFeature(user.id, "job_match", planType);
-  if (!allowed) {
-    return NextResponse.json(
-      { error: "Free limit reached for job match. Upgrade to Pro for unlimited." },
-      { status: 403 }
-    );
-  }
-
   let body: Record<string, unknown>;
   try {
     body = await request.json();
@@ -50,14 +42,30 @@ export async function POST(request: Request) {
     resumeId?: string;
     jobTitle?: string;
   };
-  if (!resumeText || !jobDescription) {
+
+  // Validate input sizes to prevent memory exhaustion
+  const resumeValidation = validateTextLength(resumeText, 50000, "resumeText");
+  if (!resumeValidation.valid) {
+    return NextResponse.json({ error: resumeValidation.error }, { status: 400 });
+  }
+  const jobValidation = validateTextLength(jobDescription, 30000, "jobDescription");
+  if (!jobValidation.valid) {
+    return NextResponse.json({ error: jobValidation.error }, { status: 400 });
+  }
+
+  // Atomic usage check + log (BUG-002 fix)
+  const planType = user.profile?.plan_type ?? "free";
+  const { allowed } = await checkAndLogUsage(user.id, "job_match", planType);
+  if (!allowed) {
     return NextResponse.json(
-      { error: "resumeText and jobDescription are required" },
-      { status: 400 }
+      { error: "Free limit reached for job match. Upgrade to Pro for unlimited." },
+      { status: 403 }
     );
   }
 
-  const content = `Resume:\n${resumeText.slice(0, 8000)}\n\nJob description:\n${jobDescription.slice(0, 6000)}`;
+  const safeResume = resumeValidation.text;
+  const safeJobDesc = jobValidation.text;
+  const content = `Resume:\n${safeResume.slice(0, 8000)}\n\nJob description:\n${safeJobDesc.slice(0, 6000)}`;
   let result: JobMatchResult;
   try {
     const raw = await cachedAiGenerate(SYSTEM_PROMPT, content, { jsonMode: true, cacheFeature: "job_match" });
@@ -77,7 +85,7 @@ export async function POST(request: Request) {
     );
   }
 
-  await logUsage(user.id, "job_match");
+  // Usage already logged by checkAndLogUsage above
 
   const supabase = await createClient();
   let resumeIdToSave: string | null = null;
@@ -93,9 +101,9 @@ export async function POST(request: Request) {
   await supabase.from("job_matches").insert({
     user_id: user.id,
     resume_id: resumeIdToSave,
-    job_description: jobDescription.slice(0, 5000),
+    job_description: safeJobDesc.slice(0, 5000),
     job_title: jobTitle?.trim() || null,
-    resume_text: resumeText?.slice(0, 10000) || null,
+    resume_text: safeResume.slice(0, 10000),
     match_score: result.match_score,
     missing_skills: result.missing_skills,
     analysis: result,

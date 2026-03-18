@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { validateTextLength } from "@/lib/validation";
 import { logActivity, checkAndLogMilestones } from "@/lib/activityFeed";
 import { recordDailyActivity } from "@/lib/streakSystem";
 
@@ -54,8 +55,13 @@ export async function POST(request: Request) {
     notes?: string;
   };
 
-  if (!company?.trim() || !role?.trim()) {
-    return NextResponse.json({ error: "company and role are required" }, { status: 400 });
+  // Validate required text fields
+  const companyVal = validateTextLength(company, 200, "company");
+  if (!companyVal.valid) return NextResponse.json({ error: companyVal.error }, { status: 400 });
+  const roleVal = validateTextLength(role, 200, "role");
+  if (!roleVal.valid) return NextResponse.json({ error: roleVal.error }, { status: 400 });
+  if (notes && notes.length > 2000) {
+    return NextResponse.json({ error: "notes exceeds maximum length of 2000 characters" }, { status: 400 });
   }
 
   const validStatuses = ["saved", "applied", "interviewing", "offer", "rejected", "withdrawn"];
@@ -66,8 +72,8 @@ export async function POST(request: Request) {
     .from("applications")
     .insert({
       user_id: user.id,
-      company: company.trim().slice(0, 200),
-      role: role.trim().slice(0, 200),
+      company: companyVal.text.slice(0, 200),
+      role: roleVal.text.slice(0, 200),
       status: statusVal,
       applied_date: applied_date || null,
       url: url?.trim().slice(0, 500) || null,
@@ -87,9 +93,9 @@ export async function POST(request: Request) {
   logActivity(
     user.id,
     "application_submitted",
-    `Applied to ${role} at ${company}`,
+    `Applied to ${roleVal.text} at ${companyVal.text}`,
     undefined,
-    { company, role, application_id: data.id },
+    { company: companyVal.text, role: roleVal.text, application_id: data.id },
     true
   ).catch(() => {});
   checkAndLogMilestones(user.id).catch(() => {});

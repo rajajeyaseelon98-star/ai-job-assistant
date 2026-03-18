@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { aiGenerate } from "@/lib/ai";
-import { isValidUUID } from "@/lib/validation";
+import { isValidUUID, validateTextLength } from "@/lib/validation";
 import { checkRateLimit } from "@/lib/rateLimit";
 
 const SKILL_GAP_PROMPT = `You are an expert career analyst and skills assessor.
@@ -88,8 +88,9 @@ export async function POST(request: Request) {
     jobSkills = (job.skills_required as string[]) || [];
   } else if (typeof body.resume_text === "string" && typeof body.job_id === "string") {
     // Mode 2: Direct resume_text + job_id
-    if (!body.resume_text.trim()) {
-      return NextResponse.json({ error: "resume_text is required" }, { status: 400 });
+    const resumeVal = validateTextLength(body.resume_text as string, 50000, "resume_text");
+    if (!resumeVal.valid) {
+      return NextResponse.json({ error: resumeVal.error }, { status: 400 });
     }
     if (!isValidUUID(body.job_id)) {
       return NextResponse.json({ error: "Invalid job_id" }, { status: 400 });
@@ -106,7 +107,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Job posting not found" }, { status: 404 });
     }
 
-    resumeText = (body.resume_text as string).trim();
+    resumeText = resumeVal.text;
     jobTitle = job.title || "";
     jobDescription = job.description || "";
     jobRequirements = job.requirements || "";

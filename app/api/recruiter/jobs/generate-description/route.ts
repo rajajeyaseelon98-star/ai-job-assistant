@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { validateTextLength } from "@/lib/validation";
 import { aiGenerate } from "@/lib/ai";
 
 const SYSTEM_PROMPT = `You are an expert job description writer. Create an optimized, professional job description that attracts qualified candidates. The description should be well-structured with clear sections including: Role Overview, Key Responsibilities, Required Qualifications, Preferred Qualifications, and What We Offer. Use inclusive language and focus on impact and growth opportunities. Keep the tone professional yet engaging.
@@ -35,8 +36,10 @@ export async function POST(request: Request) {
     work_type?: string;
   };
 
-  if (!title?.trim()) {
-    return NextResponse.json({ error: "title is required" }, { status: 400 });
+  // Validate title input size
+  const titleVal = validateTextLength(title, 200, "title");
+  if (!titleVal.valid) {
+    return NextResponse.json({ error: titleVal.error }, { status: 400 });
   }
 
   // Sanitize inputs to prevent prompt injection
@@ -46,7 +49,7 @@ export async function POST(request: Request) {
       .trim()
       .slice(0, 200);
 
-  const sanitizedTitle = sanitize(title);
+  const sanitizedTitle = sanitize(titleVal.text);
 
   const validExperienceLevels = ["entry", "mid", "senior", "lead", "executive"];
   const validWorkTypes = ["onsite", "remote", "hybrid"];

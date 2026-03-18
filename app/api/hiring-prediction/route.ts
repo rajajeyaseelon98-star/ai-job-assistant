@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { predictHiringSuccess } from "@/lib/hiringPrediction";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 /** POST /api/hiring-prediction — Get hiring success prediction */
 export async function POST(request: Request) {
@@ -8,6 +9,9 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const rl = await checkRateLimit(user.id);
+  if (!rl.allowed) return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429 });
 
   let body: Record<string, unknown>;
   try {

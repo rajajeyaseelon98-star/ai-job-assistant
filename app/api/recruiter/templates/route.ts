@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { validateTextLength } from "@/lib/validation";
 
 const VALID_TEMPLATE_TYPES = [
   "general",
@@ -62,12 +63,11 @@ export async function POST(request: Request) {
     template_type?: string;
   };
 
-  if (!name?.trim()) {
-    return NextResponse.json({ error: "name is required" }, { status: 400 });
-  }
-  if (!content?.trim()) {
-    return NextResponse.json({ error: "content is required" }, { status: 400 });
-  }
+  // Validate text input sizes
+  const nameVal = validateTextLength(name, 200, "name");
+  if (!nameVal.valid) return NextResponse.json({ error: nameVal.error }, { status: 400 });
+  const contentVal = validateTextLength(content, 5000, "content");
+  if (!contentVal.valid) return NextResponse.json({ error: contentVal.error }, { status: 400 });
 
   const typeVal =
     template_type && VALID_TEMPLATE_TYPES.includes(template_type as (typeof VALID_TEMPLATE_TYPES)[number])
@@ -79,9 +79,9 @@ export async function POST(request: Request) {
     .from("message_templates")
     .insert({
       recruiter_id: user.id,
-      name: name.trim().slice(0, 200),
+      name: nameVal.text.slice(0, 200),
       subject: subject?.trim().slice(0, 500) || null,
-      content: content.trim().slice(0, 5000),
+      content: contentVal.text.slice(0, 5000),
       template_type: typeVal,
     })
     .select()
