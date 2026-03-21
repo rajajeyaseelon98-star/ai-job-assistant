@@ -1,6 +1,8 @@
 "use client";
 
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { FeedbackButtons } from "@/components/ui/FeedbackButtons";
+import { ShareScoreButton } from "@/components/ui/ShareScoreButton";
 
 interface MatchResultProps {
   match_score: number;
@@ -24,6 +26,9 @@ export function MatchResult({
           <span className="text-sm sm:text-base text-text-muted">%</span>
         </div>
         <ProgressBar value={match_score} className="mt-3 w-full" />
+        <div className="mt-3 flex items-center gap-3">
+          <ShareScoreButton score={match_score} type="match" />
+        </div>
       </div>
       {matched_skills?.length > 0 && (
         <div className="rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 shadow-sm">
@@ -65,6 +70,11 @@ export function MatchResult({
           </ul>
         </div>
       )}
+
+      {/* Feedback */}
+      <div className="rounded-xl border border-gray-200 bg-card px-4 py-3 sm:px-5 shadow-sm">
+        <FeedbackButtons feature="job_match" />
+      </div>
     </div>
   );
 }

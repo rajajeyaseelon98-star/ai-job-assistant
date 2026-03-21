@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { FileText, Target, Mail } from "lucide-react";
+
 interface ActivityItem {
   id: string;
   type: "resume_analysis" | "job_match" | "cover_letter";
@@ -15,7 +18,41 @@ export function ActivityList({ items }: ActivityListProps) {
     return (
       <div className="rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 shadow-sm">
         <h3 className="text-lg sm:text-xl md:text-2xl font-medium text-text">Recent Activity</h3>
-        <p className="mt-2 sm:mt-3 text-sm sm:text-base text-text-muted">No activity yet. Analyze a resume or match a job to get started.</p>
+        <div className="mt-4 space-y-3">
+          <p className="text-sm text-text-muted">No activity yet. Here&apos;s how to get started:</p>
+          <div className="grid gap-2">
+            <Link
+              href="/resume-analyzer"
+              className="flex items-center gap-3 rounded-lg border border-gray-200 p-3 text-left hover:border-primary hover:bg-primary/5 transition-colors"
+            >
+              <FileText className="h-5 w-5 text-primary shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-text">Analyze your resume</p>
+                <p className="text-xs text-text-muted">Get your ATS score in 30 seconds</p>
+              </div>
+            </Link>
+            <Link
+              href="/job-match"
+              className="flex items-center gap-3 rounded-lg border border-gray-200 p-3 text-left hover:border-primary hover:bg-primary/5 transition-colors"
+            >
+              <Target className="h-5 w-5 text-blue-500 shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-text">Find matching jobs</p>
+                <p className="text-xs text-text-muted">AI matches you with the best opportunities</p>
+              </div>
+            </Link>
+            <Link
+              href="/cover-letter"
+              className="flex items-center gap-3 rounded-lg border border-gray-200 p-3 text-left hover:border-primary hover:bg-primary/5 transition-colors"
+            >
+              <Mail className="h-5 w-5 text-green-500 shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-text">Generate a cover letter</p>
+                <p className="text-xs text-text-muted">AI-crafted and tailored to the job</p>
+              </div>
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }

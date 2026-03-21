@@ -2,7 +2,7 @@
 
 **Purpose:** Single source of truth for how the app works. Update this doc whenever you change routes, APIs, components, lib, or database.
 
-**Last updated:** 2026-03-18 (Phase 8 + Post-Audit Fixes: auto_apply_credit grants real credits, hiringPrediction filters by job title, pro trial auto-reverts on expiry).
+**Last updated:** 2026-03-20 (Phase 9 — UX Overhaul: Google OAuth, onboarding flow, role selection on signup, sidebar grouping, demo mode, feedback system, smart upgrade triggers, improved notifications, share/viral loop, empty state guidance, landing page Job Seeker/Recruiter tabs, signup role pre-selection from query params).
 
 ---
 
@@ -59,6 +59,21 @@
 - **getUser():** Gets Supabase auth user; loads profile from `public.users` (id, email, name, created_at, plan_type, role). If no profile, calls `ensureUserRow` then re-selects.
 - **ensureUserRow(userId, email):** Upserts into `public.users` with `plan_type: "free"`, `role: "job_seeker"`, `onConflict: "id", ignoreDuplicates: true` so existing rows are not overwritten.
 - **UserRole:** `"job_seeker" | "recruiter"` type. User profile includes `role` field.
+
+### 2.4 Google OAuth troubleshooting (400 on `/auth/v1/authorize`)
+
+When the browser shows **`GET .../auth/v1/authorize?provider=google ... 400 (Bad Request)`**, the request fails **before** Google’s consent screen. The app code (`signInWithOAuth` + `redirectTo`) is usually correct; fix **Supabase + Google Cloud** settings.
+
+| Check | Action |
+|-------|--------|
+| **Google provider** | Supabase Dashboard → **Authentication** → **Providers** → **Google** → enable **Enable Sign in with Google** and paste **Client ID** and **Client Secret** from Google Cloud. |
+| **Google redirect URI** | Google Cloud Console → **APIs & Services** → **Credentials** → your OAuth 2.0 Client → **Authorized redirect URIs** must include exactly: `https://<YOUR_PROJECT_REF>.supabase.co/auth/v1/callback` (this is Supabase’s callback, **not** `localhost`). |
+| **Supabase redirect URLs** | Supabase Dashboard → **Authentication** → **URL Configuration** → **Redirect URLs** must include every app callback you use, e.g. `http://localhost:3000/auth/callback` and production `https://yourdomain.com/auth/callback`. Missing entries cause **400** when the client sends `redirect_to` to `/authorize`. |
+| **Site URL** | Same screen → **Site URL** should match your primary origin (e.g. `http://localhost:3000` for local dev). |
+
+**Project ref in URL:** `khplqskyueridoioabio` is your Supabase project ref; Google’s redirect URI must use `https://khplqskyueridoioabio.supabase.co/auth/v1/callback`.
+
+**Docs alignment:** `FEATURES_FLOW.md` §36 describes the OAuth flow; `TEST_CASES.md` §39 / §48 cover OAuth and “provider not enabled” messaging. **BUG-A** in §9.12 addresses user-friendly errors when the provider is disabled; a **400** on the authorize URL still requires **Dashboard** fixes above.
 
 ---
 
@@ -246,7 +261,7 @@ All protected APIs use `getUser()`; 401 if no user. Many use `checkRateLimit(use
 
 | Page | Path | Behavior |
 |------|------|----------|
-| Landing | `/` | app/page.tsx — core hook: "Get 3x More Interviews Using AI". Hero with single CTA, social proof metrics, 3-step process, interactive score preview card with factor breakdown, streak rewards showcase, recruiter "8 Perfect Candidates" section, pricing, data moat links. |
+| Landing | `/` | app/page.tsx — **client component** with Job Seeker / Recruiter tab toggle. Job Seeker: "Get 3x More Interviews" hero, Upload→Score→Apply flow, interview probability preview, streak rewards. Recruiter: "Top 10 Candidates In 5 Seconds" hero, Post→Shortlist→Hire flow, recruiter tools grid, candidate preview. All CTAs link to `/signup?role=${activeTab}`. Shared pricing + career intelligence. |
 | Login | `/login` | Login form; redirect `next` sanitized. |
 | Signup | `/signup` | Sign up. |
 | Reset | `/login/reset` | Password reset. |
@@ -339,7 +354,113 @@ All protected APIs use `getUser()`; 401 if no user. Many use `checkRateLimit(use
 
 ---
 
-## 9. Updating this document
+## 9. Phase 9 — UX Overhaul (2026-03-20)
+
+### 9.1 Authentication Changes
+
+| Change | Details |
+|--------|---------|
+| **Google OAuth** | Added to both `/signup` and `/login` pages via `supabase.auth.signInWithOAuth({ provider: "google" })`. Redirects through `/auth/callback`. |
+| **Role selection on signup** | Signup page now shows Job Seeker / Recruiter toggle. Selected role is passed as `?role=` query param to `/auth/callback`, which sets it in the users table. Default: `job_seeker`. |
+| **Trust signals** | Both auth pages show trust badges below the form: "3.2x more interviews", "10,000+ users", "Secure & private". |
+| **Auth callback role handling** | `/auth/callback/route.ts` now reads `?role=` param and updates `users.role` on first login. |
+
+### 9.2 Onboarding Flow
+
+New page: `app/(dashboard)/onboarding/page.tsx` — 3-step guided experience:
+1. **Upload Resume** — File upload or paste text, triggers `/api/analyze-resume`
+2. **See Your Score** — Shows ATS score with missing skills and improvements
+3. **Start Applying** — Action cards: Find Jobs, Auto-Apply, Improve Resume, then Go to Dashboard
+
+Added to middleware protected routes. New users redirected to `/onboarding` after signup.
+
+### 9.3 Sidebar Reorganization
+
+Navigation items grouped into categories with section headers:
+- **(no label):** Dashboard
+- **Apply:** Resume Analyzer, Job Match, Job Board, Auto Job Finder, AI Auto-Apply, Smart Auto-Apply
+- **Improve:** Resume Tailoring, Cover Letter, Interview Prep, LinkedIn Import, AI Career Coach
+- **Insights:** Applications, Career Analytics, Resume Performance, Activity Feed, Salary Insights, Skill Demand, Streak Rewards
+- **(no label):** History, Pricing, Settings
+
+### 9.4 Landing Page Changes
+
+- **Converted to client component** (`"use client"`) for interactive tab switching
+- **Job Seeker / Recruiter tabs** at the top toggle all landing page content dynamically
+- **Navbar** has "For Recruiters" / "For Job Seekers" links that switch tabs, plus Jobs, Pricing, Login, Get Started Free
+- **Job Seeker tab**: hero "Get 3x More Interviews — Without Applying Manually", social proof (3.2x/89%/50K+/₹0), 3-step Upload→Score→Apply, value section "See Exactly Why You're Not Getting Interviews" with interview probability card (78%), separate JS pricing (Free ₹0 / Pro ₹299 / Premium ₹499), streak rewards (7/14/30 days), final CTA "Stop Applying. Start Getting Interviews."
+- **Recruiter tab**: hero "Hire Top 10 Candidates in 5 Seconds", social proof (5sec/92%/3x/₹0), 3-step Post→Shortlist→Hire, value section "Everything You Need to Hire Faster" with candidate preview card (94% match), separate recruiter pricing (Free ₹0 / Pro ₹299 / Premium ₹499), final CTA "Stop Screening. Start Hiring."
+- All CTAs link to `/signup?role=${activeTab}` — role carries through to signup
+- Shared sections: career intelligence links (Skills, Salary, Jobs), footer
+
+### 9.4.1 Signup Role Pre-selection
+
+- `app/signup/page.tsx` reads `?role=` from URL query params via `useSearchParams()`
+- Pre-selects Job Seeker or Recruiter toggle based on the `role` param from landing page CTAs
+- Component split: `SignupForm` (inner, uses `useSearchParams`) wrapped in `Suspense` by `SignupPage` (default export)
+- Fallback: defaults to `job_seeker` if no role param or invalid value
+
+### 9.5 New Components
+
+| Component | Path | Purpose |
+|-----------|------|---------|
+| `EmptyState` | `components/ui/EmptyState.tsx` | Reusable empty state with icon, title, description, action button |
+| `UpgradeBanner` | `components/ui/UpgradeBanner.tsx` | Smart upgrade prompt showing when usage is low/exhausted |
+| `FeedbackButtons` | `components/ui/FeedbackButtons.tsx` | Thumbs up/down feedback on AI results, posts to `/api/feedback` |
+| `ShareScoreButton` | `components/ui/ShareScoreButton.tsx` | Share ATS/match/interview scores via native share or clipboard |
+| `SuccessAnimation` | `components/ui/SuccessAnimation.tsx` | Full-screen success overlay with check icon animation |
+
+### 9.6 New API Routes
+
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/feedback` | POST | Stores user feedback (thumbs up/down) for AI features. Fields: `feature`, `resultId`, `type`. Best-effort insert to `feedback` table. |
+
+### 9.7 Demo Mode
+
+New public page: `app/demo/page.tsx` — accessible without authentication.
+- Users paste resume text
+- Client-side analysis generates plausible ATS score (no API call)
+- Full results are blurred/locked behind signup CTA
+- Converts curiosity into signups
+
+### 9.8 Notification Copy Improvements
+
+Updated notification messages to be more engaging:
+- Auto-Apply confirm: `"X new applications sent!"` → `"Your next interview could be around the corner!"`
+- Smart Apply: `"X high-match jobs found for you today!"`
+- Daily Report: `"Your daily career update is ready!"`
+
+### 9.9 Smart Upgrade Triggers
+
+- Resume Analyzer page shows `UpgradeBanner` when usage approaches or hits free limit
+- API returns `_usage: { used, limit }` in response so frontend can track
+- Banner appears in two states: amber (1 remaining) or red (0 remaining)
+
+### 9.10 Feedback & Share System
+
+- **FeedbackButtons** added to: ResumeAnalysisResult, MatchResult, CoverLetterResult
+- **ShareScoreButton** added to: ResumeAnalysisResult (ATS score), MatchResult (match score)
+- Uses native `navigator.share()` on mobile, clipboard copy on desktop
+
+### 9.11 Empty State Improvements
+
+- **ActivityList** empty state now shows 3 actionable cards (Analyze Resume, Find Jobs, Generate Cover Letter) instead of plain text
+- Uses `EmptyState` component pattern for consistent empty states across pages
+
+### 9.12 QA Cross-Verification Fixes (Phase 9.1)
+
+| Bug ID | Severity | File(s) | Issue | Fix |
+|--------|----------|---------|-------|-----|
+| BUG-A | CRITICAL | signup, login | Google OAuth error "provider is not enabled" — raw Supabase error shown to user | Added user-friendly error message: "Google sign-in is not configured yet. Please use email signup instead." **Root cause is Supabase Dashboard config** — Google provider must be enabled in Authentication → Providers with OAuth Client ID/Secret. |
+| BUG-B | MEDIUM | signup | `next` param in OAuth `redirectTo` URL not `encodeURIComponent()`-wrapped | Added `encodeURIComponent()` for `next` param in both OAuth and email redirect URLs. Login page already had this. |
+| BUG-E | LOW | ShareScoreButton | `nativeShare()` used `if (navigator.share)` while outer code used `typeof` check | Unified to `typeof navigator !== "undefined" && typeof navigator.share === "function"` in both locations. |
+| BUG-F | LOW | SuccessAnimation | `onDone` callback in useEffect dependency array causes infinite re-render when passed inline | Used `useRef` pattern (`onDoneRef`) to capture latest callback without dependency. |
+| BUG-G | LOW | onboarding | File upload accepts `.pdf/.doc/.docx` but `file.text()` only reads plain text correctly | Changed accept to `.txt` only, updated label. Full PDF/DOC parsing handled by `ResumeUpload` component on resume-analyzer page. |
+
+---
+
+## 10. Updating this document
 
 - When you add or remove API routes, pages, or lib functions: update the corresponding section (§5, §6, §4).
 - When you change schema, RLS, or migrations: update §3 and note any new migration or grant step.

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { FeedbackButtons } from "@/components/ui/FeedbackButtons";
 
 interface CoverLetterResultProps {
   id: string | null;
@@ -133,6 +134,11 @@ export function CoverLetterResult({ id, text, onSaved }: CoverLetterResultProps)
             {displayText}
           </div>
         )}
+      </div>
+
+      {/* Feedback */}
+      <div className="mt-3">
+        <FeedbackButtons feature="cover_letter" resultId={id || undefined} />
       </div>
     </div>
   );

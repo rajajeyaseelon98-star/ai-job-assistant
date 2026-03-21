@@ -1510,3 +1510,230 @@
 - [ ] TC-37.6: Open redirect prevention
 - [ ] TC-37.8: Rate limit abuse prevention
 - [ ] TC-37.10: CRON_SECRET enforcement
+
+---
+
+## 39. Google OAuth Authentication (Phase 9)
+
+### TC-39.1: Google OAuth Signup
+- [ ] Click "Continue with Google" on signup page
+- [ ] Google consent screen appears
+- [ ] After consent, user is redirected to /auth/callback
+- [ ] User row created in database with correct role
+- [ ] Redirected to /onboarding (job seeker) or /recruiter (recruiter)
+
+### TC-39.2: Google OAuth Login
+- [ ] Click "Continue with Google" on login page
+- [ ] Existing Google user authenticated successfully
+- [ ] Redirected to ?next param or /dashboard
+
+### TC-39.3: Role Selection on Signup
+- [ ] Default role is "Job Seeker" (pre-selected)
+- [ ] Click "Recruiter" toggles selection with visual indicator
+- [ ] Selected role passed as ?role= param in redirect URL
+- [ ] Auth callback sets role in users table
+- [ ] Role persists after login
+
+### TC-39.4: Trust Signals Display
+- [ ] Signup page shows 3 trust signals below form
+- [ ] Login page shows 3 trust signals below form
+- [ ] Signals show: "3.2x more interviews", "10,000+ users", "Secure & private"
+- [ ] Icons render correctly (TrendingUp, Users, Shield)
+
+### TC-39.5: Email/Password Still Works
+- [ ] Email signup still works with role selection
+- [ ] Email login still works
+- [ ] Error messages display correctly
+- [ ] Both buttons disabled during loading
+
+## 40. Onboarding Flow (Phase 9)
+
+### TC-40.1: Step 1 — Upload Resume
+- [ ] Page loads at /onboarding with step indicator
+- [ ] File upload accepts .txt, .pdf, .doc, .docx
+- [ ] Paste textarea works (min 50 chars required)
+- [ ] "Analyze My Resume" button disabled when text < 50 chars
+- [ ] "Skip for now" navigates to /dashboard
+- [ ] Progress bar shows 0% at step 1
+
+### TC-40.2: Step 2 — See Score
+- [ ] Loading spinner shown during analysis
+- [ ] ATS score displayed with correct color (green ≥80, yellow ≥60, red <60)
+- [ ] ProgressBar shows score visually
+- [ ] Missing skills shown as red badges
+- [ ] Top improvements shown as numbered list
+- [ ] [Continue] goes to step 3
+- [ ] [Improve My Resume First] goes to /resume-analyzer
+- [ ] Progress bar shows 50% at step 2
+
+### TC-40.3: Step 3 — Start Applying
+- [ ] Success message "You're all set!" displayed
+- [ ] Three action cards shown: Find Jobs, Auto-Apply, Improve Resume
+- [ ] Each card navigates to correct page on click
+- [ ] [Go to Dashboard] navigates to /dashboard
+- [ ] Progress bar shows 100% at step 3
+
+### TC-40.4: Onboarding Protected
+- [ ] /onboarding redirects to /login if not authenticated
+- [ ] Middleware includes /onboarding in protected routes
+
+## 41. Demo Mode (Phase 9)
+
+### TC-41.1: Demo Page Access
+- [ ] /demo loads without authentication
+- [ ] Header shows logo, Log in, Sign Up Free
+- [ ] No sidebar or dashboard layout
+
+### TC-41.2: Demo Analysis
+- [ ] Textarea accepts resume text
+- [ ] "Check My Score" disabled when text < 50 chars
+- [ ] 2-second loading animation shown
+- [ ] Score displayed between 40-85 range
+- [ ] Score color-coded correctly
+- [ ] No actual API call made (client-side only)
+
+### TC-41.3: Demo Results Lock
+- [ ] Full analysis section is blurred/locked
+- [ ] Lock icon and "Sign up to unlock" overlay shown
+- [ ] "Unlock Full Report (Free)" links to /signup
+- [ ] "Try Again" resets the form
+- [ ] Blurred content shows placeholder skills/improvements
+
+## 42. Feedback System (Phase 9)
+
+### TC-42.1: Feedback Buttons Display
+- [ ] FeedbackButtons shown on ResumeAnalysisResult
+- [ ] FeedbackButtons shown on MatchResult
+- [ ] FeedbackButtons shown on CoverLetterResult
+- [ ] Shows "Was this helpful?" with thumbs up/down
+
+### TC-42.2: Feedback Submission
+- [ ] Click thumbs up → shows "Thanks for the feedback!"
+- [ ] Click thumbs down → shows "We'll improve this. Thanks!"
+- [ ] POST /api/feedback called with correct feature and type
+- [ ] Only one feedback per result (buttons disappear after click)
+
+### TC-42.3: Share Score Buttons
+- [ ] ShareScoreButton shown on ResumeAnalysisResult
+- [ ] ShareScoreButton shown on MatchResult
+- [ ] Mobile: native share dialog opens
+- [ ] Desktop: clipboard copy with "Copied!" confirmation
+- [ ] Share text includes score and app name
+
+## 43. Smart Upgrade Triggers (Phase 9)
+
+### TC-43.1: Upgrade Banner Display
+- [ ] Banner hidden when remaining uses > 1
+- [ ] Amber banner when only 1 use remaining
+- [ ] Red banner when 0 uses remaining
+- [ ] Banner shows feature name and count
+- [ ] "Upgrade to Pro" button links to /pricing
+
+### TC-43.2: Usage Tracking in Response
+- [ ] /api/analyze-resume response includes `_usage: { used, limit }`
+- [ ] Frontend reads _usage and shows UpgradeBanner
+- [ ] Pro/Premium users: no banner (limit: -1)
+
+## 44. Sidebar Navigation Groups (Phase 9)
+
+### TC-44.1: Group Labels
+- [ ] "APPLY" section header visible
+- [ ] "IMPROVE" section header visible
+- [ ] "INSIGHTS" section header visible
+- [ ] Dashboard has no group label (standalone)
+- [ ] History/Pricing/Settings have no group label
+
+### TC-44.2: Navigation Functionality
+- [ ] All 22 navigation links work correctly
+- [ ] Active page highlighted with primary color
+- [ ] Mobile: sidebar closes on link click
+- [ ] Mobile: sidebar closes on Escape key
+- [ ] "Switch to Recruiter" link at bottom works
+
+## 45. Notification Copy Improvements (Phase 9)
+
+### TC-45.1: Auto-Apply Notifications
+- [ ] After auto-apply confirm: title shows "X new applications sent!"
+- [ ] Message includes "Your next interview could be around the corner!"
+
+### TC-45.2: Smart Apply Notifications
+- [ ] After smart apply: title shows "X high-match jobs found for you today!"
+- [ ] Message includes "Smart Apply just applied to X jobs while you were away"
+
+### TC-45.3: Daily Report Notification
+- [ ] Title shows "Your daily career update is ready!"
+
+## 46. Empty State Improvements (Phase 9)
+
+### TC-46.1: ActivityList Empty State
+- [ ] Shows "No activity yet. Here's how to get started:"
+- [ ] 3 action cards displayed: Analyze Resume, Find Jobs, Cover Letter
+- [ ] Each card links to correct page
+- [ ] Cards have icons, titles, and descriptions
+- [ ] Cards show hover state with border color change
+
+## 47. Landing Page Role Tabs (Phase 9)
+
+### TC-47.1: Tab Toggle
+- [ ] Landing page loads with "Job Seeker" tab active by default
+- [ ] Clicking "I'm a Recruiter" switches all content to recruiter-focused
+- [ ] Clicking "I'm a Job Seeker" switches back to job seeker content
+- [ ] Tab toggle has visual active state (filled background, bold text)
+- [ ] Inactive tab shows muted styling with hover effect
+
+### TC-47.2: Job Seeker Tab Content
+- [ ] Hero shows "Get 3x More Interviews Using AI"
+- [ ] 3-step flow displays: Upload Resume → Get ATS Score → Auto-Apply
+- [ ] Interview probability preview card renders with sample factors
+- [ ] Streak rewards section shows levels and XP
+- [ ] All CTAs link to `/signup?role=job_seeker`
+
+### TC-47.3: Recruiter Tab Content
+- [ ] Hero shows "Top 10 Candidates In 5 Seconds"
+- [ ] 3-step flow displays: Post Your Job → AI Shortlists → Hire Fast
+- [ ] Recruiter tools grid shows 4 cards (AI Screening, ATS Pipeline, Smart Alerts, Salary Intelligence)
+- [ ] Candidate preview card renders with sample skills/scores
+- [ ] All CTAs link to `/signup?role=recruiter`
+
+### TC-47.4: Shared Sections
+- [ ] Pricing section renders for both tabs
+- [ ] Career intelligence links (Skills, Salary, Jobs) visible for both tabs
+- [ ] Footer renders for both tabs
+
+### TC-47.5: Signup Role Pre-selection
+- [ ] Navigating to `/signup?role=job_seeker` pre-selects Job Seeker toggle
+- [ ] Navigating to `/signup?role=recruiter` pre-selects Recruiter toggle
+- [ ] Navigating to `/signup` (no param) defaults to Job Seeker
+- [ ] Navigating to `/signup?role=invalid` defaults to Job Seeker
+- [ ] Pre-selected role is used in Google OAuth redirectTo URL
+- [ ] Pre-selected role is used in email signup emailRedirectTo URL
+- [ ] User can still change role after pre-selection before submitting
+
+## 48. QA Cross-Verification Fixes (Phase 9.1)
+
+### TC-48.1: Google OAuth Error Handling
+- [ ] When Google provider not enabled in Supabase, clicking "Continue with Google" on signup shows: "Google sign-in is not configured yet. Please use email signup instead."
+- [ ] When Google provider not enabled in Supabase, clicking "Continue with Google" on login shows: "Google sign-in is not configured yet. Please use email login instead."
+- [ ] Error message does NOT show raw Supabase error like "Unsupported provider: provider is not enabled"
+- [ ] When Google provider IS enabled, OAuth flow works correctly (redirect to Google, callback, redirect to /onboarding or /recruiter)
+
+### TC-48.2: URL Encoding in OAuth Redirects
+- [ ] Signup Google OAuth `redirectTo` URL properly encodes the `next` param with `encodeURIComponent()`
+- [ ] Signup email `emailRedirectTo` URL properly encodes the `next` param
+- [ ] Auth callback correctly parses `?next=` and `?role=` from URL
+
+### TC-48.3: SuccessAnimation Stability
+- [ ] SuccessAnimation does NOT re-trigger when parent component re-renders
+- [ ] SuccessAnimation shows for specified duration then calls `onDone` exactly once
+- [ ] Passing inline `onDone={() => ...}` does NOT cause infinite loop
+
+### TC-48.4: Onboarding File Upload
+- [ ] File input only accepts `.txt` files (not PDF/DOC which produce garbage text)
+- [ ] Upload label says "TXT file (or paste text below)"
+- [ ] Pasting resume text directly works correctly
+- [ ] Resume text is analyzed via `/api/analyze-resume` and score displays
+
+### TC-48.5: ShareScoreButton Consistency
+- [ ] On devices with `navigator.share`, uses native share dialog
+- [ ] On devices without `navigator.share`, shows "Copy to clipboard" option
+- [ ] No TypeScript or runtime errors on SSR (typeof navigator check)

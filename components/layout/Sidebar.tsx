@@ -31,29 +31,59 @@ import {
   Gift,
 } from "lucide-react";
 
-const nav = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/resume-analyzer", label: "Resume Analyzer", icon: FileText },
-  { href: "/job-match", label: "Job Match", icon: Target },
-  { href: "/job-board", label: "Job Board", icon: Briefcase },
-  { href: "/job-finder", label: "Auto Job Finder", icon: Search },
-  { href: "/auto-apply", label: "AI Auto-Apply", icon: Rocket },
-  { href: "/smart-apply", label: "Smart Auto-Apply", icon: Zap },
-  { href: "/tailor-resume", label: "Resume Tailoring", icon: Wand2 },
-  { href: "/cover-letter", label: "Cover Letter", icon: Mail },
-  { href: "/interview-prep", label: "Interview Prep", icon: Mic2 },
-  { href: "/import-linkedin", label: "LinkedIn Import", icon: Linkedin },
-  { href: "/applications", label: "Applications", icon: ClipboardList },
-  { href: "/analytics", label: "Career Analytics", icon: BarChart3 },
-  { href: "/resume-performance", label: "Resume Performance", icon: Award },
-  { href: "/career-coach", label: "AI Career Coach", icon: Brain },
-  { href: "/activity", label: "Activity Feed", icon: Activity },
-  { href: "/salary-insights", label: "Salary Insights", icon: IndianRupee },
-  { href: "/skill-demand", label: "Skill Demand", icon: TrendingUp },
-  { href: "/streak-rewards", label: "Streak Rewards", icon: Gift },
-  { href: "/history", label: "History", icon: History },
-  { href: "/pricing", label: "Pricing", icon: CreditCard },
-  { href: "/settings", label: "Settings", icon: Settings },
+interface NavGroup {
+  label: string;
+  items: { href: string; label: string; icon: typeof LayoutDashboard }[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    label: "",
+    items: [
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: "Apply",
+    items: [
+      { href: "/resume-analyzer", label: "Resume Analyzer", icon: FileText },
+      { href: "/job-match", label: "Job Match", icon: Target },
+      { href: "/job-board", label: "Job Board", icon: Briefcase },
+      { href: "/job-finder", label: "Auto Job Finder", icon: Search },
+      { href: "/auto-apply", label: "AI Auto-Apply", icon: Rocket },
+      { href: "/smart-apply", label: "Smart Auto-Apply", icon: Zap },
+    ],
+  },
+  {
+    label: "Improve",
+    items: [
+      { href: "/tailor-resume", label: "Resume Tailoring", icon: Wand2 },
+      { href: "/cover-letter", label: "Cover Letter", icon: Mail },
+      { href: "/interview-prep", label: "Interview Prep", icon: Mic2 },
+      { href: "/import-linkedin", label: "LinkedIn Import", icon: Linkedin },
+      { href: "/career-coach", label: "AI Career Coach", icon: Brain },
+    ],
+  },
+  {
+    label: "Insights",
+    items: [
+      { href: "/applications", label: "Applications", icon: ClipboardList },
+      { href: "/analytics", label: "Career Analytics", icon: BarChart3 },
+      { href: "/resume-performance", label: "Resume Performance", icon: Award },
+      { href: "/activity", label: "Activity Feed", icon: Activity },
+      { href: "/salary-insights", label: "Salary Insights", icon: IndianRupee },
+      { href: "/skill-demand", label: "Skill Demand", icon: TrendingUp },
+      { href: "/streak-rewards", label: "Streak Rewards", icon: Gift },
+    ],
+  },
+  {
+    label: "",
+    items: [
+      { href: "/history", label: "History", icon: History },
+      { href: "/pricing", label: "Pricing", icon: CreditCard },
+      { href: "/settings", label: "Settings", icon: Settings },
+    ],
+  },
 ];
 
 export function Sidebar() {
@@ -131,26 +161,35 @@ export function Sidebar() {
 
         {/* Scrollable nav */}
         <nav className="flex-1 overflow-y-auto px-3 py-2">
-          <div className="flex flex-col gap-0.5">
-            {nav.map((item) => {
-              const isActive = pathname === item.href;
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-text-muted hover:bg-gray-100 hover:text-text active:bg-gray-200"
-                  }`}
-                >
-                  <Icon className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
-                  <span className="truncate">{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
+          {navGroups.map((group, gi) => (
+            <div key={gi} className={group.label ? "mt-3 first:mt-0" : ""}>
+              {group.label && (
+                <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-text-muted/60">
+                  {group.label}
+                </p>
+              )}
+              <div className="flex flex-col gap-0.5">
+                {group.items.map((item) => {
+                  const isActive = pathname === item.href;
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                        isActive
+                          ? "bg-primary/10 text-primary"
+                          : "text-text-muted hover:bg-gray-100 hover:text-text active:bg-gray-200"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         {/* Footer */}

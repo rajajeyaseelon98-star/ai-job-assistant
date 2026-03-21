@@ -1,6 +1,8 @@
 "use client";
 
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { FeedbackButtons } from "@/components/ui/FeedbackButtons";
+import { ShareScoreButton } from "@/components/ui/ShareScoreButton";
 import type { ATSAnalysisResult } from "@/types/resume";
 
 interface ResumeAnalysisResultProps {
@@ -52,6 +54,9 @@ export function ResumeAnalysisResult({ data }: ResumeAnalysisResultProps) {
           <ScoreBadge score={data.atsScore} />
         </div>
         <ProgressBar value={data.atsScore} className="mt-3 sm:mt-4 w-full max-w-xs" />
+        <div className="mt-3 flex items-center gap-3">
+          <ShareScoreButton score={data.atsScore} type="ats" />
+        </div>
       </div>
 
       <div className="px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 space-y-4 sm:space-y-5 md:space-y-6">
@@ -104,6 +109,11 @@ export function ResumeAnalysisResult({ data }: ResumeAnalysisResultProps) {
             </div>
           </Section>
         )}
+
+        {/* Feedback */}
+        <div className="border-t border-gray-200 pt-4">
+          <FeedbackButtons feature="resume_analysis" />
+        </div>
       </div>
     </div>
   );

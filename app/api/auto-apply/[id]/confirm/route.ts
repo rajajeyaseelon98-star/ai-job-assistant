@@ -67,8 +67,8 @@ export async function POST(
   await createNotification(
     user.id,
     "auto_apply",
-    "Auto-Apply Complete",
-    `Successfully applied to ${appliedCount} job${appliedCount !== 1 ? "s" : ""}. Check your Applications page for details.`,
+    `${appliedCount} new application${appliedCount !== 1 ? "s" : ""} sent!`,
+    `You just applied to ${appliedCount} high-match job${appliedCount !== 1 ? "s" : ""}. Your next interview could be around the corner!`,
     { run_id: id, applied_count: appliedCount }
   );
 

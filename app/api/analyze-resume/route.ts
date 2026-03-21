@@ -92,7 +92,7 @@ export async function POST(request: Request) {
 
   // Atomic usage check + log to prevent TOCTOU race condition (BUG-002 fix)
   const planType = user.profile?.plan_type ?? "free";
-  const { allowed } = await checkAndLogUsage(user.id, "resume_analysis", planType);
+  const { allowed, used, limit } = await checkAndLogUsage(user.id, "resume_analysis", planType);
   if (!allowed) {
     return NextResponse.json(
       { error: "Free limit reached for resume analysis. Upgrade to Pro for unlimited." },
@@ -165,5 +165,5 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json({ ...data, _usage: { used, limit } });
 }

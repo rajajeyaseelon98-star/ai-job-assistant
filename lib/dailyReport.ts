@@ -133,7 +133,7 @@ export async function sendDailyReportNotification(userId: string): Promise<void>
     await createNotification(
       userId,
       "info",
-      "Daily Career Report",
+      "Your daily career update is ready!",
       parts.join(" • ") + ". " + report.action_items[0],
       { report }
     );

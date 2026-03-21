@@ -8,6 +8,7 @@ import { ResumeAnalysisResult } from "@/components/resume/ResumeAnalysisResult";
 import { ImprovedResumeView, improvedToPlainText } from "@/components/resume/ImprovedResumeView";
 import { dispatchUsageUpdated } from "@/components/layout/Topbar";
 import { AIProgressIndicator } from "@/components/ui/AIProgressIndicator";
+import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
 import type { ATSAnalysisResult } from "@/types/resume";
 import type { ImprovedResumeContent } from "@/types/analysis";
 
@@ -29,6 +30,7 @@ function ResumeAnalyzerContent() {
   const [improveJobTitle, setImproveJobTitle] = useState("");
   const [improveJobDescription, setImproveJobDescription] = useState("");
   const [recheckLoading, setRecheckLoading] = useState(false);
+  const [usageInfo, setUsageInfo] = useState<{ used: number; limit: number } | null>(null);
   // Snapshot of analysis that drove the current improvement (so Re-analyze button stays visible)
   const [analysisForRecheck, setAnalysisForRecheck] = useState<ATSAnalysisResult | null>(null);
 
@@ -176,6 +178,10 @@ function ResumeAnalyzerContent() {
         throw new Error(msg);
       }
       setAnalysis(data);
+      // Track usage for upgrade banner
+      if (data._usage) {
+        setUsageInfo({ used: data._usage.used, limit: data._usage.limit });
+      }
       dispatchUsageUpdated();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Analysis failed");
@@ -187,6 +193,11 @@ function ResumeAnalyzerContent() {
   return (
     <div className="space-y-4 sm:space-y-6 md:space-y-8">
       <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Resume Analyzer</h1>
+
+      {/* Smart upgrade trigger */}
+      {usageInfo && usageInfo.limit > 0 && (
+        <UpgradeBanner feature="resume analyses" usedCount={usageInfo.used} limit={usageInfo.limit} />
+      )}
       {analysisId && analysis && (
         <p className="text-sm text-text-muted">Viewing past analysis from history.</p>
       )}

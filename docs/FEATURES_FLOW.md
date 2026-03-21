@@ -1512,3 +1512,249 @@ Every feature-gated API:
         ├─ resume_improve: 0 (Pro only)
         └─ smart_apply: 0 (Pro only)
 ```
+
+---
+
+## 36. Google OAuth Authentication Flow (Phase 9)
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                    Google OAuth Flow                                  │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Signup Page (/signup)                                               │
+│  ┌──────────────────────────────────┐                                │
+│  │ 1. Role Selection (toggle)       │                                │
+│  │    ● Job Seeker  ○ Recruiter     │                                │
+│  │                                   │                                │
+│  │ 2. [Continue with Google] btn     │                                │
+│  │    ↓                              │                                │
+│  │    supabase.auth.signInWithOAuth  │                                │
+│  │      provider: "google"           │                                │
+│  │      redirectTo: /auth/callback   │                                │
+│  │        ?next=/onboarding          │                                │
+│  │        &role=job_seeker|recruiter │                                │
+│  │                                   │                                │
+│  │ 3. OR: Email/Password signup      │                                │
+│  │    emailRedirectTo includes role   │                                │
+│  └──────────────────────────────────┘                                │
+│                                                                      │
+│  Auth Callback (/auth/callback)                                      │
+│  ┌──────────────────────────────────┐                                │
+│  │ 1. exchangeCodeForSession(code)  │                                │
+│  │ 2. ensureUserRow(user.id, email) │                                │
+│  │ 3. IF ?role param:               │                                │
+│  │    UPDATE users SET role=?role    │                                │
+│  │ 4. Redirect to ?next param       │                                │
+│  └──────────────────────────────────┘                                │
+│                                                                      │
+│  Trust Signals (below auth cards):                                   │
+│  ├─ 3.2x more interviews (TrendingUp icon)                          │
+│  ├─ 10,000+ users (Users icon)                                      │
+│  └─ Secure & private (Shield icon)                                   │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+## 37. Onboarding Flow (Phase 9)
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                    Onboarding Flow (/onboarding)                     │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Step 1: Upload Resume                                               │
+│  ├─ File upload (.txt, .pdf, .doc, .docx)                           │
+│  ├─ OR paste resume text (min 50 chars)                              │
+│  ├─ "Skip for now" → /dashboard                                     │
+│  └─ On submit → POST /api/analyze-resume → Step 2                   │
+│                                                                      │
+│  Step 2: See Your Score                                              │
+│  ├─ Loading: Spinner + "Analyzing your resume..."                   │
+│  ├─ Result: ATS Score (color-coded), ProgressBar                    │
+│  ├─ Missing Skills (red badges)                                      │
+│  ├─ Top Improvements (numbered list, max 3)                         │
+│  ├─ [Continue] → Step 3                                              │
+│  └─ [Improve My Resume First] → /resume-analyzer                   │
+│                                                                      │
+│  Step 3: Start Applying                                              │
+│  ├─ Success celebration ("You're all set!")                           │
+│  ├─ Action cards:                                                    │
+│  │   ├─ Find Matching Jobs → /job-match                             │
+│  │   ├─ AI Auto-Apply → /auto-apply                                 │
+│  │   └─ Improve Resume → /resume-analyzer                           │
+│  └─ [Go to Dashboard] → /dashboard                                  │
+│                                                                      │
+│  Progress bar: 3-step indicator at top                               │
+│  Each step: icon + title, active/done/pending states                │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+## 38. Demo Mode Flow (Phase 9)
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                    Demo Mode (/demo)                                 │
+├──────────────────────────────────────────────────────────────────────┤
+│  Public page — NO authentication required                           │
+│                                                                      │
+│  Input:                                                              │
+│  ├─ Textarea for resume text (min 50 chars)                         │
+│  └─ [Check My Score] button                                         │
+│                                                                      │
+│  Analysis (client-side only, no API call):                          │
+│  ├─ 2-second simulated delay                                        │
+│  ├─ Score based on keyword density:                                 │
+│  │   base=55 + (matched_keywords * 3) + random(0-10)               │
+│  │   clamped to 40-85                                               │
+│  └─ Keywords: experience, skills, project, team, etc.               │
+│                                                                      │
+│  Result display:                                                     │
+│  ├─ Estimated ATS Score (color-coded)                               │
+│  ├─ ProgressBar                                                     │
+│  ├─ Blurred/locked section (missing skills + improvements)          │
+│  │   └─ Overlay: Lock icon + "Sign up to unlock full analysis"     │
+│  ├─ [Sign Up for Full Analysis (Free)]                              │
+│  └─ [Try Again]                                                     │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+## 39. Feedback System Flow (Phase 9)
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                    User Feedback Flow                                 │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Components with feedback:                                           │
+│  ├─ ResumeAnalysisResult → feature="resume_analysis"                │
+│  ├─ MatchResult → feature="job_match"                               │
+│  └─ CoverLetterResult → feature="cover_letter"                     │
+│                                                                      │
+│  UI: "Was this helpful?" [ThumbsUp] [ThumbsDown]                    │
+│  After click: "Thanks for the feedback!" (or "We'll improve this")  │
+│                                                                      │
+│  API: POST /api/feedback                                            │
+│  ├─ Auth required                                                    │
+│  ├─ Rate limited                                                     │
+│  ├─ Body: { feature, resultId?, type: "up"|"down" }                │
+│  └─ INSERT into feedback table (best-effort)                        │
+│                                                                      │
+│  Share buttons (ShareScoreButton):                                   │
+│  ├─ ResumeAnalysisResult → share ATS score                         │
+│  └─ MatchResult → share match score                                 │
+│  ├─ Mobile: navigator.share() native dialog                        │
+│  └─ Desktop: copy to clipboard                                      │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+## 40. Smart Upgrade Triggers (Phase 9)
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                    Upgrade Trigger Flow                               │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  API returns _usage in response:                                     │
+│  { ...result, _usage: { used: 2, limit: 3 } }                      │
+│                                                                      │
+│  Frontend (UpgradeBanner component):                                │
+│  ├─ remaining = limit - used                                        │
+│  ├─ IF remaining === 0:                                              │
+│  │   Red banner: "You've used all X free [feature]"                 │
+│  │   CTA: "Upgrade to Pro" (red button)                             │
+│  ├─ IF remaining === 1:                                              │
+│  │   Amber banner: "Only 1 free [feature] remaining"               │
+│  │   CTA: "Upgrade to Pro" (amber button)                           │
+│  └─ IF remaining > 1: hidden                                        │
+│                                                                      │
+│  Currently active on: /resume-analyzer                              │
+│  Can be added to any page with usage tracking                       │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+## 41. Sidebar Navigation Groups (Phase 9)
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                    Sidebar Structure                                  │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Dashboard                                                           │
+│  ─────────────                                                       │
+│  APPLY                                                               │
+│  ├─ Resume Analyzer                                                  │
+│  ├─ Job Match                                                        │
+│  ├─ Job Board                                                        │
+│  ├─ Auto Job Finder                                                  │
+│  ├─ AI Auto-Apply                                                    │
+│  └─ Smart Auto-Apply                                                 │
+│  IMPROVE                                                             │
+│  ├─ Resume Tailoring                                                 │
+│  ├─ Cover Letter                                                     │
+│  ├─ Interview Prep                                                   │
+│  ├─ LinkedIn Import                                                  │
+│  └─ AI Career Coach                                                  │
+│  INSIGHTS                                                            │
+│  ├─ Applications                                                     │
+│  ├─ Career Analytics                                                 │
+│  ├─ Resume Performance                                               │
+│  ├─ Activity Feed                                                    │
+│  ├─ Salary Insights                                                  │
+│  ├─ Skill Demand                                                     │
+│  └─ Streak Rewards                                                   │
+│  ─────────────                                                       │
+│  History                                                             │
+│  Pricing                                                             │
+│  Settings                                                            │
+│  ─────────────                                                       │
+│  [Switch to Recruiter]                                               │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+## 42. Landing Page Role Tabs (Phase 9)
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                   Landing Page Tab Flow                               │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  User visits / (landing page)                                        │
+│  │                                                                   │
+│  ▼                                                                   │
+│  ┌─────────────────────────────────────┐                             │
+│  │  [I'm a Job Seeker] [I'm a Recruiter] │  ◀── Tab toggle          │
+│  └─────────────────────────────────────┘                             │
+│  │                                                                   │
+│  ├── Tab = "job_seeker" ──────────────────────┐                      │
+│  │   Hero: "Get 3x More Interviews Using AI"  │                     │
+│  │   3-Step: Upload → Score → Apply            │                     │
+│  │   Interview Probability Preview             │                     │
+│  │   Streak Rewards Showcase                   │                     │
+│  │   CTA → /signup?role=job_seeker             │                     │
+│  │                                                                   │
+│  └── Tab = "recruiter" ──────────────────────┐                       │
+│      Hero: "Top 10 Candidates In 5 Seconds"  │                      │
+│      3-Step: Post Job → Shortlist → Hire      │                     │
+│      Recruiter Tools Grid (4 cards)           │                      │
+│      Candidate Preview Card                   │                      │
+│      CTA → /signup?role=recruiter              │                     │
+│                                                                      │
+│  Shared sections (both tabs):                                        │
+│  ├─ Pricing comparison                                               │
+│  ├─ Career intelligence links (Skills, Salary, Jobs)                 │
+│  └─ Footer                                                           │
+│                                                                      │
+│  User clicks CTA                                                     │
+│  │                                                                   │
+│  ▼                                                                   │
+│  /signup?role=job_seeker  OR  /signup?role=recruiter                  │
+│  │                                                                   │
+│  ▼                                                                   │
+│  Signup page reads ?role= via useSearchParams()                      │
+│  Role toggle pre-selected to match landing tab                       │
+│  │                                                                   │
+│  ▼                                                                   │
+│  User confirms role + signs up (Google OAuth or email)               │
+│  Role sent in redirectTo URL → auth callback sets role in DB         │
+└──────────────────────────────────────────────────────────────────────┘
+```

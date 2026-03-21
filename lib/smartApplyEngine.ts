@@ -236,8 +236,8 @@ export async function executeSmartRule(rule: SmartApplyRule): Promise<{
       await createNotification(
         rule.user_id,
         "auto_apply",
-        "Smart Auto-Apply Applied!",
-        `Automatically applied to ${appliedCount} job${appliedCount !== 1 ? "s" : ""} matching your rules. Check Applications for details.`,
+        `${appliedCount} high-match job${appliedCount !== 1 ? "s" : ""} found for you today!`,
+        `Smart Apply just applied to ${appliedCount} job${appliedCount !== 1 ? "s" : ""} while you were away. Check your Applications to see the matches!`,
         { rule_id: rule.id, run_id: run.id, applied_count: appliedCount }
       );
     }

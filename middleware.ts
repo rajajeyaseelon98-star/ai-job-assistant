@@ -29,6 +29,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/resume-performance") ||
     pathname.startsWith("/career-coach") ||
     pathname.startsWith("/streak-rewards") ||
+    pathname.startsWith("/onboarding") ||
     pathname.startsWith("/select-role") ||
     pathname.startsWith("/recruiter") ||
     pathname.startsWith("/history") ||
