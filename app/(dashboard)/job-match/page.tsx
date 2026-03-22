@@ -16,6 +16,11 @@ function JobMatchContent() {
   const searchParams = useSearchParams();
   const matchId = searchParams.get("matchId");
   const [result, setResult] = useState<MatchResultData | null>(null);
+  const [matchContext, setMatchContext] = useState<{
+    jobTitle: string;
+    jobDescription: string;
+    resumeText: string;
+  } | null>(null);
   const [pastLoading, setPastLoading] = useState(!!matchId);
   const [formDefaults, setFormDefaults] = useState<{
     jobTitle: string;
@@ -39,11 +44,14 @@ function JobMatchContent() {
           });
         }
         if (data) {
-          setFormDefaults({
+          const defaults = {
             jobTitle: data.job_title ?? "",
             jobDescription: data.job_description ?? "",
             resumeText: data.resume_text ?? "",
-          });
+          };
+          setFormDefaults(defaults);
+          // Same context as a fresh match run — enables "Tailor resume" + sessionStorage prefill from history
+          setMatchContext(defaults);
         }
       })
       .catch(() => {})
@@ -54,7 +62,9 @@ function JobMatchContent() {
     <div className="space-y-4 sm:space-y-6 md:space-y-8">
       <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Job Match</h1>
       <p className="text-sm sm:text-base text-text-muted">
-        Paste your resume and a job description to see how well you match and which keywords to add.
+        <strong className="text-text">Job Match</strong> scores your fit and lists gaps — it does{" "}
+        <strong>not</strong> rewrite your resume. For a full rewrite for this job, use{" "}
+        <span className="font-medium text-text">Resume Tailoring</span> after you see your score.
       </p>
       {matchId && result && (
         <p className="text-sm text-text-muted">Viewing past match from history.</p>
@@ -67,7 +77,10 @@ function JobMatchContent() {
           defaultResumeText={formDefaults.resumeText}
           defaultJobTitle={formDefaults.jobTitle}
           defaultJobDescription={formDefaults.jobDescription}
-          onResult={setResult}
+          onResult={(data, ctx) => {
+            setResult(data);
+            setMatchContext(ctx);
+          }}
         />
       </section>
 
@@ -79,6 +92,7 @@ function JobMatchContent() {
             matched_skills={result.matched_skills ?? []}
             missing_skills={result.missing_skills}
             resume_improvements={result.resume_improvements ?? []}
+            tailorContext={matchContext ?? undefined}
           />
         </section>
       )}

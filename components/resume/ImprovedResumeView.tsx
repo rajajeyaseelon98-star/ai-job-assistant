@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import type { ImprovedResumeContent } from "@/types/analysis";
+import { normalizeImprovedResumeContent } from "@/lib/normalizeImprovedResume";
 
 interface ImprovedResumeViewProps {
   content: ImprovedResumeContent;
@@ -99,6 +100,7 @@ function improvedToHtml(c: ImprovedResumeContent): string {
 }
 
 export function ImprovedResumeView({ content, improvedResumeId }: ImprovedResumeViewProps) {
+  const normalized = useMemo(() => normalizeImprovedResumeContent(content), [content]);
   const containerRef = useRef<HTMLDivElement>(null);
   const [copyFeedback, setCopyFeedback] = useState<"copied" | "error" | null>(null);
   const [pdfMessage, setPdfMessage] = useState<string | null>(null);
@@ -107,7 +109,7 @@ export function ImprovedResumeView({ content, improvedResumeId }: ImprovedResume
 
   function handleCopy() {
     setCopyFeedback(null);
-    const text = improvedToPlainText(content);
+    const text = improvedToPlainText(normalized);
     navigator.clipboard
       .writeText(text)
       .then(() => {
@@ -122,7 +124,7 @@ export function ImprovedResumeView({ content, improvedResumeId }: ImprovedResume
 
   function handleDownloadPdf() {
     setPdfMessage(null);
-    const html = improvedToHtml(content);
+    const html = improvedToHtml(normalized);
     const iframe = document.createElement("iframe");
     iframe.setAttribute("title", "Print improved resume");
     iframe.style.position = "fixed";
@@ -164,7 +166,7 @@ export function ImprovedResumeView({ content, improvedResumeId }: ImprovedResume
       const res = await fetch("/api/improved-resumes/export-docx", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content: normalized }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -235,17 +237,26 @@ export function ImprovedResumeView({ content, improvedResumeId }: ImprovedResume
           <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-text-muted">Improved resume</h3>
         </div>
         <div className="px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 space-y-5 sm:space-y-6">
-          {content.summary && (
-            <section>
-              <h4 className="mb-2 text-xs sm:text-sm font-semibold uppercase tracking-wider text-text-muted">Professional summary</h4>
-              <p className="text-sm sm:text-base text-text whitespace-pre-wrap leading-relaxed">{content.summary}</p>
-            </section>
-          )}
-          {content.skills?.length > 0 && (
-            <section>
-              <h4 className="mb-2 sm:mb-3 text-xs sm:text-sm font-semibold uppercase tracking-wider text-text-muted">Skills</h4>
+          <section aria-labelledby="improved-summary">
+            <h4 id="improved-summary" className="mb-2 text-xs sm:text-sm font-semibold uppercase tracking-wider text-text-muted">
+              Professional summary
+            </h4>
+            {normalized.summary.trim() ? (
+              <p className="text-sm sm:text-base text-text whitespace-pre-wrap leading-relaxed">{normalized.summary}</p>
+            ) : (
+              <p className="text-sm text-text-muted italic">
+                No summary yet — run the resume fixer again with your full resume text or job context for a stronger opening.
+              </p>
+            )}
+          </section>
+
+          <section aria-labelledby="improved-skills">
+            <h4 id="improved-skills" className="mb-2 sm:mb-3 text-xs sm:text-sm font-semibold uppercase tracking-wider text-text-muted">
+              Skills
+            </h4>
+            {normalized.skills.length > 0 ? (
               <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                {content.skills.map((skill, i) => (
+                {normalized.skills.map((skill, i) => (
                   <span
                     key={i}
                     className="inline-flex items-center rounded-full bg-primary/5 px-2.5 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-medium text-primary ring-1 ring-inset ring-primary/20"
@@ -254,13 +265,18 @@ export function ImprovedResumeView({ content, improvedResumeId }: ImprovedResume
                   </span>
                 ))}
               </div>
-            </section>
-          )}
-          {content.experience?.length > 0 && (
-            <section>
-              <h4 className="mb-2 sm:mb-3 text-xs sm:text-sm font-semibold uppercase tracking-wider text-text-muted">Experience</h4>
+            ) : (
+              <p className="text-sm text-text-muted italic">No skills listed — your source resume may be thin here; add skills and re-run.</p>
+            )}
+          </section>
+
+          <section aria-labelledby="improved-exp">
+            <h4 id="improved-exp" className="mb-2 sm:mb-3 text-xs sm:text-sm font-semibold uppercase tracking-wider text-text-muted">
+              Experience
+            </h4>
+            {normalized.experience.length > 0 ? (
               <ul className="space-y-4 sm:space-y-5">
-                {content.experience.map((exp, i) => (
+                {normalized.experience.map((exp, i) => (
                   <li key={i} className="border-l-2 border-primary/20 pl-3 sm:pl-4">
                     <p className="text-sm sm:text-base md:text-lg font-medium text-text leading-snug">{exp.title}</p>
                     <p className="text-xs sm:text-sm text-text-muted mt-0.5">{exp.company}</p>
@@ -275,16 +291,23 @@ export function ImprovedResumeView({ content, improvedResumeId }: ImprovedResume
                   </li>
                 ))}
               </ul>
-            </section>
-          )}
-          {content.projects?.length > 0 && (
-            <section>
-              <h4 className="mb-2 sm:mb-3 text-xs sm:text-sm font-semibold uppercase tracking-wider text-text-muted">Projects</h4>
+            ) : (
+              <p className="text-sm text-text-muted italic">No experience block parsed — paste detailed roles or upload a fuller resume.</p>
+            )}
+          </section>
+
+          <section aria-labelledby="improved-proj">
+            <h4 id="improved-proj" className="mb-2 sm:mb-3 text-xs sm:text-sm font-semibold uppercase tracking-wider text-text-muted">
+              Projects
+            </h4>
+            {normalized.projects.length > 0 ? (
               <ul className="space-y-4 sm:space-y-5">
-                {content.projects.map((proj, i) => (
+                {normalized.projects.map((proj, i) => (
                   <li key={i} className="border-l-2 border-primary/20 pl-3 sm:pl-4">
                     <p className="text-sm sm:text-base md:text-lg font-medium text-text leading-snug">{proj.name}</p>
-                    {proj.description && <p className="text-xs sm:text-sm text-text-muted mt-0.5 line-clamp-3 sm:line-clamp-none">{proj.description}</p>}
+                    {proj.description ? (
+                      <p className="text-xs sm:text-sm text-text-muted mt-0.5 line-clamp-3 sm:line-clamp-none">{proj.description}</p>
+                    ) : null}
                     {(proj.bullets || []).length > 0 && (
                       <ul className="mt-2 space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-text">
                         {(proj.bullets || []).map((b, j) => (
@@ -298,14 +321,21 @@ export function ImprovedResumeView({ content, improvedResumeId }: ImprovedResume
                   </li>
                 ))}
               </ul>
-            </section>
-          )}
-          {content.education && (
-            <section>
-              <h4 className="mb-2 text-xs sm:text-sm font-semibold uppercase tracking-wider text-text-muted">Education</h4>
-              <p className="text-sm sm:text-base text-text leading-relaxed">{content.education}</p>
-            </section>
-          )}
+            ) : (
+              <p className="text-sm text-text-muted italic">No projects listed — optional; add portfolio work to your source and re-run if relevant.</p>
+            )}
+          </section>
+
+          <section aria-labelledby="improved-edu">
+            <h4 id="improved-edu" className="mb-2 text-xs sm:text-sm font-semibold uppercase tracking-wider text-text-muted">
+              Education
+            </h4>
+            {normalized.education.trim() ? (
+              <p className="text-sm sm:text-base text-text leading-relaxed">{normalized.education}</p>
+            ) : (
+              <p className="text-sm text-text-muted italic">No education line yet — add degrees or certifications to your resume and try again.</p>
+            )}
+          </section>
         </div>
       </div>
     </div>

@@ -11,6 +11,7 @@ import { AIProgressIndicator } from "@/components/ui/AIProgressIndicator";
 import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
 import type { ATSAnalysisResult } from "@/types/resume";
 import type { ImprovedResumeContent } from "@/types/analysis";
+import { humanizeImproveResumeError, humanizeNetworkError } from "@/lib/friendlyApiError";
 
 function ResumeAnalyzerContent() {
   const searchParams = useSearchParams();
@@ -33,12 +34,31 @@ function ResumeAnalyzerContent() {
   const [usageInfo, setUsageInfo] = useState<{ used: number; limit: number } | null>(null);
   // Snapshot of analysis that drove the current improvement (so Re-analyze button stays visible)
   const [analysisForRecheck, setAnalysisForRecheck] = useState<ATSAnalysisResult | null>(null);
+  /** How to improve resume when job fields are used: pivot to target job vs polish current path */
+  const [tailorIntent, setTailorIntent] = useState<"target_job" | "optimize_current">("target_job");
+  /** Upload file vs paste text — paste is visible without uploading */
+  const [resumeInputMode, setResumeInputMode] = useState<"upload" | "paste">("upload");
 
   // Clear stale errors on mount so a previous "limit reached" doesn’t persist after changing plan
   useEffect(() => {
     setError(null);
     setImproveError(null);
   }, []);
+
+  // Quick Resume Builder → open in analyzer
+  useEffect(() => {
+    if (analysisId || improvedId) return;
+    try {
+      const draft = sessionStorage.getItem("resumeBuilderDraft");
+      if (!draft) return;
+      setResumeText(draft);
+      setResumeInputMode("paste");
+      setResumeId(null);
+      sessionStorage.removeItem("resumeBuilderDraft");
+    } catch {
+      /* ignore */
+    }
+  }, [analysisId, improvedId]);
 
   useEffect(() => {
     if (!analysisId) return;
@@ -70,6 +90,7 @@ function ResumeAnalyzerContent() {
   function handleUploadComplete(data: { id: string; parsed_text: string | null }) {
     setResumeId(data.id);
     setResumeText(data.parsed_text ?? "");
+    setResumeInputMode("upload");
     setAnalysis(null);
     setImprovedContent(null);
     setImprovedResumeId(null);
@@ -95,6 +116,10 @@ function ResumeAnalyzerContent() {
           resumeId: resumeId || undefined,
           jobTitle: improveJobTitle.trim() || undefined,
           jobDescription: improveJobDescription.trim() || undefined,
+          tailorIntent:
+            improveJobTitle.trim() || improveJobDescription.trim()
+              ? tailorIntent
+              : undefined,
           previousAnalysis: analysis
             ? {
                 atsScore: analysis.atsScore,
@@ -106,7 +131,7 @@ function ResumeAnalyzerContent() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setImproveError(data.error || "Failed to improve resume");
+        setImproveError(humanizeImproveResumeError(typeof data.error === "string" ? data.error : undefined));
         return;
       }
       const { improvedResumeId: id, ...contentOnly } = data;
@@ -114,7 +139,7 @@ function ResumeAnalyzerContent() {
       if (typeof id === "string") setImprovedResumeId(id);
       if (analysis) setAnalysisForRecheck(analysis);
     } catch {
-      setImproveError("Failed to improve resume");
+      setImproveError(humanizeNetworkError());
     } finally {
       setImproving(false);
     }
@@ -150,7 +175,7 @@ function ResumeAnalyzerContent() {
       setAnalysisForRecheck(data);
       dispatchUsageUpdated();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Re-check failed");
+      setError(e instanceof Error ? humanizeImproveResumeError(e.message) : humanizeNetworkError());
     } finally {
       setRecheckLoading(false);
     }
@@ -174,7 +199,11 @@ function ResumeAnalyzerContent() {
       });
       const data = await res.json();
       if (!res.ok) {
-        const msg = data.detail ? `${data.error}: ${data.detail}` : (data.error || "Analysis failed");
+        const msg = data.detail
+          ? `${typeof data.error === "string" ? data.error : "Error"}: ${data.detail}`
+          : typeof data.error === "string"
+            ? data.error
+            : "Analysis failed";
         throw new Error(msg);
       }
       setAnalysis(data);
@@ -184,7 +213,9 @@ function ResumeAnalyzerContent() {
       }
       dispatchUsageUpdated();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Analysis failed");
+      setError(
+        e instanceof Error ? humanizeImproveResumeError(e.message) : humanizeImproveResumeError(undefined)
+      );
     } finally {
       setLoading(false);
     }
@@ -213,20 +244,75 @@ function ResumeAnalyzerContent() {
       )}
 
       <section>
-        <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Upload resume</h2>
-        <ResumeUpload onUploadComplete={handleUploadComplete} />
+        <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Add your resume</h2>
+        <p className="mb-3 text-sm text-text-muted">
+          Upload a file or paste text — both work for ATS analysis.
+        </p>
+        <div className="mb-4 flex flex-wrap gap-2 rounded-lg border border-gray-200 bg-card p-1">
+          <button
+            type="button"
+            onClick={() => setResumeInputMode("upload")}
+            className={`min-h-[44px] flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors sm:flex-none sm:px-4 ${
+              resumeInputMode === "upload"
+                ? "bg-primary text-white shadow-sm"
+                : "text-text-muted hover:bg-gray-50"
+            }`}
+          >
+            Upload PDF / DOCX
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setResumeInputMode("paste");
+              if (resumeText === null) setResumeText("");
+            }}
+            className={`min-h-[44px] flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors sm:flex-none sm:px-4 ${
+              resumeInputMode === "paste"
+                ? "bg-primary text-white shadow-sm"
+                : "text-text-muted hover:bg-gray-50"
+            }`}
+          >
+            Paste resume text
+          </button>
+        </div>
+        {resumeInputMode === "upload" ? (
+          <ResumeUpload onUploadComplete={handleUploadComplete} />
+        ) : (
+          <div className="space-y-2">
+            <textarea
+              className="w-full rounded-lg border border-gray-300 p-3 text-base sm:text-sm text-text min-h-[180px]"
+              rows={10}
+              value={resumeText ?? ""}
+              onChange={(e) => {
+                setResumeText(e.target.value);
+                setResumeId(null);
+              }}
+              placeholder="Paste your full resume here (no upload needed)…"
+            />
+            <p className="text-xs text-text-muted">
+              Tip: paste from Word, Google Docs, or any text source. Then analyze below.
+            </p>
+          </div>
+        )}
       </section>
 
-      {resumeText && (
+      {resumeText != null && resumeText !== "" && (
         <section>
-          <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Resume text</h2>
-          <textarea
-            className="w-full rounded-lg border border-gray-300 p-3 text-base sm:text-sm text-text min-h-[44px]"
-            rows={6}
-            value={resumeText}
-            onChange={(e) => setResumeText(e.target.value)}
-            placeholder="Paste or edit resume text…"
-          />
+          {resumeInputMode === "upload" && (
+            <>
+              <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Resume text</h2>
+              <textarea
+                className="w-full rounded-lg border border-gray-300 p-3 text-base sm:text-sm text-text min-h-[44px]"
+                rows={6}
+                value={resumeText}
+                onChange={(e) => setResumeText(e.target.value)}
+                placeholder="Paste or edit resume text…"
+              />
+            </>
+          )}
+          {resumeInputMode === "paste" && (
+            <h2 className="mb-3 text-base sm:text-lg font-semibold text-text">Ready to analyze</h2>
+          )}
           <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
             <button
               type="button"
@@ -248,6 +334,35 @@ function ResumeAnalyzerContent() {
           <ResumeAnalysisResult data={analysis} />
           <div className="mt-4 sm:mt-6 flex flex-col gap-3">
             <p className="text-xs sm:text-sm font-medium text-text">Optional: tailor for a specific job</p>
+            {(improveJobTitle.trim() || improveJobDescription.trim()) && (
+              <div className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-gray-50/80 p-3 sm:p-4">
+                <p className="text-xs font-medium text-text">How should we use the job info?</p>
+                <label className="flex cursor-pointer items-start gap-2 text-sm text-text">
+                  <input
+                    type="radio"
+                    name="tailorIntent"
+                    checked={tailorIntent === "target_job"}
+                    onChange={() => setTailorIntent("target_job")}
+                    className="mt-1"
+                  />
+                  <span>
+                    <strong>Tailor for this job</strong> — align resume to this role (ok for career change).
+                  </span>
+                </label>
+                <label className="flex cursor-pointer items-start gap-2 text-sm text-text">
+                  <input
+                    type="radio"
+                    name="tailorIntent"
+                    checked={tailorIntent === "optimize_current"}
+                    onChange={() => setTailorIntent("optimize_current")}
+                    className="mt-1"
+                  />
+                  <span>
+                    <strong>Polish my current path</strong> — improve wording for your field; job text is only a hint.
+                  </span>
+                </label>
+              </div>
+            )}
             <input
               type="text"
               placeholder="Job title (e.g. Frontend Developer)"
@@ -287,17 +402,18 @@ function ResumeAnalyzerContent() {
         <section>
           <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Improved resume</h2>
           {(analysisForRecheck ?? analysis) && (
-            <div className="mb-4 rounded-lg border border-primary/30 bg-primary/5 p-3 sm:p-4">
-              <p className="mb-3 text-sm font-medium text-text">
-                Verify improvement — re-score against the same feedback you just fixed
+            <div className="mb-4 rounded-lg border-2 border-primary/40 bg-gradient-to-br from-primary/10 to-primary/5 p-4 sm:p-5">
+              <p className="mb-1 text-sm font-semibold text-text">Next step</p>
+              <p className="mb-3 text-sm text-text-muted">
+                See your new ATS score after the improvements.
               </p>
               <button
                 type="button"
                 onClick={handleRecheckImproved}
                 disabled={recheckLoading}
-                className="w-full sm:w-auto min-h-[44px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50"
+                className="w-full sm:w-auto min-h-[48px] rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50"
               >
-                {recheckLoading ? "Re-analyzing…" : "Re-analyze improved resume"}
+                {recheckLoading ? "Scoring your improved resume…" : "See your new ATS score →"}
               </button>
               <p className="mt-2 text-xs text-text-muted">
                 Should show 90%+ if the improvements addressed the previous feedback.

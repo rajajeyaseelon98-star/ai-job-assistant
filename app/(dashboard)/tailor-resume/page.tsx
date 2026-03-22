@@ -16,7 +16,8 @@ export default function TailorResumePage() {
       <div>
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Resume Tailoring</h1>
         <p className="mt-1 text-sm sm:text-base text-text-muted">
-          Paste a job description and your resume — we&apos;ll rewrite it to match the role perfectly, optimized for ATS.
+          <strong className="text-text">Resume Tailoring</strong> rewrites your resume for a specific job (ATS-friendly sections).
+          This is different from <strong className="text-text">Job Match</strong>, which only scores fit and gaps.
         </p>
       </div>
 

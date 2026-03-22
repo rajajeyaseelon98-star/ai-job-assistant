@@ -57,7 +57,9 @@ function LoginForm() {
       <div className="w-full max-w-md">
         <div className="rounded-xl border border-gray-200 bg-card p-6 sm:p-8 shadow-sm">
           <h1 className="text-xl sm:text-2xl font-bold text-text">Welcome back</h1>
-          <p className="mt-1 text-sm sm:text-base text-text-muted">Sign in to your account</p>
+          <p className="mt-1 text-sm sm:text-base text-text-muted">
+            Get 3× more interviews — sign in to continue
+          </p>
 
           {/* Google OAuth */}
           <button
@@ -72,7 +74,7 @@ function LoginForm() {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
             </svg>
-            {googleLoading ? "Connecting..." : "Continue with Google"}
+            {googleLoading ? "Signing you in…" : "Continue with Google"}
           </button>
 
           {/* Divider */}
@@ -96,7 +98,8 @@ function LoginForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 sm:py-2 text-base sm:text-sm text-text min-h-[44px]"
+                disabled={loading || googleLoading}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 sm:py-2 text-base sm:text-sm text-text min-h-[44px] disabled:opacity-60"
               />
             </div>
             <div>
@@ -109,7 +112,8 @@ function LoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 sm:py-2 text-base sm:text-sm text-text min-h-[44px]"
+                disabled={loading || googleLoading}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 sm:py-2 text-base sm:text-sm text-text min-h-[44px] disabled:opacity-60"
               />
             </div>
             {message && (
@@ -124,7 +128,7 @@ function LoginForm() {
               disabled={loading || googleLoading}
               className="w-full rounded-lg bg-primary py-2.5 sm:py-2 font-medium text-white hover:bg-primary-hover disabled:opacity-50 min-h-[44px] active:scale-[0.98] transition-transform text-sm sm:text-base"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? "Signing you in…" : "Sign in"}
             </button>
           </form>
 

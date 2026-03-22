@@ -92,8 +92,9 @@ export default function AutoApplyPage() {
           <Rocket className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> AI Auto-Apply
         </h1>
         <p className="mt-1 text-xs sm:text-sm text-text-muted">
-          Upload your resume, and our AI will find matching jobs, tailor your application, and apply for you.
-          You review and confirm before anything is sent.
+          Upload your resume — we find matches, score them, and you confirm before we apply. Each job shows{" "}
+          <strong className="text-text">Direct apply (our platform)</strong> vs{" "}
+          <strong className="text-text">External apply</strong> (partner / job board link) so you always know.
         </p>
       </div>
 

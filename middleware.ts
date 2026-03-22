@@ -12,6 +12,7 @@ export async function middleware(request: NextRequest) {
   const isProtected =
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/resume-analyzer") ||
+    pathname.startsWith("/resume-builder") ||
     pathname.startsWith("/job-match") ||
     pathname.startsWith("/job-finder") ||
     pathname.startsWith("/auto-apply") ||

@@ -75,7 +75,7 @@ export function RecruiterSidebar() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed left-3 top-3 z-40 rounded-lg p-2 hover:bg-gray-100 active:bg-gray-200 lg:hidden"
+        className="fixed left-3 top-3 z-40 rounded-lg p-2 text-foreground transition-colors duration-200 hover:bg-surface-muted active:bg-slate-200/80 lg:hidden"
         aria-label="Open menu"
       >
         <Menu className="h-5 w-5 text-text" />
@@ -94,14 +94,14 @@ export function RecruiterSidebar() {
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 py-3 lg:border-b-0 lg:px-4 lg:py-4">
+        <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3 lg:border-b-0 lg:px-4 lg:py-4">
           <Link href="/recruiter" className="min-w-0">
-            <span className="text-base font-semibold text-primary lg:text-lg">Recruiter Panel</span>
+            <span className="text-base font-semibold tracking-tight text-foreground lg:text-lg">Recruiter Panel</span>
           </Link>
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="rounded-lg p-1.5 hover:bg-gray-100 active:bg-gray-200 lg:hidden"
+            className="rounded-lg p-1.5 transition-colors duration-200 hover:bg-surface-muted active:bg-slate-200/80 lg:hidden"
             aria-label="Close menu"
           >
             <X className="h-5 w-5 text-text-muted" />
@@ -120,10 +120,10 @@ export function RecruiterSidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-200 ease-in-out ${
                     isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-text-muted hover:bg-gray-100 hover:text-text active:bg-gray-200"
+                      ? "bg-primary/10 text-primary shadow-sm"
+                      : "text-text-muted hover:bg-surface-muted hover:text-foreground active:bg-slate-200/60"
                   }`}
                 >
                   <Icon className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
@@ -134,10 +134,10 @@ export function RecruiterSidebar() {
           </div>
         </nav>
 
-        <div className="shrink-0 border-t border-gray-100 px-3 py-3 safe-bottom">
+        <div className="shrink-0 border-t border-border px-3 py-3 safe-bottom">
           <Link
             href="/select-role?next=/dashboard"
-            className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-text-muted hover:bg-gray-50 hover:text-text active:bg-gray-100"
+            className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5 text-sm text-text-muted shadow-sm transition-all duration-200 hover:border-primary/25 hover:bg-surface-muted hover:text-foreground"
           >
             <ArrowLeftRight className="h-4 w-4 shrink-0" />
             <span className="truncate">Switch to Job Seeker</span>

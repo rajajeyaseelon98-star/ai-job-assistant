@@ -9,15 +9,40 @@ html {
 }
 
 body {
-  @apply bg-background text-text;
+  @apply bg-background text-text antialiased;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 /* ── Touch-friendly defaults ── */
-button, a, [role="button"] {
+button,
+a,
+[role="button"] {
   -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Design system: form controls ── */
+@layer components {
+  .input-field {
+    @apply w-full min-h-[44px] rounded-lg border border-border bg-card px-3 py-2 text-base text-text shadow-sm transition-colors duration-200 ease-in-out placeholder:text-text-muted/70 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:min-h-0 sm:text-sm;
+  }
+
+  .input-field:disabled {
+    @apply cursor-not-allowed bg-slate-50 opacity-60;
+  }
+
+  .label-field {
+    @apply mb-1.5 block text-sm font-medium text-text;
+  }
+
+  .card-elevated {
+    @apply rounded-xl border border-border bg-card shadow-card transition-shadow duration-200 ease-in-out;
+  }
+
+  .card-elevated:hover {
+    @apply shadow-card-md;
+  }
 }
 
 /* ── Responsive utilities ── */
@@ -38,13 +63,14 @@ button, a, [role="button"] {
   background: transparent;
 }
 .overflow-y-auto::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded-full;
+  @apply rounded-full bg-border;
 }
 
 /* ── Mobile-specific fixes ── */
 @media (max-width: 640px) {
-  /* Prevent horizontal scroll from any rogue element */
-  main, section, article {
+  main,
+  section,
+  article {
     max-width: 100vw;
     overflow-x: hidden;
   }

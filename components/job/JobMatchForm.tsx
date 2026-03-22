@@ -8,12 +8,15 @@ interface JobMatchFormProps {
   defaultResumeText?: string;
   defaultJobTitle?: string;
   defaultJobDescription?: string;
-  onResult: (data: {
-    match_score: number;
-    matched_skills: string[];
-    missing_skills: string[];
-    resume_improvements: string[];
-  }) => void;
+  onResult: (
+    data: {
+      match_score: number;
+      matched_skills: string[];
+      missing_skills: string[];
+      resume_improvements: string[];
+    },
+    context: { jobTitle: string; jobDescription: string; resumeText: string }
+  ) => void;
 }
 
 export function JobMatchForm({
@@ -54,7 +57,11 @@ export function JobMatchForm({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Match failed");
-      onResult(data);
+      onResult(data, {
+        jobTitle: jobTitle.trim(),
+        jobDescription: jobDescription.trim(),
+        resumeText: resumeText.trim(),
+      });
       dispatchUsageUpdated();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Match failed");

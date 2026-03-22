@@ -5,7 +5,10 @@ import { redirect } from "next/navigation";
 import { ScoreCard } from "@/components/dashboard/ScoreCard";
 import { JobMatchAvgCard } from "@/components/dashboard/JobMatchAvgCard";
 import { UsageCard } from "@/components/dashboard/UsageCard";
-import { QuickActions } from "@/components/dashboard/QuickActions";
+import { ProductNarrativeBanner } from "@/components/dashboard/ProductNarrativeBanner";
+import { StartHereChecklist } from "@/components/dashboard/StartHereChecklist";
+import { StartHereActions } from "@/components/dashboard/StartHereActions";
+import { ExploreMoreActions } from "@/components/dashboard/ExploreMoreActions";
 import { ActivityList } from "@/components/dashboard/ActivityList";
 import { StreakWidget } from "@/components/dashboard/StreakWidget";
 import { DailyActions } from "@/components/dashboard/DailyActions";
@@ -41,6 +44,11 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false })
     .limit(5);
 
+  const { count: applicationCount } = await supabase
+    .from("applications")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
   const { data: avgRow } = await supabase
     .from("job_matches")
     .select("match_score")
@@ -52,6 +60,8 @@ export default async function DashboardPage() {
     : null;
 
   const latestScore = analyses?.[0]?.score ?? null;
+  const hasMatch = (matches?.length ?? 0) > 0;
+  const hasTrackedApplication = (applicationCount ?? 0) > 0;
   const activityItems = [
     ...(analyses?.map((a) => ({
       id: a.id,
@@ -87,6 +97,14 @@ export default async function DashboardPage() {
         Welcome back{user?.profile?.name ? `, ${user.profile.name}` : user?.profile?.email ? `, ${user.profile.email.split("@")[0]}` : ""} 👋
       </h1>
 
+      <ProductNarrativeBanner />
+
+      <StartHereChecklist
+        hasAtsScore={latestScore !== null}
+        hasJobMatch={hasMatch}
+        hasTrackedApplication={hasTrackedApplication}
+      />
+
       {/* Streak + Score Cards Row */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 md:gap-6">
         <StreakWidget />
@@ -107,8 +125,19 @@ export default async function DashboardPage() {
       <DailyActions />
 
       <div>
-        <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Quick Actions</h2>
-        <QuickActions />
+        <h2 className="mb-2 text-base sm:text-lg font-semibold text-text">Start here</h2>
+        <p className="mb-3 sm:mb-4 text-xs sm:text-sm text-text-muted">
+          The shortest path to interviews: score → match → apply.
+        </p>
+        <StartHereActions />
+      </div>
+
+      <div>
+        <h2 className="mb-2 text-base sm:text-lg font-semibold text-text">Explore more</h2>
+        <p className="mb-3 sm:mb-4 text-xs sm:text-sm text-text-muted">
+          Optional tools — use after your first resume score or when you need a specific edge.
+        </p>
+        <ExploreMoreActions />
       </div>
 
       <div>

@@ -14,6 +14,7 @@ import {
   Mail,
   Mic2,
   Linkedin,
+  PenLine,
   ClipboardList,
   BarChart3,
   History,
@@ -38,34 +39,33 @@ interface NavGroup {
 
 const navGroups: NavGroup[] = [
   {
-    label: "",
+    label: "Start here",
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    ],
-  },
-  {
-    label: "Apply",
-    items: [
+      { href: "/resume-builder", label: "Quick Resume Builder", icon: PenLine },
       { href: "/resume-analyzer", label: "Resume Analyzer", icon: FileText },
       { href: "/job-match", label: "Job Match", icon: Target },
-      { href: "/job-board", label: "Job Board", icon: Briefcase },
-      { href: "/job-finder", label: "Auto Job Finder", icon: Search },
       { href: "/auto-apply", label: "AI Auto-Apply", icon: Rocket },
-      { href: "/smart-apply", label: "Smart Auto-Apply", icon: Zap },
     ],
   },
   {
-    label: "Improve",
+    label: "Explore more",
     items: [
+      { href: "/job-board", label: "Job Board", icon: Briefcase },
+      { href: "/job-finder", label: "Auto Job Finder", icon: Search },
+      { href: "/smart-apply", label: "Smart Auto-Apply", icon: Zap },
       { href: "/tailor-resume", label: "Resume Tailoring", icon: Wand2 },
       { href: "/cover-letter", label: "Cover Letter", icon: Mail },
       { href: "/interview-prep", label: "Interview Prep", icon: Mic2 },
-      { href: "/import-linkedin", label: "LinkedIn Import", icon: Linkedin },
       { href: "/career-coach", label: "AI Career Coach", icon: Brain },
     ],
   },
   {
-    label: "Insights",
+    label: "Advanced",
+    items: [{ href: "/import-linkedin", label: "LinkedIn Import", icon: Linkedin }],
+  },
+  {
+    label: "Track & insights",
     items: [
       { href: "/applications", label: "Applications", icon: ClipboardList },
       { href: "/analytics", label: "Career Analytics", icon: BarChart3 },
@@ -123,7 +123,7 @@ export function Sidebar() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed left-3 top-3 z-40 rounded-lg p-2 hover:bg-gray-100 active:bg-gray-200 lg:hidden"
+        className="fixed left-3 top-3 z-40 rounded-lg p-2 text-foreground transition-colors duration-200 hover:bg-surface-muted active:bg-slate-200/80 lg:hidden"
         aria-label="Open menu"
       >
         <Menu className="h-5 w-5 text-text" />
@@ -140,19 +140,19 @@ export function Sidebar() {
 
       {/* Sidebar with slide animation */}
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-screen w-[260px] flex-col border-r border-gray-200 bg-card shadow-xl transition-transform duration-300 ease-in-out lg:w-[240px] lg:translate-x-0 lg:shadow-none ${
+        className={`fixed left-0 top-0 z-50 flex h-screen w-[260px] flex-col border-r border-border bg-card shadow-card-md transition-transform duration-300 ease-in-out lg:w-[240px] lg:translate-x-0 lg:shadow-nav ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Header */}
-        <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 py-3 lg:border-b-0 lg:px-4 lg:py-4">
+        <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3 lg:border-b-0 lg:px-4 lg:py-4">
           <Link href="/dashboard" className="min-w-0">
-            <span className="text-base font-semibold text-primary lg:text-lg">AI Job Assistant</span>
+            <span className="text-base font-semibold tracking-tight text-foreground lg:text-lg">AI Job Assistant</span>
           </Link>
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="rounded-lg p-1.5 hover:bg-gray-100 active:bg-gray-200 lg:hidden"
+            className="rounded-lg p-1.5 transition-colors duration-200 hover:bg-surface-muted active:bg-slate-200/80 lg:hidden"
             aria-label="Close menu"
           >
             <X className="h-5 w-5 text-text-muted" />
@@ -164,7 +164,7 @@ export function Sidebar() {
           {navGroups.map((group, gi) => (
             <div key={gi} className={group.label ? "mt-3 first:mt-0" : ""}>
               {group.label && (
-                <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-text-muted/60">
+                <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
                   {group.label}
                 </p>
               )}
@@ -176,10 +176,10 @@ export function Sidebar() {
                     <Link
                       key={item.href}
                       href={item.href}
-                      className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                      className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200 ease-in-out ${
                         isActive
-                          ? "bg-primary/10 text-primary"
-                          : "text-text-muted hover:bg-gray-100 hover:text-text active:bg-gray-200"
+                          ? "bg-primary/10 text-primary shadow-sm"
+                          : "text-text-muted hover:bg-surface-muted hover:text-foreground active:bg-slate-200/60"
                       }`}
                     >
                       <Icon className="h-4 w-4 shrink-0" />
@@ -193,10 +193,10 @@ export function Sidebar() {
         </nav>
 
         {/* Footer */}
-        <div className="shrink-0 border-t border-gray-100 px-3 py-3 safe-bottom">
+        <div className="shrink-0 border-t border-border px-3 py-3 safe-bottom">
           <Link
             href="/select-role?next=/recruiter"
-            className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-text-muted hover:bg-gray-50 hover:text-text active:bg-gray-100"
+            className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5 text-sm text-text-muted shadow-sm transition-all duration-200 hover:border-primary/25 hover:bg-surface-muted hover:text-foreground"
           >
             <ArrowLeftRight className="h-4 w-4 shrink-0" />
             <span className="truncate">Switch to Recruiter</span>

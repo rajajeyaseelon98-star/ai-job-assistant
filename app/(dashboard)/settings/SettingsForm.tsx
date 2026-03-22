@@ -155,6 +155,27 @@ export function SettingsForm({
       </section>
 
       <section className="rounded-xl border border-gray-200 bg-card p-4 sm:p-6 shadow-sm">
+        <h2 className="font-semibold text-text">Advanced</h2>
+        <p className="mt-2 text-sm text-text-muted">
+          Optional tools — not required for the main flow (upload resume → score → apply).
+        </p>
+        <ul className="mt-3 space-y-2 text-sm">
+          <li>
+            <Link href="/import-linkedin" className="font-medium text-primary hover:underline">
+              LinkedIn import
+            </Link>
+            <span className="text-text-muted"> — generate a draft from profile text or PDF</span>
+          </li>
+          <li>
+            <Link href="/resume-builder" className="font-medium text-primary hover:underline">
+              Quick Resume Builder
+            </Link>
+            <span className="text-text-muted"> — guided draft, then open in Resume Analyzer</span>
+          </li>
+        </ul>
+      </section>
+
+      <section className="rounded-xl border border-gray-200 bg-card p-4 sm:p-6 shadow-sm">
         <h2 className="font-semibold text-text">Subscription</h2>
         <p className="mt-2 text-sm text-text-muted">
           Current plan: <span className="capitalize font-medium text-text">{planType}</span>

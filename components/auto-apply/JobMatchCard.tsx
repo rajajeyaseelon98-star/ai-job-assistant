@@ -1,6 +1,6 @@
 "use client";
 
-import { MapPin, DollarSign, ExternalLink, TrendingUp, Lightbulb } from "lucide-react";
+import { MapPin, DollarSign, ExternalLink, TrendingUp, Lightbulb, Building2, Globe } from "lucide-react";
 import type { AutoApplyJobResult } from "@/types/autoApply";
 
 interface JobMatchCardProps {
@@ -8,8 +8,14 @@ interface JobMatchCardProps {
   onToggleSelect: (jobId: string) => void;
 }
 
+function applyChannel(job: AutoApplyJobResult): "platform" | "external" {
+  if (job.apply_channel) return job.apply_channel;
+  return job.url && job.source !== "Internal" ? "external" : "platform";
+}
+
 export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
   const prob = job.interview_probability;
+  const channel = applyChannel(job);
 
   return (
     <div className={`rounded-xl border p-3 sm:p-4 transition-colors ${
@@ -27,7 +33,32 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
           </div>
           <p className="text-xs sm:text-sm text-text-muted">{job.company}</p>
 
-          <div className="mt-1.5 flex flex-wrap gap-2 text-xs text-text-muted">
+          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-text-muted">
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${
+                channel === "platform"
+                  ? "bg-emerald-50 text-emerald-800"
+                  : "bg-sky-50 text-sky-800"
+              }`}
+              title={
+                channel === "platform"
+                  ? "Apply through our platform"
+                  : "Opens external job board / company site"
+              }
+            >
+              {channel === "platform" ? (
+                <>
+                  <Building2 className="h-3 w-3" /> Direct apply (our platform)
+                </>
+              ) : (
+                <>
+                  <Globe className="h-3 w-3" /> External apply
+                </>
+              )}
+            </span>
+            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-text-muted">
+              Source: {job.source}
+            </span>
             {job.location && (
               <span className="flex items-center gap-1">
                 <MapPin className="h-3 w-3" /> {job.location}
@@ -41,7 +72,6 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
                 {job.salary_max ? `${(job.salary_max / 1000).toFixed(0)}k` : ""}
               </span>
             )}
-            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs">{job.source}</span>
           </div>
 
           {job.match_reason && (

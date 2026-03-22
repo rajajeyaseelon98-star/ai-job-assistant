@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Zap, Loader2, Power, PowerOff, Clock, TrendingUp, Settings2 } from "lucide-react";
 import type { SmartApplyRule } from "@/types/autoApply";
+import { humanizeSmartApplyError, humanizeNetworkError } from "@/lib/friendlyApiError";
 
 interface Resume {
   id: string;
@@ -17,6 +19,9 @@ export default function SmartApplyPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [usage, setUsage] = useState<{
+    smart_apply: { used: number; limit: number };
+  } | null>(null);
 
   // Form state
   const [resumeId, setResumeId] = useState("");
@@ -33,12 +38,17 @@ export default function SmartApplyPage() {
     Promise.all([
       fetch("/api/smart-apply").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/upload-resume").then((r) => (r.ok ? r.json() : [])),
-    ]).then(([rulesData, resumesData]) => {
+      fetch("/api/usage").then((r) => (r.ok ? r.json() : null)),
+    ]).then(([rulesData, resumesData, usageData]) => {
       setRules(rulesData);
       setResumes(resumesData);
       if (resumesData.length > 0) setResumeId(resumesData[0].id);
 
       // Pre-fill form from existing rule
+      if (usageData?.smart_apply) {
+        setUsage({ smart_apply: usageData.smart_apply });
+      }
+
       if (rulesData.length > 0) {
         const r = rulesData[0];
         setResumeId(r.resume_id);
@@ -91,11 +101,11 @@ export default function SmartApplyPage() {
         });
         setSuccess("Smart Auto-Apply rules saved and activated!");
       } else {
-        const data = await res.json();
-        setError(data.error || "Failed to save rules");
+        const data = await res.json().catch(() => ({}));
+        setError(humanizeSmartApplyError(typeof data.error === "string" ? data.error : undefined));
       }
     } catch {
-      setError("Something went wrong");
+      setError(humanizeNetworkError());
     } finally {
       setSaving(false);
     }
@@ -131,9 +141,37 @@ export default function SmartApplyPage() {
           <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500" /> Smart Auto-Apply
         </h1>
         <p className="mt-1 text-xs sm:text-sm text-text-muted">
-          Set your rules once. Our AI finds and applies to matching jobs automatically every day.
-          You&apos;ll get notified for every application.
+          <strong className="text-text">Set once → we apply daily for you.</strong> Our AI finds matching jobs and applies on your schedule. Pro feature — you&apos;ll get notified for each run.
         </p>
+
+        {usage && (
+          <div
+            className={`mt-3 rounded-lg border px-3 py-2.5 text-xs sm:text-sm ${
+              usage.smart_apply.limit === 0
+                ? "border-amber-200 bg-amber-50 text-amber-950"
+                : "border-emerald-200 bg-emerald-50/80 text-emerald-950"
+            }`}
+          >
+            {usage.smart_apply.limit === 0 ? (
+              <>
+                <strong>Plan limits:</strong> Smart Auto-Apply is included on <strong>Pro</strong> and{" "}
+                <strong>Premium</strong>. Free plans can use{" "}
+                <Link href="/auto-apply" className="font-medium underline">
+                  AI Auto-Apply
+                </Link>{" "}
+                with monthly caps shown on your dashboard.
+              </>
+            ) : (
+              <>
+                <strong>How limits work:</strong> Rules run on a <strong>~24h cadence</strong>. Each run applies
+                only up to your <strong>max/day</strong> and <strong>max/week</strong> below (and your match
+                threshold). Pro: unlimited scheduled runs within those caps. This month&apos;s Smart Auto-Apply
+                events logged: <strong>{usage.smart_apply.used}</strong>
+                {usage.smart_apply.limit === -1 ? " (unlimited)" : ` / ${usage.smart_apply.limit}`}.
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {error && <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>}

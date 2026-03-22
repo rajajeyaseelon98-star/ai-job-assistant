@@ -23,6 +23,8 @@ export interface AutoApplyJobResult {
   salary_max?: number;
   url: string;
   source: string;
+  /** platform = apply on our site; external = partner listing (e.g. Adzuna) */
+  apply_channel?: "platform" | "external";
   match_score: number;
   match_reason: string;
   cover_letter?: string;

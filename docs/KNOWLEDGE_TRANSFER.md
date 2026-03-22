@@ -2,7 +2,9 @@
 
 **Purpose:** Single source of truth for how the app works. Update this doc whenever you change routes, APIs, components, lib, or database.
 
-**Last updated:** 2026-03-20 (Phase 9 — UX Overhaul: Google OAuth, onboarding flow, role selection on signup, sidebar grouping, demo mode, feedback system, smart upgrade triggers, improved notifications, share/viral loop, empty state guidance, landing page Job Seeker/Recruiter tabs, signup role pre-selection from query params).
+**Last updated:** 2026-03-07 (Dashboard **Start here** vs **Explore more**, 3-step checklist, product narrative banner + topbar hook, sidebar **Explore more** group, shared `PageLoading`, improved-resume normalization + fixed UI sections, Smart Auto-Apply plan/limit copy, friendly API errors, job finder Phase 2+ roadmap note).
+
+**Product strategy & UX priorities** (positioning, focus, page-level UX backlog): see **`docs/PRODUCT_STRATEGY_UX.md`**. This KT doc describes *implementation*; that doc describes *what to lead with* and *what to simplify*.
 
 ---
 
@@ -10,7 +12,8 @@
 
 - **Stack:** Next.js 15 (App Router), React 18, TypeScript, Supabase (Auth + Postgres), Tailwind CSS.
 - **AI:** Gemini (primary) and OpenAI (fallback on 429/quota). See `lib/ai.ts`. Cached wrappers (`cachedAiGenerate`, `cachedAiGenerateContent`) in `lib/ai.ts` check `ai_cache` table before calling AI, reducing costs 30-50%.
-- **Main flows:** Resume upload & ATS analysis, resume improve (Pro), job match, cover letter, interview prep, **auto job finder**, **AI auto-apply** (killer feature), **smart auto-apply** (set & forget), **resume tailoring**, **application tracker**, **LinkedIn import**. Usage is tracked per feature; free plan has limits.
+- **Main flows:** Resume upload & ATS analysis, **Quick Resume Builder** (`/resume-builder` → draft into Resume Analyzer via `sessionStorage`), resume improve (Pro), job match, cover letter, interview prep, **auto job finder**, **AI auto-apply** (killer feature), **smart auto-apply** (set & forget), **resume tailoring**, **application tracker**, **LinkedIn import**. Usage is tracked per feature; free plan has limits.
+- **Improved resume JSON:** `/api/improve-resume` and LinkedIn import responses are passed through **`normalizeImprovedResumeContent`** (`lib/normalizeImprovedResume.ts`); **`ImprovedResumeView`** always renders five sections (Summary, Skills, Experience, Projects, Education) with recovery copy when empty.
 - **AI Auto-Apply:** User selects resume → system finds jobs (Adzuna + internal) → pre-filter scores with JS (no AI) → deep AI match top N → **interview probability score** computed per job → user reviews & confirms → applications created. Assisted mode.
 - **Smart Auto-Apply:** Pro feature. User sets rules once (min match score, salary range, roles, locations, daily/weekly limits) → system runs daily via cron → auto-applies to qualifying jobs → user notified. `/api/smart-apply/trigger` endpoint for cron.
 - **Interview Probability Score:** JS-only (no AI cost). Factors: skill overlap, experience alignment, ATS quality, historical success rate. **Weights are dynamically adjusted** by the Learning Engine based on application outcomes. Returns HIGH/MEDIUM/LOW with reasons and boost tips.
@@ -46,7 +49,7 @@
 ### 2.1 Middleware (`middleware.ts`)
 
 - Runs on every request (except static assets). Calls `updateSession()` from `lib/supabase/middleware.ts` to refresh Supabase session cookies.
-- **Protected paths:** `/dashboard`, `/resume-analyzer`, `/job-match`, `/job-board`, `/job-finder`, `/auto-apply`, `/smart-apply`, `/tailor-resume`, `/cover-letter`, `/interview-prep`, `/import-linkedin`, `/applications`, `/analytics`, `/activity`, `/salary-insights`, `/skill-demand`, `/resume-performance`, `/career-coach`, `/streak-rewards`, `/select-role`, `/recruiter`, `/history`, `/pricing`, `/settings`, and all `/api/*` except `/api/auth`. **Public paths:** `/share/[token]` (shareable score card), `/u/[slug]` (public profile), `/results/[token]` (shareable results), `/jobs` and `/jobs/[slug]` (SEO job pages), `/salary/[slug]` and `/salary` (SEO salary pages), `/skills` (SEO skills page), `/api/platform-stats` (social proof).
+- **Protected paths:** `/dashboard`, `/resume-builder`, `/resume-analyzer`, `/job-match`, `/job-board`, `/job-finder`, `/auto-apply`, `/smart-apply`, `/tailor-resume`, `/cover-letter`, `/interview-prep`, `/import-linkedin`, `/applications`, `/analytics`, `/activity`, `/salary-insights`, `/skill-demand`, `/resume-performance`, `/career-coach`, `/streak-rewards`, `/select-role`, `/recruiter`, `/history`, `/pricing`, `/settings`, and all `/api/*` except `/api/auth`. **Public paths:** `/share/[token]` (shareable score card), `/u/[slug]` (public profile), `/results/[token]` (shareable results), `/jobs` and `/jobs/[slug]` (SEO job pages), `/salary/[slug]` and `/salary` (SEO salary pages), `/skills` (SEO skills page), `/api/platform-stats` (social proof).
 - **Behavior:** If unauthenticated on a protected path: API → 401 JSON; page → redirect to `/login?next=<path>`. If authenticated but email not confirmed (`!user.email_confirmed_at`) on a page → redirect to `/login?error=verify`.
 
 ### 2.2 Auth callback (`app/auth/callback/route.ts`)
@@ -265,7 +268,7 @@ All protected APIs use `getUser()`; 401 if no user. Many use `checkRateLimit(use
 | Login | `/login` | Login form; redirect `next` sanitized. |
 | Signup | `/signup` | Sign up. |
 | Reset | `/login/reset` | Password reset. |
-| Dashboard | `/dashboard` | Server: getUser, getUsageSummary, recent resume_analysis (no user_id filter), job_matches, cover_letters by user_id; activity list sorted by date. Client widgets: **StreakWidget** (daily login recording, streak level, XP, multiplier, progress to next reward), **OpportunityAlerts** (urgent opportunities with scan), **DailyActions** (personalized to-do items with completion tracking). ScoreCard, JobMatchAvgCard, UsageCard, QuickActions, ActivityList. |
+| Dashboard | `/dashboard` | Server: getUser, getUsageSummary, `applications` count (for checklist), recent resume_analysis, job_matches, cover_letters; activity list sorted by date. **ProductNarrativeBanner**, **StartHereChecklist** (3 steps; dismiss in `localStorage`), **StartHereActions** (Analyzer / Match / Auto-Apply), **ExploreMoreActions** (builder, job board, finder, smart apply, tailor, cover, interview, coach, applications). Client widgets: **StreakWidget**, **OpportunityAlerts**, **DailyActions**. ScoreCard, JobMatchAvgCard, UsageCard, ActivityList. |
 | Resume Analyzer | `/resume-analyzer` | Client: upload, paste text, analyze, improve (optional job/analysis context). Query params: analysisId, improvedId (load past analysis or improved resume). State: improvedResumeId passed to ImprovedResumeView for DOCX download. Re-analyze improved resume uses analysisForRecheck snapshot. |
 | Job Match | `/job-match` | JobMatchForm; calls /api/job-match; MatchResult. |
 | Cover Letter | `/cover-letter` | CoverLetterForm; generate; CoverLetterResult. |
@@ -318,7 +321,7 @@ All protected APIs use `getUser()`; 401 if no user. Many use `checkRateLimit(use
 
 - **ImprovedResumeView:** Props: content, improvedResumeId?. Copy: improvedToPlainText → clipboard with "Copied!" / error feedback. PDF: iframe with srcdoc HTML → print() then remove iframe on afterprint (no blob URL in address bar). DOCX: if improvedResumeId → open GET download URL; else POST /api/improved-resumes/export-docx with content and trigger download. Uses esc() for HTML in print view (XSS-safe).
 - **ResumeUpload, ResumeAnalysisResult, JobMatchForm, MatchResult, CoverLetterForm, CoverLetterResult, InterviewQuestions:** Form + result per feature.
-- **Dashboard:** ScoreCard, JobMatchAvgCard, UsageCard, QuickActions, ActivityList, **StreakWidget** (flame icon, streak count, level badge, XP multiplier, streak freeze indicator, progress bar to next reward, stats row with best streak/active days/XP), **DailyActions** (personalized to-do checklist with completion progress bar, priority labels, action icons, "Go" links, 100% completion celebration), **OpportunityAlerts** (urgency-colored alert cards with dismiss, action links, auto-scan on load).
+- **Dashboard:** ScoreCard, JobMatchAvgCard, UsageCard, ActivityList, **ProductNarrativeBanner** / **StartHereChecklist** / **StartHereActions** / **ExploreMoreActions**, **StreakWidget** (flame icon, streak count, level badge, XP multiplier, streak freeze indicator, progress bar to next reward, stats row with best streak/active days/XP), **DailyActions** (personalized to-do checklist with completion progress bar, priority labels, action icons, "Go" links, 100% completion celebration), **OpportunityAlerts** (urgency-colored alert cards with dismiss, action links, auto-scan on load).
 - **Layout:** DashboardLayout, Sidebar (nav + mobile hamburger), Topbar (usage refresh).
 - **RecruiterLayout:** Server component in `(recruiter)/layout.tsx`; checks `role === 'recruiter'`, redirects to `/select-role` if not.
 - **RecruiterSidebar:** Navigation for recruiter section with all recruiter pages + Instant Shortlist + Top Candidates + "Switch to Job Seeker" link.

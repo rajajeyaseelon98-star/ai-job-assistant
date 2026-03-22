@@ -26,11 +26,12 @@ export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   withdrawn: "Withdrawn",
 };
 
+/** Kanban / list status chips — aligned with Navy + Blue SaaS theme */
 export const STATUS_COLORS: Record<ApplicationStatus, string> = {
-  saved: "bg-gray-100 text-gray-700",
-  applied: "bg-blue-100 text-blue-700",
-  interviewing: "bg-yellow-100 text-yellow-700",
-  offer: "bg-green-100 text-green-700",
-  rejected: "bg-red-100 text-red-700",
-  withdrawn: "bg-gray-100 text-gray-500",
+  saved: "bg-slate-100 text-foreground ring-1 ring-border",
+  applied: "bg-blue-50 text-primary ring-1 ring-primary/15",
+  interviewing: "bg-amber-50 text-amber-900 ring-1 ring-amber-200/90",
+  offer: "bg-emerald-50 text-emerald-900 ring-1 ring-emerald-200/90",
+  rejected: "bg-red-50 text-red-800 ring-1 ring-red-200/90",
+  withdrawn: "bg-slate-100 text-text-muted ring-1 ring-border",
 };

@@ -2,13 +2,14 @@
 
 **Purpose:** Step-by-step flow chart of every feature. Shows the data path from user action → frontend → API → lib → database → response for each feature.
 
-**Last updated:** 2026-03-18
+**Last updated:** 2026-03-07
 
 ---
 
 ## Table of Contents
 
 1. [Authentication & Onboarding](#1-authentication--onboarding)
+1b. [Dashboard & navigation (Start here)](#1b-dashboard--navigation-start-here)
 2. [Resume Upload & ATS Analysis](#2-resume-upload--ats-analysis)
 3. [Resume Improvement](#3-resume-improvement)
 4. [Job Matching](#4-job-matching)
@@ -82,6 +83,36 @@ User visits app
 
 ---
 
+## 1b. Dashboard & navigation (Start here)
+
+```
+User lands on /dashboard (after login)
+    │
+    ├─ ProductNarrativeBanner — "3× more interviews" + CTA → /resume-analyzer
+    ├─ StartHereChecklist (client)
+    │   ├─ Step 1 done? ──► user has ≥1 resume_analysis row (latest score)
+    │   ├─ Step 2 done? ──► user has ≥1 job_matches row
+    │   └─ Step 3 done? ──► user has ≥1 applications row
+    │   └─ Dismiss ──► localStorage start_here_checklist_dismissed
+    ├─ Streak / Score / Match avg / Usage cards
+    ├─ OpportunityAlerts, DailyActions
+    ├─ Start here — StartHereActions: Resume Analyzer, Job Match, AI Auto-Apply
+    └─ Explore more — ExploreMoreActions: Quick Resume Builder, Job Board, Job Finder,
+        Smart Auto-Apply, Tailor, Cover Letter, Interview, Career Coach, Applications
+```
+
+**Sidebar IA:** **Start here** (core loop) · **Explore more** (secondary tools) · **Advanced** (LinkedIn) · **Track & insights** · History / Pricing / Settings.
+
+**Topbar:** Monthly usage counters + line: *Up to 3× more interviews — we help you apply, not only advise.*
+
+**Quick Resume Builder:** `/resume-builder` → user completes wizard → **Open in Resume Analyzer** writes `resumeBuilderDraft` to `sessionStorage`; Resume Analyzer reads it on load.
+
+**Loading UI:** Shared skeleton `components/ui/PageLoading.tsx` (variants: `default`, `dense`, `dashboard`) used by route `loading.tsx` files.
+
+**Key files:** `app/(dashboard)/dashboard/page.tsx`, `components/dashboard/ProductNarrativeBanner.tsx`, `StartHereChecklist.tsx`, `StartHereActions.tsx`, `ExploreMoreActions.tsx`, `components/layout/Sidebar.tsx`, `components/layout/Topbar.tsx`, `components/ui/PageLoading.tsx`
+
+---
+
 ## 2. Resume Upload & ATS Analysis
 
 ```
@@ -142,8 +173,8 @@ User clicks "Improve with AI" (from resume analyzer or tailor page)
         ├─ canUseFeature("resume_improve", planType) ──► Pro/Premium only
         ├─ cachedAiGenerate(IMPROVE_PROMPT, inputs)
         │   │
-        │   └─ Returns ImprovedResumeContent:
-        │       { summary, skills[], experience[], projects[], education[] }
+        │   └─ JSON parsed → normalizeImprovedResumeContent() ──► ImprovedResumeContent:
+        │       { summary, skills[], experience[], projects[], education (string) }
         │
         ├─ INSERT into improved_resumes (user_id, resume_id, improved_content, job_title)
         ├─ logActivity(userId, "resume_improved", title, description)
@@ -162,9 +193,11 @@ User clicks "Improve with AI" (from resume analyzer or tailor page)
                 │           (includes "Created with AI Job Assistant" watermark)
                 │
                 └─ "Re-analyze" button ──► POST /api/analyze-resume with recheckAfterImprovement=true
+                │
+                └─ UI always shows five section headings (Summary, Skills, Experience, Projects, Education)
 ```
 
-**Key files:** `app/api/improve-resume/route.ts`, `components/resume/ImprovedResumeView.tsx`, `lib/buildDocx.ts`
+**Key files:** `app/api/improve-resume/route.ts`, `components/resume/ImprovedResumeView.tsx`, `lib/normalizeImprovedResume.ts`, `lib/buildDocx.ts`, `lib/friendlyApiError.ts`
 
 ---
 
@@ -273,9 +306,12 @@ User visits /job-finder
                 └─ JobResults (job cards with source filter: "All" | "Adzuna" | "AI Suggested")
                     │
                     └─ Each card: title, company, location, salary, apply link
+                    │
+                    └─ UI copy (JobResults): roadmap for **Phase 2+** — recruiter-posted and platform-hosted jobs
+                        will surface with explicit Internal / Recruiter badges (reduces reliance on external feeds alone).
 ```
 
-**Key files:** `app/(dashboard)/job-finder/page.tsx`, `app/api/auto-jobs/route.ts`
+**Key files:** `app/(dashboard)/job-finder/page.tsx`, `app/api/auto-jobs/route.ts`, `components/job-finder/JobResults.tsx`
 
 ---
 
@@ -391,6 +427,10 @@ User visits /smart-apply (Pro only)
         ├─ UPSERT into smart_apply_rules (onConflict: user_id + resume_id)
         └─ Return rule
 
+    UI (same page):
+        ├─ GET /api/usage ──► `smart_apply.used` / `smart_apply.limit` (0 = free cannot use; -1 = Pro unlimited)
+        └─ Copy: ~24h cadence between runs; each run respects rule max/day + max/week; free users directed to AI Auto-Apply
+
     ┌──────────────────────────────────────────────────────────────────────┐
     │ Cron trigger: POST /api/smart-apply/trigger (daily)                 │
     │                                                                      │
@@ -415,7 +455,7 @@ User visits /smart-apply (Pro only)
     └──────────────────────────────────────────────────────────────────────┘
 ```
 
-**Key files:** `app/(dashboard)/smart-apply/page.tsx`, `app/api/smart-apply/route.ts`, `app/api/smart-apply/trigger/route.ts`, `lib/smartApplyEngine.ts`
+**Key files:** `app/(dashboard)/smart-apply/page.tsx`, `app/api/smart-apply/route.ts`, `app/api/smart-apply/trigger/route.ts`, `app/api/usage/route.ts`, `lib/smartApplyEngine.ts`, `lib/usage.ts`
 
 ---
 
@@ -431,10 +471,10 @@ User visits /tailor-resume
         ├─ Body includes jobTitle + jobDescription ──► AI uses context for tailoring
         └─ Returns tailored ImprovedResumeContent
             │
-            └─ ImprovedResumeView with download options
+            └─ ImprovedResumeView with download options (five fixed sections via normalizeImprovedResumeContent)
 ```
 
-**Key files:** `app/(dashboard)/tailor-resume/page.tsx`, `components/tailor/TailorResumeForm.tsx`
+**Key files:** `app/(dashboard)/tailor-resume/page.tsx`, `components/tailor/TailorResumeForm.tsx`, `lib/normalizeImprovedResume.ts`, `lib/friendlyApiError.ts`
 
 ---
 

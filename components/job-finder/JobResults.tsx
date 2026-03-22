@@ -38,6 +38,15 @@ export function JobResults({ jobs, searchQuery }: JobResultsProps) {
           {searchQuery && (
             <p className="text-xs sm:text-sm text-text-muted mt-0.5">Matching: {searchQuery}</p>
           )}
+          <p className="mt-2 text-xs text-text-muted max-w-2xl">
+            Each card shows its <strong className="text-text">source</strong> (e.g. Adzuna = external listings;
+            &quot;AI Suggested&quot; = ranked matches from our index). We label everything so you know where jobs come from.
+          </p>
+          <p className="mt-2 text-xs text-text-muted max-w-2xl border-l-2 border-primary/30 pl-3">
+            <strong className="text-text">Coming next:</strong> recruiter-posted roles and jobs hosted on our platform
+            (Phase 2+) will appear here with clear &quot;Internal&quot; / &quot;Recruiter&quot; badges — reducing reliance on
+            external feeds alone.
+          </p>
         </div>
 
         {sources.length > 1 && (

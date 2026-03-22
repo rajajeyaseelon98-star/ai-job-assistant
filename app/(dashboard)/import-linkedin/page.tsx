@@ -15,6 +15,21 @@ export default function ImportLinkedInPage() {
         <p className="mt-1 text-xs sm:text-sm text-text-muted">
           Import your LinkedIn profile to automatically generate a professional, ATS-optimized resume.
         </p>
+        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-900">
+          <strong>Optional / Advanced.</strong> Most users should start with{" "}
+          <a href="/resume-builder" className="font-medium underline">
+            Quick Resume Builder
+          </a>{" "}
+          or{" "}
+          <a href="/resume-analyzer" className="font-medium underline">
+            Resume Analyzer
+          </a>
+          . Complete your profile in{" "}
+          <a href="/settings" className="font-medium underline">
+            Settings
+          </a>{" "}
+          anytime.
+        </div>
       </div>
 
       <section className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-6 shadow-sm">

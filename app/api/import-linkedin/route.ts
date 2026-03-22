@@ -4,6 +4,7 @@ import { aiGenerate } from "@/lib/ai";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { validateTextLength } from "@/lib/validation";
 import type { ImprovedResumeContent } from "@/types/analysis";
+import { normalizeImprovedResumeContent } from "@/lib/normalizeImprovedResume";
 
 const LINKEDIN_PARSE_PROMPT = `You are an expert resume creator. The user has provided their LinkedIn profile text (copied from their LinkedIn page or exported PDF).
 Parse this text and create a professional resume from it.
@@ -80,15 +81,16 @@ export async function POST(request: Request) {
     let jsonStr = raw.trim();
     const jsonMatch = jsonStr.match(/^```(?:json)?\s*([\s\S]*?)```$/m);
     if (jsonMatch) jsonStr = jsonMatch[1].trim();
-    content = JSON.parse(jsonStr) as ImprovedResumeContent;
-    if (!content.summary) content.summary = "";
-    if (!Array.isArray(content.skills)) content.skills = [];
-    if (!Array.isArray(content.experience)) content.experience = [];
-    if (!Array.isArray(content.projects)) content.projects = [];
-    if (typeof content.education !== "string") content.education = "";
+    content = normalizeImprovedResumeContent(JSON.parse(jsonStr));
   } catch (e) {
     console.error("LinkedIn parse error:", e);
-    return NextResponse.json({ error: "Failed to parse LinkedIn data" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error:
+          "We couldn’t turn that text into a resume draft. Try pasting a bit more profile content, or break it into shorter chunks.",
+      },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json(content);

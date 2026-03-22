@@ -99,7 +99,10 @@ export async function POST(request: Request) {
   } catch (e) {
     console.error("Parse error:", e);
     return NextResponse.json(
-      { error: "Failed to extract text from file" },
+      {
+        error:
+          "We couldn’t read text from this file. Try a DOCX export, a different PDF, or copy-paste your resume text instead.",
+      },
       { status: 400 }
     );
   }

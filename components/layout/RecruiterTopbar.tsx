@@ -32,7 +32,7 @@ export function RecruiterTopbar({ userName }: RecruiterTopbarProps) {
   }
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-gray-200 bg-card px-4 sm:px-6">
+    <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-card px-4 shadow-nav sm:px-6">
       <div className="flex items-center gap-2">
         {/* Spacer for hamburger button on mobile */}
         <div className="w-8 lg:hidden" />
@@ -46,7 +46,7 @@ export function RecruiterTopbar({ userName }: RecruiterTopbarProps) {
           <button
             type="button"
             onClick={() => setOpen(!open)}
-            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 hover:bg-gray-100 active:bg-gray-200 sm:gap-2"
+            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors duration-200 hover:bg-surface-muted active:bg-slate-200/70 sm:gap-2"
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
               <User className="h-4 w-4" />
@@ -69,7 +69,7 @@ export function RecruiterTopbar({ userName }: RecruiterTopbarProps) {
                   setOpen(false);
                   handleLogout();
                 }}
-                className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-text hover:bg-gray-50 active:bg-gray-100"
+                className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-foreground transition-colors duration-200 hover:bg-surface-muted"
               >
                 <LogOut className="h-4 w-4" /> Logout
               </button>

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Upload, Wand2, Loader2, Briefcase } from "lucide-react";
 import type { ImprovedResumeContent } from "@/types/analysis";
+import { humanizeImproveResumeError, humanizeNetworkError } from "@/lib/friendlyApiError";
 
 interface TailorResumeFormProps {
   onResult: (content: ImprovedResumeContent, improvedResumeId?: string) => void;
@@ -16,6 +17,24 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
   const [error, setError] = useState("");
   const [step, setStep] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("tailorFromJobMatch");
+      if (!raw) return;
+      const d = JSON.parse(raw) as {
+        jobTitle?: string;
+        jobDescription?: string;
+        resumeText?: string;
+      };
+      if (d.resumeText) setResumeText(d.resumeText);
+      if (d.jobTitle) setJobTitle(d.jobTitle);
+      if (d.jobDescription) setJobDescription(d.jobDescription);
+      sessionStorage.removeItem("tailorFromJobMatch");
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   async function handleFileUpload(file: File) {
     if (!file) return;
@@ -33,7 +52,12 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
       const res = await fetch("/api/upload-resume", { method: "POST", body: formData });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Upload failed");
+        const msg = data.error || "Upload failed";
+        setError(
+          msg.includes("couldn’t") || msg.includes("couldn't") || msg.includes("copy-paste")
+            ? msg
+            : "We couldn’t read this file. Try DOCX or paste your resume text below."
+        );
         return;
       }
       const data = await res.json();
@@ -41,7 +65,7 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
         setResumeText(data.parsed_text);
       }
     } catch {
-      setError("Failed to parse file");
+      setError(humanizeNetworkError());
     } finally {
       setStep("");
     }
@@ -70,12 +94,13 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
           resumeText,
           jobTitle: jobTitle.trim() || undefined,
           jobDescription: jobDescription.trim(),
+          tailorIntent: "target_job",
         }),
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || "Tailoring failed");
+        const data = await res.json().catch(() => ({}));
+        setError(humanizeImproveResumeError(typeof data.error === "string" ? data.error : undefined));
         return;
       }
 
@@ -83,7 +108,7 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
       const { improvedResumeId, ...content } = data;
       onResult(content as ImprovedResumeContent, improvedResumeId);
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError(humanizeNetworkError());
     } finally {
       setLoading(false);
       setStep("");
@@ -112,11 +137,14 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="mb-3 w-full sm:w-auto min-h-[44px] flex items-center justify-center sm:justify-start gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm text-text-muted hover:border-primary hover:text-primary active:bg-gray-50 transition-colors"
+          className="mb-2 w-full sm:w-auto min-h-[44px] flex items-center justify-center sm:justify-start gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm text-text-muted hover:border-primary hover:text-primary active:bg-gray-50 transition-colors"
         >
           <Upload className="h-4 w-4" />
           Upload PDF/DOCX
         </button>
+        <p className="mb-3 text-xs text-text-muted">
+          If a PDF won’t parse, export as DOCX or paste your text — both work.
+        </p>
 
         <textarea
           value={resumeText}

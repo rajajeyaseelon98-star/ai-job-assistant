@@ -27,7 +27,14 @@ export function ResumeUpload({ onUploadComplete }: ResumeUploadProps) {
       if (!res.ok) throw new Error(data.error || "Upload failed");
       onUploadComplete({ id: data.id, parsed_text: data.parsed_text });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Upload failed");
+      const raw = e instanceof Error ? e.message : "Upload failed";
+      setError(
+        raw.includes("couldn’t read") || raw.includes("couldn't read")
+          ? raw
+          : raw === "Failed to extract text from file" || raw.includes("extract")
+            ? "We couldn’t read this file. Try DOCX, another PDF, or paste your resume text."
+            : raw
+      );
     } finally {
       setLoading(false);
     }

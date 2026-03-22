@@ -75,7 +75,8 @@ function SignupForm() {
               <button
                 type="button"
                 onClick={() => setRole("job_seeker")}
-                className={`flex items-center gap-2 rounded-lg border-2 px-3 py-2.5 text-left text-sm transition-all ${
+                disabled={loading || googleLoading}
+                className={`flex items-center gap-2 rounded-lg border-2 px-3 py-2.5 text-left text-sm transition-all disabled:opacity-50 ${
                   role === "job_seeker"
                     ? "border-primary bg-primary/5 text-primary"
                     : "border-gray-200 text-text-muted hover:border-gray-300"
@@ -90,7 +91,8 @@ function SignupForm() {
               <button
                 type="button"
                 onClick={() => setRole("recruiter")}
-                className={`flex items-center gap-2 rounded-lg border-2 px-3 py-2.5 text-left text-sm transition-all ${
+                disabled={loading || googleLoading}
+                className={`flex items-center gap-2 rounded-lg border-2 px-3 py-2.5 text-left text-sm transition-all disabled:opacity-50 ${
                   role === "recruiter"
                     ? "border-primary bg-primary/5 text-primary"
                     : "border-gray-200 text-text-muted hover:border-gray-300"
@@ -118,7 +120,7 @@ function SignupForm() {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
             </svg>
-            {googleLoading ? "Connecting..." : "Continue with Google"}
+            {googleLoading ? "Signing you up…" : "Continue with Google"}
           </button>
 
           {/* Divider */}
@@ -142,7 +144,8 @@ function SignupForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 sm:py-2 text-base sm:text-sm text-text min-h-[44px]"
+                disabled={loading || googleLoading}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 sm:py-2 text-base sm:text-sm text-text min-h-[44px] disabled:opacity-60"
               />
             </div>
             <div>
@@ -156,7 +159,8 @@ function SignupForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 sm:py-2 text-base sm:text-sm text-text min-h-[44px]"
+                disabled={loading || googleLoading}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 sm:py-2 text-base sm:text-sm text-text min-h-[44px] disabled:opacity-60"
               />
             </div>
             {message && (
@@ -171,7 +175,7 @@ function SignupForm() {
               disabled={loading || googleLoading}
               className="w-full rounded-lg bg-primary py-2.5 sm:py-2 font-medium text-white hover:bg-primary-hover disabled:opacity-50 min-h-[44px] active:scale-[0.98] transition-transform text-sm sm:text-base"
             >
-              {loading ? "Creating account..." : "Create account"}
+              {loading ? "Creating your account…" : "Create account"}
             </button>
           </form>
 
