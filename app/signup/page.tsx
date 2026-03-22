@@ -3,15 +3,23 @@
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { sanitizeRedirectPath } from "@/lib/validation";
 import { useRouter, useSearchParams } from "next/navigation";
 import { User, Briefcase, Shield, TrendingUp, Users } from "lucide-react";
 
 function SignupForm() {
   const searchParams = useSearchParams();
   const initialRole = searchParams.get("role") === "recruiter" ? "recruiter" : "job_seeker";
+  const nextFromUrl = searchParams.get("next");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"job_seeker" | "recruiter">(initialRole);
+
+  /** Post-OAuth / email confirm redirect (?next= respected for both roles when safe). */
+  function redirectAfterAuth(forRole: "job_seeker" | "recruiter") {
+    const def = forRole === "recruiter" ? "/recruiter" : "/onboarding";
+    return sanitizeRedirectPath(nextFromUrl, def);
+  }
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
@@ -21,7 +29,7 @@ function SignupForm() {
     setGoogleLoading(true);
     setMessage(null);
     const supabase = createClient();
-    const nextPath = role === "recruiter" ? "/recruiter" : "/onboarding";
+    const nextPath = redirectAfterAuth(role);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -46,7 +54,7 @@ function SignupForm() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(role === "recruiter" ? "/recruiter" : "/onboarding")}&role=${role}`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectAfterAuth(role))}&role=${role}`,
       },
     });
     setLoading(false);

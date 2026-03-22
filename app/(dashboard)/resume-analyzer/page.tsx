@@ -49,12 +49,15 @@ function ResumeAnalyzerContent() {
   useEffect(() => {
     if (analysisId || improvedId) return;
     try {
-      const draft = sessionStorage.getItem("resumeBuilderDraft");
+      const builder = sessionStorage.getItem("resumeBuilderDraft");
+      const landing = sessionStorage.getItem("landingResumeDraft");
+      const draft = builder || landing;
       if (!draft) return;
       setResumeText(draft);
       setResumeInputMode("paste");
       setResumeId(null);
       sessionStorage.removeItem("resumeBuilderDraft");
+      sessionStorage.removeItem("landingResumeDraft");
     } catch {
       /* ignore */
     }
