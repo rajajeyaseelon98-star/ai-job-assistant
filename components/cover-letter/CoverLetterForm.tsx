@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { dispatchUsageUpdated } from "@/components/layout/Topbar";
 import { AIProgressIndicator } from "@/components/ui/AIProgressIndicator";
+import { Loader2 } from "lucide-react";
 
 export interface CoverLetterGenerated {
   id: string;
@@ -80,23 +81,23 @@ export function CoverLetterForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+    <form onSubmit={handleSubmit} className="space-y-0">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <div>
-          <label className="block text-sm font-medium text-text mb-1">Company name</label>
+          <label className="text-sm font-semibold text-slate-700 mb-2 block">Company name</label>
           <input
             type="text"
-            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm text-text min-h-[44px] focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
             value={companyName}
             onChange={(e) => setCompanyName(e.target.value)}
             placeholder="Acme Inc."
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-text mb-1">Role</label>
+          <label className="text-sm font-semibold text-slate-700 mb-2 block">Role</label>
           <input
             type="text"
-            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm text-text min-h-[44px] focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
             value={role}
             onChange={(e) => setRole(e.target.value)}
             placeholder="React Developer"
@@ -104,9 +105,9 @@ export function CoverLetterForm({
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-text mb-1">Job description</label>
+        <label className="text-sm font-semibold text-slate-700 mb-2 block">Job description</label>
         <textarea
-          className="mt-1 w-full rounded-lg border border-gray-300 p-3 text-base sm:text-sm text-text min-h-[120px] focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          className="resize-y min-h-[160px] mb-6 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
           rows={6}
           value={jobDescription}
           onChange={(e) => setJobDescription(e.target.value)}
@@ -114,9 +115,9 @@ export function CoverLetterForm({
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-text mb-1">Your resume text</label>
+        <label className="text-sm font-semibold text-slate-700 mb-2 block">Your resume text</label>
         <textarea
-          className="mt-1 w-full rounded-lg border border-gray-300 p-3 text-base sm:text-sm text-text min-h-[120px] focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          className="resize-y min-h-[160px] mb-6 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
           rows={6}
           value={resumeText}
           onChange={(e) => setResumeText(e.target.value)}
@@ -127,9 +128,16 @@ export function CoverLetterForm({
       <button
         type="submit"
         disabled={loading}
-        className="w-full sm:w-auto min-h-[44px] rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover active:bg-primary/80 disabled:opacity-50"
+        className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-md shadow-indigo-500/25 rounded-xl px-8 py-3.5 font-medium transition-all w-full sm:w-auto inline-flex items-center justify-center gap-2 disabled:opacity-50"
       >
-        {loading ? "Generating…" : "Generate cover letter"}
+        {loading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Generating cover letter…
+          </>
+        ) : (
+          "Generate cover letter"
+        )}
       </button>
       {loading && <AIProgressIndicator message="Generating your cover letter…" />}
     </form>

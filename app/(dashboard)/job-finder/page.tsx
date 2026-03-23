@@ -18,28 +18,32 @@ export default function JobFinderPage() {
   const [result, setResult] = useState<SearchResult | null>(null);
 
   return (
-    <div className="space-y-4 sm:space-y-6 md:space-y-8">
-      <div>
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Auto Job Finder</h1>
-        <p className="mt-1 text-sm sm:text-base text-text-muted">
-          Upload your resume and we&apos;ll automatically find matching jobs based on your skills and experience.
-        </p>
+    <>
+      <div className="mx-auto w-full max-w-3xl pt-8 pb-4 space-y-4 sm:space-y-6 md:space-y-8">
+        <div>
+          <h1 className="mb-2 flex items-center gap-3 font-display text-3xl font-bold tracking-tight text-slate-900">
+            Auto Job Finder
+          </h1>
+          <p className="mb-8 text-base leading-relaxed text-slate-500">
+            Upload your resume and we&apos;ll automatically find matching jobs based on your skills and experience.
+          </p>
+        </div>
+
+        <section className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Your Resume</h2>
+          <JobFinderForm onResult={(data) => setResult(data as SearchResult)} />
+        </section>
+
+        {result && <SkillsOverview skills={result.skills} />}
       </div>
 
-      <section className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 lg:p-6 shadow-sm">
-        <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Your Resume</h2>
-        <JobFinderForm onResult={(data) => setResult(data as SearchResult)} />
-      </section>
-
       {result && (
-        <>
-          <SkillsOverview skills={result.skills} />
-
+        <div className="mx-auto w-full max-w-5xl pb-12">
           <section>
             <JobResults jobs={result.jobs} searchQuery={result.search_query} />
           </section>
-        </>
+        </div>
       )}
-    </div>
+    </>
   );
 }

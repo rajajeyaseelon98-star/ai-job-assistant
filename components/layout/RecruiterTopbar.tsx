@@ -32,7 +32,7 @@ export function RecruiterTopbar({ userName }: RecruiterTopbarProps) {
   }
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-card px-4 shadow-nav sm:px-6">
+    <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-slate-200 bg-white/80 backdrop-blur-md px-4 sm:px-6">
       <div className="flex items-center gap-2">
         {/* Spacer for hamburger button on mobile */}
         <div className="w-8 lg:hidden" />
@@ -46,19 +46,19 @@ export function RecruiterTopbar({ userName }: RecruiterTopbarProps) {
           <button
             type="button"
             onClick={() => setOpen(!open)}
-            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors duration-200 hover:bg-surface-muted active:bg-slate-200/70 sm:gap-2"
+            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors duration-200 hover:bg-slate-50 active:bg-slate-100 sm:gap-2"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
               <User className="h-4 w-4" />
             </div>
-            <span className="hidden max-w-[120px] truncate text-sm text-text md:inline">{userName}</span>
-            <ChevronDown className="h-4 w-4 text-text-muted" />
+            <span className="hidden max-w-[120px] truncate text-sm text-slate-700 md:inline">{userName}</span>
+            <ChevronDown className="h-4 w-4 text-slate-400" />
           </button>
           {open && (
-            <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-gray-200 bg-card py-1 shadow-lg">
+            <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
               <Link
                 href="/recruiter/settings"
-                className="flex items-center gap-2 px-4 py-2.5 text-sm text-text hover:bg-gray-50 active:bg-gray-100"
+                className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
                 onClick={() => setOpen(false)}
               >
                 <Settings className="h-4 w-4" /> Settings
@@ -69,7 +69,7 @@ export function RecruiterTopbar({ userName }: RecruiterTopbarProps) {
                   setOpen(false);
                   handleLogout();
                 }}
-                className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-foreground transition-colors duration-200 hover:bg-surface-muted"
+                className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-slate-700 transition-colors duration-200 hover:bg-slate-50"
               >
                 <LogOut className="h-4 w-4" /> Logout
               </button>

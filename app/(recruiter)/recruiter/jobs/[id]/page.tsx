@@ -117,67 +117,70 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
     } catch { setError("Something went wrong"); }
   }
 
-  if (loading) return <p className="text-sm text-text-muted">Loading job...</p>;
+  if (loading) return <p className="text-sm text-slate-500">Loading job...</p>;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 sm:space-y-6">
+    <div className="max-w-3xl mx-auto w-full py-12 px-6 space-y-6">
       <div className="flex items-center justify-between">
-        <button onClick={() => router.push("/recruiter/jobs")} className="flex items-center gap-1 text-sm text-text-muted hover:text-text min-h-[44px]">
+        <button onClick={() => router.push("/recruiter/jobs")} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 min-h-[44px]">
           <ArrowLeft className="h-4 w-4" /> Back to Jobs
         </button>
-        <div className="flex items-center gap-2 text-xs text-text-muted">
+        <div className="flex items-center gap-2 text-xs text-slate-500">
           <span>{applicationCount} application{applicationCount !== 1 ? "s" : ""}</span>
         </div>
       </div>
 
-      <h1 className="text-xl font-bold text-text sm:text-2xl lg:text-3xl">Edit Job Posting</h1>
+      <div>
+        <h1 className="font-display text-3xl font-bold text-slate-900 tracking-tight mb-2">Edit Job Posting</h1>
+        <p className="text-slate-500 text-sm mb-10">Define your role and find your perfect candidate</p>
+      </div>
 
-      <div className="space-y-4 sm:space-y-5">
+      <div className="bg-white border border-slate-200 shadow-xl shadow-slate-200/50 rounded-[32px] p-8 sm:p-12 space-y-6">
         <div>
-          <label className="mb-1 block text-sm font-medium text-text">Job Title *</label>
+          <label className="text-[13px] font-bold text-slate-700 mb-2 block ml-1">Job Title *</label>
           <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Senior React Developer"
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[44px]" />
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-slate-900 placeholder:text-slate-400 appearance-none" />
         </div>
 
         <div>
-          <div className="mb-1 flex items-center justify-between">
-            <label className="text-sm font-medium text-text">Job Description *</label>
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-[13px] font-bold text-slate-700 block ml-1">Job Description *</label>
             <button type="button" onClick={generateDescription} disabled={aiLoading}
-              className="flex items-center gap-1 rounded-lg bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700 hover:bg-purple-200 disabled:opacity-50">
+              className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-2 disabled:opacity-50">
               {aiLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
               AI Regenerate
             </button>
           </div>
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={8}
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
+            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all min-h-[160px] outline-none text-slate-900 appearance-none" />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-text">Requirements</label>
+          <label className="text-[13px] font-bold text-slate-700 mb-2 block ml-1">Requirements</label>
           <textarea value={requirements} onChange={(e) => setRequirements(e.target.value)} rows={4}
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
+            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all min-h-[160px] outline-none text-slate-900 appearance-none" />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-text">Required Skills (comma-separated)</label>
+          <label className="text-[13px] font-bold text-slate-700 mb-2 block ml-1">Required Skills (comma-separated)</label>
           <input type="text" value={skills} onChange={(e) => setSkills(e.target.value)} placeholder="React, TypeScript, Node.js..."
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[44px]" />
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-slate-900 placeholder:text-slate-400 appearance-none" />
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
-            <label className="mb-1 block text-sm font-medium text-text">Work Type</label>
+            <label className="text-[13px] font-bold text-slate-700 mb-2 block ml-1">Work Type</label>
             <select value={workType} onChange={(e) => setWorkType(e.target.value as WorkType)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]">
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-slate-900 appearance-none">
               <option value="onsite">On-site</option>
               <option value="remote">Remote</option>
               <option value="hybrid">Hybrid</option>
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-text">Employment Type</label>
+            <label className="text-[13px] font-bold text-slate-700 mb-2 block ml-1">Employment Type</label>
             <select value={employmentType} onChange={(e) => setEmploymentType(e.target.value as EmploymentType)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]">
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-slate-900 appearance-none">
               <option value="full_time">Full Time</option>
               <option value="part_time">Part Time</option>
               <option value="contract">Contract</option>
@@ -185,64 +188,61 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-text">Status</label>
+            <label className="text-[13px] font-bold text-slate-700 mb-2 block ml-1">Status</label>
             <select value={status} onChange={(e) => setStatus(e.target.value as JobStatus)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]">
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-slate-900 appearance-none">
               <option value="draft">Draft</option>
               <option value="active">Active</option>
               <option value="paused">Paused</option>
               <option value="closed">Closed</option>
             </select>
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-text">Location</label>
+            <label className="text-[13px] font-bold text-slate-700 mb-2 block ml-1">Location</label>
             <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g., Chennai, Remote"
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none min-h-[44px]" />
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-slate-900 placeholder:text-slate-400 appearance-none" />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-text">Salary Currency</label>
+            <label className="text-[13px] font-bold text-slate-700 mb-2 block ml-1">Salary Currency</label>
             <input type="text" value={salaryCurrency} onChange={(e) => setSalaryCurrency(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]" />
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-slate-900 appearance-none" />
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
           <div>
-            <label className="mb-1 block text-sm font-medium text-text">Exp Min (yrs)</label>
+            <label className="text-[13px] font-bold text-slate-700 mb-2 block ml-1">Exp Min (yrs)</label>
             <input type="number" value={experienceMin} onChange={(e) => setExperienceMin(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]" />
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-slate-900 appearance-none" />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-text">Exp Max (yrs)</label>
+            <label className="text-[13px] font-bold text-slate-700 mb-2 block ml-1">Exp Max (yrs)</label>
             <input type="number" value={experienceMax} onChange={(e) => setExperienceMax(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]" />
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-slate-900 appearance-none" />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-text">Salary Min</label>
+            <label className="text-[13px] font-bold text-slate-700 mb-2 block ml-1">Salary Min</label>
             <input type="number" value={salaryMin} onChange={(e) => setSalaryMin(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]" />
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-slate-900 appearance-none" />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-text">Salary Max</label>
+            <label className="text-[13px] font-bold text-slate-700 mb-2 block ml-1">Salary Max</label>
             <input type="number" value={salaryMax} onChange={(e) => setSalaryMax(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]" />
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-slate-900 appearance-none" />
           </div>
         </div>
 
         {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
         {success && <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-600">{success}</p>}
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4 pt-8 border-t border-slate-100">
           <button type="button" onClick={handleSave} disabled={saving}
-            className="flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 min-h-[44px] w-full sm:w-auto">
+            className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30 rounded-xl px-10 py-4 font-bold transition-all disabled:opacity-50 w-full sm:w-auto">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Save Changes
           </button>
           <button type="button" onClick={handleDelete}
-            className="flex items-center justify-center gap-2 rounded-lg border border-red-300 px-4 py-2 text-sm text-red-600 hover:bg-red-50 active:bg-red-100 min-h-[44px] w-full sm:w-auto">
+            className="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl px-8 py-4 font-bold transition-all w-full sm:w-auto flex items-center justify-center gap-2">
             <Trash2 className="h-4 w-4" /> Delete
           </button>
         </div>

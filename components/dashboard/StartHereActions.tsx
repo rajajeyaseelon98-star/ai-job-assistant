@@ -24,22 +24,22 @@ const actions = [
 
 export function StartHereActions() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:gap-6">
       {actions.map((a) => {
         const Icon = a.icon;
         return (
           <Link
             key={a.href}
             href={a.href}
-            className="flex flex-col gap-1 rounded-xl border-2 border-primary/15 bg-card px-4 py-4 sm:px-5 sm:py-5 shadow-sm transition-shadow hover:shadow-md hover:border-primary/30 active:bg-gray-50 min-h-[44px]"
+            className="group flex min-h-[44px] min-w-[44px] cursor-pointer rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-px hover:border-indigo-300 hover:shadow-md"
           >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 shrink-0 rounded-lg flex items-center justify-center bg-slate-50 border border-slate-100 text-slate-500 group-hover:bg-indigo-50 group-hover:border-indigo-100 group-hover:text-indigo-600 transition-colors">
                 <Icon className="h-5 w-5" />
               </div>
               <div className="min-w-0 text-left">
-                <span className="font-semibold text-sm sm:text-base text-text block">{a.label}</span>
-                <span className="text-xs text-text-muted">{a.description}</span>
+                <span className="font-display block text-sm font-semibold text-slate-900 sm:text-base">{a.label}</span>
+                <span className="font-sans text-xs text-slate-500">{a.description}</span>
               </div>
             </div>
           </Link>

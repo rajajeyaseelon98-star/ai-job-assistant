@@ -22,7 +22,7 @@ const PLANS: Plan[] = [
     period: "/month",
     description: "Perfect for small businesses and startups",
     icon: Zap,
-    color: "text-blue-600 bg-blue-100",
+    color: "text-amber-500 bg-amber-50",
     features: [
       "Up to 3 active job postings",
       "50 candidate searches/month",
@@ -39,7 +39,7 @@ const PLANS: Plan[] = [
     period: "/month",
     description: "For growing teams and agencies",
     icon: Crown,
-    color: "text-purple-600 bg-purple-100",
+    color: "text-indigo-600 bg-indigo-50",
     popular: true,
     features: [
       "Up to 25 active job postings",
@@ -64,7 +64,7 @@ const PLANS: Plan[] = [
     period: "/month",
     description: "For large organizations with high-volume hiring",
     icon: Building2,
-    color: "text-orange-600 bg-orange-100",
+    color: "text-amber-500 bg-amber-50",
     features: [
       "Unlimited active job postings",
       "Unlimited candidate searches",
@@ -96,47 +96,57 @@ export default function RecruiterPricingPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 sm:space-y-6 md:space-y-8">
+    <div className="max-w-7xl mx-auto w-full py-16 px-6">
       <div className="text-center">
-        <h1 className="text-xl font-bold text-text sm:text-2xl lg:text-3xl">Recruiter Plans</h1>
-        <p className="mt-2 text-sm text-text-muted">
+        <h1 className="font-display text-5xl font-extrabold text-slate-900 tracking-tight text-center mb-4">Recruiter Plans</h1>
+        <p className="text-slate-500 text-lg text-center max-w-2xl mx-auto mb-20">
           Choose the plan that fits your hiring needs. Scale as you grow.
         </p>
       </div>
 
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
         {PLANS.map((plan) => (
           <div
             key={plan.name}
-            className={`relative rounded-2xl border bg-card p-4 sm:p-5 md:p-6 shadow-sm transition-shadow hover:shadow-md ${
-              plan.popular ? "border-primary ring-2 ring-primary/20" : "border-gray-200"
+            className={`bg-white border border-slate-200 rounded-[32px] p-8 flex flex-col transition-all duration-300 relative ${
+              plan.popular
+                ? "border-indigo-600 ring-2 ring-indigo-600 shadow-2xl scale-[1.03] z-10 bg-white"
+                : "hover:border-indigo-200 hover:shadow-xl"
             }`}
           >
             {plan.popular && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-0.5 text-xs font-medium text-white">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-[10px] font-bold uppercase tracking-widest px-6 py-2 rounded-full shadow-lg">
                 Most Popular
               </div>
             )}
 
-            <div className="mb-4 flex items-center gap-3">
-              <div className={`flex h-10 w-10 items-center justify-center rounded-full ${plan.color}`}>
+            <div className="mb-6">
+              <div
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 ${
+                  plan.name === "Starter"
+                    ? "bg-slate-50 text-slate-400"
+                    : plan.name === "Pro"
+                      ? "bg-indigo-50 text-indigo-600"
+                      : "bg-amber-50 text-amber-500"
+                }`}
+              >
                 <plan.icon className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-text">{plan.name}</h2>
-                <p className="text-xs text-text-muted">{plan.description}</p>
+                <h2 className="text-xl font-bold text-slate-900">{plan.name}</h2>
+                <p className="text-sm text-slate-500 mt-1">{plan.description}</p>
               </div>
             </div>
 
-            <div className="mb-4 sm:mb-6">
-              <span className="text-2xl font-bold text-text sm:text-3xl">{plan.price}</span>
-              <span className="text-sm text-text-muted">{plan.period}</span>
+            <div className="mb-8">
+              <span className="font-display text-4xl font-bold text-slate-900">{plan.price}</span>
+              <span className="text-slate-400 text-sm font-medium">{plan.period}</span>
             </div>
 
-            <ul className="mb-4 sm:mb-6 space-y-2">
+            <ul className="space-y-4 mb-10 flex-1">
               {plan.features.map((feature) => (
-                <li key={feature} className="flex items-start gap-2 text-sm text-text">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                <li key={feature} className="flex items-start gap-3 text-sm text-slate-600 leading-tight">
+                  <Check className="w-5 h-5 shrink-0 text-emerald-500 mt-0.5" />
                   {feature}
                 </li>
               ))}
@@ -144,12 +154,12 @@ export default function RecruiterPricingPage() {
 
             <button
               onClick={() => handleSelectPlan(plan.name)}
-              className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium transition-colors min-h-[44px] ${
+              className={`w-full rounded-2xl py-4 font-bold transition-all ${
                 selectedPlan === plan.name
                   ? "bg-green-600 text-white active:bg-green-700"
                   : plan.popular
-                    ? "bg-primary text-white hover:bg-primary/90 active:bg-primary/80"
-                    : "border border-gray-300 text-text hover:bg-gray-50 active:bg-gray-100"
+                    ? "w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-600/20 rounded-2xl py-4 font-bold transition-all"
+                    : "w-full bg-slate-50 border border-slate-200 text-slate-700 hover:bg-white hover:border-indigo-600 transition-all rounded-2xl py-4 font-bold"
               }`}
             >
               {selectedPlan === plan.name ? "Selected" : "Get Started"}
@@ -167,9 +177,9 @@ export default function RecruiterPricingPage() {
         </div>
       )}
 
-      <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 lg:p-6">
-        <h3 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">All Plans Include</h3>
-        <div className="grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-20 bg-slate-50/50 border border-slate-200 rounded-[40px] p-10">
+        <h3 className="font-display text-xl font-bold text-slate-900 mb-8 text-center">All Plans Include</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
             "Role-based access control",
             "Secure data handling",
@@ -180,8 +190,8 @@ export default function RecruiterPricingPage() {
             "Interview scheduling",
             "Job description AI generator",
           ].map((item) => (
-            <div key={item} className="flex items-center gap-2 text-sm text-text-muted">
-              <Check className="h-4 w-4 shrink-0 text-green-500" />
+            <div key={item} className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+              <Check className="text-emerald-500 w-5 h-5 shrink-0" />
               {item}
             </div>
           ))}

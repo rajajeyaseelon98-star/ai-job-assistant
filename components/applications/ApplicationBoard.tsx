@@ -13,7 +13,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import type { Application, ApplicationStatus } from "@/types/application";
-import { STATUS_LABELS, STATUS_COLORS } from "@/types/application";
+import { STATUS_LABELS } from "@/types/application";
 
 interface ApplicationBoardProps {
   applications: Application[];
@@ -24,6 +24,13 @@ interface ApplicationBoardProps {
 }
 
 const BOARD_COLUMNS: ApplicationStatus[] = ["saved", "applied", "interviewing", "offer", "rejected"];
+const DOT_COLORS: Record<ApplicationStatus, string> = {
+  saved: "bg-slate-400",
+  applied: "bg-blue-500",
+  interviewing: "bg-amber-500",
+  offer: "bg-emerald-500",
+  rejected: "bg-rose-500",
+};
 
 function ApplicationCard({
   app,
@@ -50,43 +57,43 @@ function ApplicationCard({
         e.dataTransfer.setData("applicationId", app.id);
         e.dataTransfer.effectAllowed = "move";
       }}
-      className={`rounded-xl border border-border bg-card p-3 shadow-card transition-all duration-200 ease-in-out hover:shadow-card-md active:shadow-card ${
+      className={`group relative bg-white border border-slate-200 shadow-sm rounded-xl p-4 mb-3 transition-all hover:border-indigo-300 hover:shadow-md ${
         draggable ? "cursor-grab active:cursor-grabbing" : ""
       }`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <h4 className="text-xs sm:text-sm font-semibold text-foreground truncate">{app.role}</h4>
-          <p className="text-xs text-text-muted truncate">{app.company}</p>
+          <h4 className="mb-1 font-display text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">{app.role}</h4>
+          <p className="text-xs text-slate-500 mb-3 flex items-center gap-2 truncate">{app.company}</p>
         </div>
-        <div className="flex shrink-0 gap-1" onDragStart={(e) => e.stopPropagation()}>
-          <button type="button" onClick={() => onEdit(app)} className="text-text-muted hover:text-primary active:text-primary/70 p-1.5 sm:p-0.5 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center">
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-3 right-3 flex gap-1" onDragStart={(e) => e.stopPropagation()}>
+          <button type="button" onClick={() => onEdit(app)} className="text-slate-400 hover:text-indigo-600 p-1 rounded-md hover:bg-slate-50 flex items-center justify-center">
             <Pencil className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           </button>
-          <button type="button" onClick={() => onDelete(app.id)} className="text-text-muted hover:text-red-500 active:text-red-400 p-1.5 sm:p-0.5 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center">
+          <button type="button" onClick={() => onDelete(app.id)} className="text-slate-400 hover:text-indigo-600 p-1 rounded-md hover:bg-slate-50 flex items-center justify-center">
             <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           </button>
         </div>
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-text-muted">
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500 mb-3">
         {showStatus && (
-          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[app.status]}`}>
+          <span className="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-medium border border-slate-200/50">
             {STATUS_LABELS[app.status]}
           </span>
         )}
         {app.location && (
-          <span className="flex items-center gap-0.5">
+          <span className="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-medium border border-slate-200/50 gap-1">
             <MapPin className="h-3 w-3" /> {app.location}
           </span>
         )}
         {app.salary && (
-          <span className="flex items-center gap-0.5">
+          <span className="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-medium border border-slate-200/50 gap-1">
             <DollarSign className="h-3 w-3" /> {app.salary}
           </span>
         )}
         {app.applied_date && (
-          <span className="flex items-center gap-0.5">
+          <span className="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-medium border border-slate-200/50 gap-1">
             <Calendar className="h-3 w-3" /> {new Date(app.applied_date).toLocaleDateString()}
           </span>
         )}
@@ -163,18 +170,19 @@ export function ApplicationBoard({
 
   if (view === "board") {
     return (
-      <>
+      <div className="bg-slate-50/50 border border-slate-200 rounded-3xl p-6 min-h-[70vh]">
         {/* Mobile: stacked cards grouped by status */}
         <div className="space-y-4 md:hidden">
           {BOARD_COLUMNS.map((status) => {
             const items = applications.filter((a) => a.status === status);
             return (
-              <div key={status}>
-                <div className="mb-2 flex items-center gap-2">
-                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[status]}`}>
-                    {STATUS_LABELS[status]}
-                  </span>
-                  <span className="text-xs text-text-muted">{items.length}</span>
+              <div key={status} className="flex-1 min-w-[300px] max-w-[350px] flex flex-col">
+                <div className="flex items-center justify-between mb-4 sticky top-0 bg-transparent z-10">
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2 w-2 rounded-full ${DOT_COLORS[status]}`} />
+                    <span className="font-display text-sm font-bold text-slate-700">{STATUS_LABELS[status]}</span>
+                  </div>
+                  <span className="text-[11px] font-bold text-slate-400 bg-slate-200/50 px-2 py-0.5 rounded-full">{items.length}</span>
                 </div>
                 <div
                   onDragOver={(e) => {
@@ -186,10 +194,10 @@ export function ApplicationBoard({
                     const id = e.dataTransfer.getData("applicationId");
                     if (id) onStatusChange(id, status);
                   }}
-                  className="min-h-[72px] space-y-2 rounded-xl border border-dashed border-border/80 bg-surface-column p-2 transition-colors duration-200"
+                  className="min-h-[72px] space-y-2 rounded-xl"
                 >
                   {items.length === 0 ? (
-                    <p className="py-4 text-center text-xs text-text-muted">Drop cards here</p>
+                    <p className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center text-[11px] text-slate-400 font-medium">Drop cards here</p>
                   ) : (
                     items.map((app) => (
                       <ApplicationCard
@@ -209,16 +217,17 @@ export function ApplicationBoard({
         </div>
 
         {/* Desktop: horizontal kanban columns */}
-        <div className="hidden md:flex gap-4 overflow-x-auto pb-4">
+        <div className="hidden md:flex gap-6 overflow-x-auto pb-4 custom-scrollbar">
           {BOARD_COLUMNS.map((status) => {
             const items = applications.filter((a) => a.status === status);
             return (
-              <div key={status} className="min-w-[220px] flex-1">
-                <div className="mb-2 flex items-center gap-2">
-                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[status]}`}>
-                    {STATUS_LABELS[status]}
-                  </span>
-                  <span className="text-xs text-text-muted">{items.length}</span>
+              <div key={status} className="flex-1 min-w-[300px] max-w-[350px] flex flex-col">
+                <div className="flex items-center justify-between mb-4 sticky top-0 bg-transparent z-10">
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2 w-2 rounded-full ${DOT_COLORS[status]}`} />
+                    <span className="font-display text-sm font-bold text-slate-700">{STATUS_LABELS[status]}</span>
+                  </div>
+                  <span className="text-[11px] font-bold text-slate-400 bg-slate-200/50 px-2 py-0.5 rounded-full">{items.length}</span>
                 </div>
                 <div
                   onDragOver={(e) => {
@@ -230,10 +239,10 @@ export function ApplicationBoard({
                     const id = e.dataTransfer.getData("applicationId");
                     if (id) onStatusChange(id, status);
                   }}
-                  className="min-h-[120px] space-y-2 rounded-xl border border-dashed border-transparent bg-surface-column p-2 transition-all duration-200 ease-in-out hover:border-primary/30 hover:bg-surface-muted"
+                  className="min-h-[120px] space-y-2 rounded-xl"
                 >
                   {items.length === 0 && (
-                    <p className="py-6 text-center text-xs text-text-muted">Drag applications here</p>
+                    <p className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center text-[11px] text-slate-400 font-medium">Drag applications here</p>
                   )}
                   {items.map((app) => (
                     <ApplicationCard
@@ -250,7 +259,7 @@ export function ApplicationBoard({
             );
           })}
         </div>
-      </>
+      </div>
     );
   }
 

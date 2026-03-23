@@ -49,53 +49,10 @@ function formatSalary(amount: number): string {
 }
 
 function SkillCard({ skill }: { skill: SkillDemandInfo }) {
-  const status = STATUS_STYLES[skill.status] || STATUS_STYLES.stable;
-  const StatusIcon = status.icon;
-
   return (
-    <div className="rounded-lg border border-gray-200 bg-card p-3 sm:p-4">
-      <div className="flex items-center justify-between gap-2">
-        <h4 className="font-medium text-text capitalize truncate">{skill.skill}</h4>
-        <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${status.color}`}>
-          <StatusIcon className="h-3 w-3" />
-          {status.label}
-        </span>
-      </div>
-
-      <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
-        <div>
-          <div className="text-text-muted">Demand</div>
-          <div className="font-bold text-text">{skill.demand_count}</div>
-        </div>
-        <div>
-          <div className="text-text-muted">Supply</div>
-          <div className="font-bold text-text">{skill.supply_count}</div>
-        </div>
-        <div>
-          <div className="text-text-muted">Trend</div>
-          <div className={`font-bold flex items-center justify-center ${skill.trend > 0 ? "text-green-600" : skill.trend < 0 ? "text-red-600" : "text-gray-600"}`}>
-            {skill.trend > 0 ? <ArrowUpRight className="h-3 w-3" /> : skill.trend < 0 ? <ArrowDownRight className="h-3 w-3" /> : null}
-            {Math.abs(skill.trend)}%
-          </div>
-        </div>
-      </div>
-
-      {skill.avg_salary && skill.avg_salary > 0 && (
-        <div className="mt-2 flex items-center gap-1 text-xs text-text-muted">
-          <IndianRupee className="h-3 w-3" />
-          Avg: {formatSalary(skill.avg_salary)}/yr
-        </div>
-      )}
-
-      {skill.top_roles.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1">
-          {skill.top_roles.slice(0, 2).map((role) => (
-            <span key={role} className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] text-text-muted">
-              {role}
-            </span>
-          ))}
-        </div>
-      )}
+    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex items-center justify-between hover:bg-white hover:border-indigo-200 transition-all">
+      <span className="text-xs font-bold text-slate-700 capitalize">{skill.skill}</span>
+      <span className="text-xs font-medium text-indigo-600">{skill.demand_count}</span>
     </div>
   );
 }
@@ -126,33 +83,107 @@ export default function SkillDemandPage() {
     data.highest_paying.length > 0
   );
 
+  const totalTrackedSkills = data
+    ? [
+        ...data.trending_skills,
+        ...data.most_in_demand,
+        ...data.highest_paying,
+        ...data.declining_skills,
+      ].length
+    : 0;
+  const hotSkillsCount = data
+    ? [
+        ...data.trending_skills,
+        ...data.most_in_demand,
+        ...data.highest_paying,
+        ...data.declining_skills,
+      ].filter((s) => s.status === "hot" || s.status === "growing").length
+    : 0;
+  const topMarketSalary =
+    data && data.highest_paying.length > 0 && data.highest_paying[0].avg_salary
+      ? formatSalary(data.highest_paying[0].avg_salary)
+      : "N/A";
+
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="max-w-5xl mx-auto w-full py-8 space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Skill Demand Graph</h1>
-        <p className="text-sm sm:text-base text-text-muted">
+        <h1 className="font-display text-3xl font-bold text-slate-900 tracking-tight">Skill Demand Graph</h1>
+        <p className="text-slate-500 text-base mt-2">
           Discover which skills are in demand, trending, and highest paying
         </p>
       </div>
 
+      {/* At a glance */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 transition-all hover:border-indigo-100">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Tracked Skills</div>
+          <div className="font-display text-2xl font-bold text-slate-900">{totalTrackedSkills}</div>
+          <div className="text-xs font-medium text-emerald-600 flex items-center gap-1 mt-2">
+            <TrendingUp className="h-3 w-3" /> Live market mapping
+          </div>
+        </div>
+        <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 transition-all hover:border-indigo-100">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Hot or Growing</div>
+          <div className="font-display text-2xl font-bold text-slate-900">{hotSkillsCount}</div>
+          <div className="text-xs font-medium text-emerald-600 flex items-center gap-1 mt-2">
+            <ArrowUpRight className="h-3 w-3" /> Trending up
+          </div>
+        </div>
+        <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 transition-all hover:border-indigo-100">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Top Market Salary</div>
+          <div className="font-display text-2xl font-bold text-slate-900">{topMarketSalary}</div>
+          <div className="text-xs font-medium text-emerald-600 flex items-center gap-1 mt-2">
+            <IndianRupee className="h-3 w-3" /> Annual benchmark
+          </div>
+        </div>
+      </div>
+
       {!hasData ? (
-        <div className="rounded-xl border border-gray-200 bg-card p-8 text-center">
-          <BarChart3 className="mx-auto mb-3 h-10 w-10 text-text-muted" />
-          <h3 className="font-medium text-text">No skill demand data yet</h3>
-          <p className="mt-1 text-sm text-text-muted">
-            Skill demand data is populated from job postings on the platform. As more jobs are posted, this dashboard will fill up with insights.
-          </p>
+        <div className="bg-white border border-slate-200 shadow-sm rounded-3xl p-8 min-h-[500px] flex flex-col relative">
+          <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-50">
+            <h2 className="font-display text-xl font-bold text-slate-900 flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-indigo-600" />
+              Skill Demand Overview
+            </h2>
+            <div className="flex items-center gap-2">
+              <button type="button" className="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-indigo-50 hover:text-indigo-600 transition-all">7D</button>
+              <button type="button" className="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-indigo-50 hover:text-indigo-600 transition-all">30D</button>
+            </div>
+          </div>
+          <div className="flex-1 flex flex-col items-center justify-center text-center max-w-lg mx-auto">
+            <div className="w-16 h-16 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mb-6">
+              <BarChart3 className="h-8 w-8" />
+            </div>
+            <h3 className="font-display text-xl font-bold text-slate-900 mb-2">No skill demand data yet</h3>
+            <p className="text-slate-400 text-sm leading-relaxed">
+              Skill demand data is populated from job postings on the platform. As more jobs are posted, this dashboard will fill up with insights.
+            </p>
+            <div className="w-full h-1.5 bg-slate-100 rounded-full mt-8 overflow-hidden relative">
+              <div className="h-full w-[10%] bg-indigo-500 rounded-full" />
+            </div>
+          </div>
         </div>
       ) : (
-        <>
+        <div className="bg-white border border-slate-200 shadow-sm rounded-3xl p-8 min-h-[500px] flex flex-col relative">
+          <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-50">
+            <h2 className="font-display text-xl font-bold text-slate-900 flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-indigo-600" />
+              Skill Demand Overview
+            </h2>
+            <div className="flex items-center gap-2">
+              <button type="button" className="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-indigo-50 hover:text-indigo-600 transition-all">7D</button>
+              <button type="button" className="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-indigo-50 hover:text-indigo-600 transition-all">30D</button>
+              <button type="button" className="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-indigo-50 hover:text-indigo-600 transition-all">90D</button>
+            </div>
+          </div>
           {/* Your Skills Analysis */}
           {data!.your_skills_analysis.length > 0 && (
             <div>
-              <h2 className="mb-3 flex items-center gap-2 text-lg sm:text-xl font-semibold text-text">
+              <h2 className="mb-3 flex items-center gap-2 text-lg sm:text-xl font-semibold text-slate-900">
                 <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 Your Skills in the Market
               </h2>
-              <div className="grid gap-3 sm:gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
                 {data!.your_skills_analysis.map((s) => (
                   <SkillCard key={s.skill} skill={s} />
                 ))}
@@ -163,11 +194,11 @@ export default function SkillDemandPage() {
           {/* Most In Demand */}
           {data!.most_in_demand.length > 0 && (
             <div>
-              <h2 className="mb-3 flex items-center gap-2 text-lg sm:text-xl font-semibold text-text">
+              <h2 className="mb-3 flex items-center gap-2 text-lg sm:text-xl font-semibold text-slate-900">
                 <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                 Most In Demand
               </h2>
-              <div className="grid gap-3 sm:gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
                 {data!.most_in_demand.map((s) => (
                   <SkillCard key={s.skill} skill={s} />
                 ))}
@@ -178,11 +209,11 @@ export default function SkillDemandPage() {
           {/* Trending */}
           {data!.trending_skills.length > 0 && (
             <div>
-              <h2 className="mb-3 flex items-center gap-2 text-lg sm:text-xl font-semibold text-text">
+              <h2 className="mb-3 flex items-center gap-2 text-lg sm:text-xl font-semibold text-slate-900">
                 <Flame className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
                 Trending Up
               </h2>
-              <div className="grid gap-3 sm:gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
                 {data!.trending_skills.map((s) => (
                   <SkillCard key={s.skill} skill={s} />
                 ))}
@@ -193,11 +224,11 @@ export default function SkillDemandPage() {
           {/* Highest Paying */}
           {data!.highest_paying.length > 0 && (
             <div>
-              <h2 className="mb-3 flex items-center gap-2 text-lg sm:text-xl font-semibold text-text">
+              <h2 className="mb-3 flex items-center gap-2 text-lg sm:text-xl font-semibold text-slate-900">
                 <IndianRupee className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                 Highest Paying Skills
               </h2>
-              <div className="grid gap-3 sm:gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
                 {data!.highest_paying.map((s) => (
                   <SkillCard key={s.skill} skill={s} />
                 ))}
@@ -208,18 +239,18 @@ export default function SkillDemandPage() {
           {/* Declining */}
           {data!.declining_skills.length > 0 && (
             <div>
-              <h2 className="mb-3 flex items-center gap-2 text-lg sm:text-xl font-semibold text-text">
+              <h2 className="mb-3 flex items-center gap-2 text-lg sm:text-xl font-semibold text-slate-900">
                 <TrendingDown className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
                 Declining Demand
               </h2>
-              <div className="grid gap-3 sm:gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
                 {data!.declining_skills.map((s) => (
                   <SkillCard key={s.skill} skill={s} />
                 ))}
               </div>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );

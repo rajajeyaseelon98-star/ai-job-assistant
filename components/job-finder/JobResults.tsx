@@ -32,11 +32,11 @@ export function JobResults({ jobs, searchQuery }: JobResultsProps) {
     <div className="space-y-4 sm:space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
         <div>
-          <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-text">
+          <h3 className="mb-2 font-display text-2xl font-bold text-slate-900">
             {filtered.length} Jobs Found
           </h3>
           {searchQuery && (
-            <p className="text-xs sm:text-sm text-text-muted mt-0.5">Matching: {searchQuery}</p>
+            <p className="mb-6 text-sm text-slate-500">Matching: {searchQuery}</p>
           )}
           <p className="mt-2 text-xs text-text-muted max-w-2xl">
             Each card shows its <strong className="text-text">source</strong> (e.g. Adzuna = external listings;
@@ -55,7 +55,7 @@ export function JobResults({ jobs, searchQuery }: JobResultsProps) {
             <select
               value={sourceFilter}
               onChange={(e) => setSourceFilter(e.target.value as typeof sourceFilter)}
-              className="w-full sm:w-auto rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm sm:text-base text-text min-h-[44px] sm:min-h-0"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 sm:w-auto"
             >
               <option value="all">All Sources</option>
               {sources.map((s) => (
@@ -66,53 +66,55 @@ export function JobResults({ jobs, searchQuery }: JobResultsProps) {
         )}
       </div>
 
-      <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {filtered.map((job) => (
           <div
             key={job.id}
-            className="rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-5 shadow-sm transition-shadow hover:shadow-md"
+            className="group relative flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-6 transition-all duration-200 hover:border-indigo-300 hover:shadow-md"
           >
             <div className="mb-2 sm:mb-3 flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
-                <h4 className="text-sm sm:text-base font-semibold text-text truncate">{job.title}</h4>
-                <div className="flex items-center gap-1 text-xs sm:text-sm text-text-muted mt-0.5">
-                  <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <h4 className="mb-1 pr-24 font-display text-lg font-bold text-slate-900 transition-colors group-hover:text-indigo-600">{job.title}</h4>
+                <div className="mb-2 flex items-center gap-1.5 text-sm font-medium text-slate-700">
+                  <Building2 className="h-4 w-4 shrink-0" />
                   <span className="truncate">{job.company}</span>
                 </div>
               </div>
               <span
-                className={`shrink-0 rounded-full px-2.5 py-0.5 sm:px-3 sm:py-1 text-xs font-medium ${
+                className={`absolute top-6 right-6 shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
                   job.source === "Adzuna"
-                    ? "bg-blue-50 text-blue-700"
-                    : "bg-purple-50 text-purple-700"
+                    ? "border border-slate-200 bg-slate-100 text-slate-600"
+                    : "border border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700"
                 }`}
               >
                 {job.source}
               </span>
             </div>
 
+            <div className="mb-4 flex items-center gap-3 text-sm text-slate-500">
             {job.location && (
-              <div className="mb-2 flex items-center gap-1 text-xs sm:text-sm text-text-muted">
+              <div className="flex items-center gap-1">
                 <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
                 {job.location}
               </div>
             )}
 
             {(job.salary_min || job.salary_max) && (
-              <div className="mb-2 flex items-center gap-1 text-xs sm:text-sm font-medium text-green-600">
+              <div className="flex items-center gap-1 font-medium text-emerald-600">
                 <DollarSign className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
                 {formatSalary(job.salary_min, job.salary_max, job.currency)}
               </div>
             )}
+            </div>
 
             {job.description && (
-              <p className="mb-3 text-xs sm:text-sm text-text-muted line-clamp-3 leading-relaxed">{job.description}</p>
+              <p className="mb-4 line-clamp-3 text-sm leading-relaxed text-slate-600">{job.description}</p>
             )}
 
             {job.match_reason && (
-              <div className="mb-3 flex items-start gap-1.5 sm:gap-2 rounded-lg bg-primary/5 px-3 py-2 sm:px-3.5 sm:py-2.5">
-                <Sparkles className="mt-0.5 h-3 w-3 sm:h-4 sm:w-4 shrink-0 text-primary" />
-                <span className="text-xs sm:text-sm text-primary leading-relaxed">{job.match_reason}</span>
+              <div className="mt-auto mb-4 flex items-start gap-3 rounded-xl border border-indigo-100 bg-indigo-50 p-4">
+                <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
+                <span className="text-sm leading-relaxed text-indigo-800">{job.match_reason}</span>
               </div>
             )}
 
@@ -121,7 +123,7 @@ export function JobResults({ jobs, searchQuery }: JobResultsProps) {
                 href={job.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 sm:py-2 text-xs sm:text-sm font-medium text-white transition-colors hover:bg-primary/90 active:bg-primary/80 min-h-[44px] sm:min-h-0 w-full sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 transition-all hover:border-indigo-200 hover:bg-slate-50 hover:text-indigo-600"
               >
                 <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 Apply Now

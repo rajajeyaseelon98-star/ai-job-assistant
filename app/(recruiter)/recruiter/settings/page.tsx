@@ -50,35 +50,37 @@ export default function RecruiterSettingsPage() {
     router.refresh();
   }
 
-  if (loading) return <p className="text-sm text-text-muted">Loading...</p>;
+  if (loading) return <p className="text-sm text-slate-500">Loading...</p>;
 
   return (
-    <div className="mx-auto max-w-lg space-y-6 sm:space-y-8">
-      <h1 className="text-xl font-bold text-text sm:text-2xl lg:text-3xl">Settings</h1>
+    <div className="max-w-3xl mx-auto w-full py-12 px-6">
+      <h1 className="font-display text-3xl font-bold text-slate-900 tracking-tight mb-8">Settings</h1>
 
-      <form onSubmit={handleSave} className="space-y-3 sm:space-y-4">
+      <form onSubmit={handleSave} className="bg-white border border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] p-8 sm:p-10 mb-8">
+        <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-widest mb-6 block">Profile</span>
         <div>
-          <label className="mb-1 block text-sm font-medium text-text">Display Name</label>
+          <label className="text-[13px] font-bold text-slate-700 mb-2 block ml-1">Display Name</label>
           <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[44px]" />
+            className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 w-full focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none text-sm text-slate-900" />
         </div>
-        {success && <p className="text-sm text-green-600">{success}</p>}
+        {success && <p className="text-sm text-emerald-600 mt-4">{success}</p>}
         <button type="submit" disabled={saving}
-          className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 min-h-[44px] w-full sm:w-auto">
+          className="mt-8 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 rounded-xl px-8 py-3 font-bold transition-all flex items-center gap-2 disabled:opacity-50 w-full sm:w-auto justify-center">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           Save
         </button>
       </form>
 
-      <hr className="border-gray-200" />
-
-      <div>
-        <h2 className="mb-2 text-base sm:text-lg font-semibold text-text">Switch Role</h2>
+      <div className="bg-slate-50 border border-slate-200 rounded-[32px] p-8 sm:p-10">
+        <h2 className="font-display text-lg font-bold text-slate-900 mb-2">Switch Role</h2>
+        <p className="text-slate-500 text-sm mb-6">Move between recruiter and job seeker workspace without leaving your account.</p>
         <button onClick={switchToJobSeeker}
-          className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-text hover:bg-gray-50 active:bg-gray-100 min-h-[44px] w-full sm:w-auto">
+          className="bg-white border border-slate-200 text-slate-600 hover:border-indigo-600 hover:text-indigo-600 shadow-sm rounded-xl px-6 py-3 font-bold transition-all flex items-center gap-2 w-fit">
           <ArrowLeftRight className="h-4 w-4" /> Switch to Job Seeker
         </button>
       </div>
+
+      <p className="mt-12 text-center text-xs text-slate-400">Managed account security powered by AI Job Assistant.</p>
     </div>
   );
 }

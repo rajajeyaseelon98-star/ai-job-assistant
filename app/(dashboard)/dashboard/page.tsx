@@ -92,12 +92,15 @@ export default async function DashboardPage() {
     .slice(0, 8);
 
   return (
-    <div className="space-y-4 sm:space-y-5 md:space-y-6">
-      <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">
-        Welcome back{user?.profile?.name ? `, ${user.profile.name}` : user?.profile?.email ? `, ${user.profile.email.split("@")[0]}` : ""} 👋
+    <div className="space-y-5 sm:space-y-6 md:space-y-8">
+      <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900 lg:text-3xl">
+        Welcome back{user?.profile?.name ? `, ${user.profile.name}` : user?.profile?.email ? `, ${user.profile.email.split("@")[0]}` : ""}{" "}
+        <span aria-hidden>👋</span>
       </h1>
 
-      <ProductNarrativeBanner />
+      <div className="mb-8">
+        <ProductNarrativeBanner />
+      </div>
 
       <StartHereChecklist
         hasAtsScore={latestScore !== null}
@@ -106,7 +109,7 @@ export default async function DashboardPage() {
       />
 
       {/* Streak + Score Cards Row */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 md:gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
         <StreakWidget />
         <ScoreCard score={latestScore} />
         <JobMatchAvgCard avgScore={avgMatchScore} />
@@ -125,23 +128,23 @@ export default async function DashboardPage() {
       <DailyActions />
 
       <div>
-        <h2 className="mb-2 text-base sm:text-lg font-semibold text-text">Start here</h2>
-        <p className="mb-3 sm:mb-4 text-xs sm:text-sm text-text-muted">
+        <h2 className="font-display mb-2 text-lg font-semibold text-slate-900 sm:text-xl">Start here</h2>
+        <p className="mb-4 font-sans text-sm text-slate-500 sm:text-base">
           The shortest path to interviews: score → match → apply.
         </p>
         <StartHereActions />
       </div>
 
       <div>
-        <h2 className="mb-2 text-base sm:text-lg font-semibold text-text">Explore more</h2>
-        <p className="mb-3 sm:mb-4 text-xs sm:text-sm text-text-muted">
+        <h2 className="font-display mb-2 text-lg font-semibold text-slate-900 sm:text-xl">Explore more</h2>
+        <p className="mb-4 font-sans text-sm text-slate-500 sm:text-base">
           Optional tools — use after your first resume score or when you need a specific edge.
         </p>
         <ExploreMoreActions />
       </div>
 
       <div>
-        <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Recent Activity</h2>
+        <h2 className="font-display mb-4 text-lg font-semibold text-slate-900 sm:text-xl">Recent Activity</h2>
         <ActivityList items={activityItems} />
       </div>
     </div>

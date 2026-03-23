@@ -189,12 +189,11 @@ export function ImprovedResumeView({ content, improvedResumeId }: ImprovedResume
 
   return (
     <div className="space-y-4 sm:space-y-5 md:space-y-6">
-      {/* Action buttons -- stack on mobile, row on sm+ */}
-      <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 sm:gap-3">
+      <div className="mt-12 flex flex-wrap items-center justify-end gap-2 rounded-t-2xl border border-slate-200 bg-slate-100 p-3">
         <button
           type="button"
           onClick={handleCopy}
-          className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-text hover:bg-gray-50 active:bg-gray-100 transition-colors"
+          className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
         >
           <svg className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" />
@@ -204,7 +203,7 @@ export function ImprovedResumeView({ content, improvedResumeId }: ImprovedResume
         <button
           type="button"
           onClick={handleDownloadPdf}
-          className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-text hover:bg-gray-50 active:bg-gray-100 transition-colors"
+          className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
         >
           <svg className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -215,7 +214,7 @@ export function ImprovedResumeView({ content, improvedResumeId }: ImprovedResume
           type="button"
           onClick={handleDownloadDocx}
           disabled={docxLoading}
-          className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-text hover:bg-gray-50 active:bg-gray-100 transition-colors disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:opacity-50"
         >
           <svg className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
@@ -232,13 +231,10 @@ export function ImprovedResumeView({ content, improvedResumeId }: ImprovedResume
       {docxError && <p className="text-xs sm:text-sm text-red-600 px-1">{docxError}</p>}
 
       {/* Resume content */}
-      <div ref={containerRef} className="overflow-hidden rounded-xl border border-gray-200 bg-card shadow-sm print:border-0 print:shadow-none">
-        <div className="border-b border-gray-200 bg-gray-50/50 px-4 py-3 sm:px-5 sm:py-4 md:px-6">
-          <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-text-muted">Improved resume</h3>
-        </div>
-        <div className="px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 space-y-5 sm:space-y-6">
+      <div ref={containerRef} className="overflow-hidden rounded-b-2xl border-x border-b border-slate-200 bg-white shadow-md print:border-0 print:shadow-none">
+        <div className="prose prose-slate prose-headings:font-display prose-headings:font-bold prose-headings:text-slate-900 prose-headings:tracking-tight prose-a:text-indigo-600 prose-a:font-medium prose-strong:text-slate-900 max-w-none space-y-5 p-8 sm:p-12">
           <section aria-labelledby="improved-summary">
-            <h4 id="improved-summary" className="mb-2 text-xs sm:text-sm font-semibold uppercase tracking-wider text-text-muted">
+            <h4 id="improved-summary" className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500 sm:text-sm">
               Professional summary
             </h4>
             {normalized.summary.trim() ? (
@@ -251,7 +247,7 @@ export function ImprovedResumeView({ content, improvedResumeId }: ImprovedResume
           </section>
 
           <section aria-labelledby="improved-skills">
-            <h4 id="improved-skills" className="mb-2 sm:mb-3 text-xs sm:text-sm font-semibold uppercase tracking-wider text-text-muted">
+            <h4 id="improved-skills" className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500 sm:mb-3 sm:text-sm">
               Skills
             </h4>
             {normalized.skills.length > 0 ? (
@@ -259,7 +255,7 @@ export function ImprovedResumeView({ content, improvedResumeId }: ImprovedResume
                 {normalized.skills.map((skill, i) => (
                   <span
                     key={i}
-                    className="inline-flex items-center rounded-full bg-primary/5 px-2.5 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-medium text-primary ring-1 ring-inset ring-primary/20"
+                    className="rounded-md border border-slate-200 bg-slate-100 px-2.5 py-1 text-sm text-slate-700"
                   >
                     {skill}
                   </span>

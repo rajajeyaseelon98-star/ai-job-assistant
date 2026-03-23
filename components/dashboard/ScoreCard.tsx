@@ -6,23 +6,23 @@ interface ScoreCardProps {
 
 export function ScoreCard({ score }: ScoreCardProps) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 shadow-sm">
-      <h3 className="text-sm sm:text-base md:text-lg font-medium text-text-muted">ATS Score</h3>
-      <div className="mt-2 sm:mt-3 flex items-baseline gap-2">
-        <span className="text-2xl sm:text-3xl md:text-4xl font-bold text-text">
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h3 className="font-display text-base font-semibold text-slate-600">ATS Score</h3>
+      <div className="mt-2 flex items-baseline gap-2 sm:mt-3">
+        <span className="text-3xl font-bold text-slate-900 md:text-4xl">
           {score !== null ? score : "—"}
         </span>
-        <span className="text-sm sm:text-base text-text-muted">/ 100</span>
+        <span className="font-sans text-sm text-slate-500 md:text-base">/ 100</span>
       </div>
-      <div className="mt-3 sm:mt-4 h-2 overflow-hidden rounded-full bg-gray-200">
+      <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200">
         <div
-          className="h-full rounded-full bg-primary transition-all"
+          className="h-full rounded-full bg-indigo-600 transition-all"
           style={{ width: `${score ?? 0}%` }}
         />
       </div>
       <Link
         href="/resume-analyzer"
-        className="mt-3 sm:mt-4 flex items-center min-h-[44px] min-w-[44px] text-sm sm:text-base font-medium text-primary hover:underline active:opacity-70 active:bg-gray-100 rounded-md transition-colors"
+        className="mt-4 flex min-h-[44px] min-w-[44px] items-center rounded-md text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-500 hover:underline active:opacity-70 sm:text-base"
       >
         Improve resume →
       </Link>

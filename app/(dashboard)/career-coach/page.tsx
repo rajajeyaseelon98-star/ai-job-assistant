@@ -71,7 +71,7 @@ export default function CareerCoachPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
+      <div className="max-w-4xl mx-auto w-full py-8 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -79,10 +79,12 @@ export default function CareerCoachPage() {
 
   if (!data) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-card p-8 text-center">
-        <Brain className="mx-auto mb-3 h-10 w-10 text-text-muted" />
-        <h3 className="font-medium text-text">Career Coach</h3>
-        <p className="mt-1 text-sm text-text-muted">Start applying to jobs to get personalized career coaching.</p>
+      <div className="max-w-4xl mx-auto w-full py-8">
+        <div className="bg-white border border-slate-200 shadow-sm rounded-3xl p-8 text-center">
+          <Brain className="mx-auto mb-3 h-10 w-10 text-indigo-600" />
+          <h3 className="font-display text-xl font-bold text-slate-900">Career Coach</h3>
+          <p className="mt-1 text-sm text-slate-500">Start applying to jobs to get personalized career coaching.</p>
+        </div>
       </div>
     );
   }
@@ -91,23 +93,19 @@ export default function CareerCoachPage() {
   const StatusIcon = statusStyle.icon;
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="max-w-4xl mx-auto w-full py-8 space-y-4 sm:space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-xl sm:text-2xl lg:text-3xl font-bold text-text">
-          <Brain className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+        <h1 className="font-display text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+          <Brain className="h-6 w-6 text-indigo-600" />
           AI Career Coach
         </h1>
-        <p className="text-sm sm:text-base text-text-muted">Your personal career strategist — powered by your data</p>
+        <p className="text-slate-500 text-base mt-2">Your personal career strategist — powered by your data</p>
       </div>
 
-      {/* Status Banner */}
-      <div className={`rounded-xl border ${statusStyle.border} ${statusStyle.bg} p-3 sm:p-5`}>
-        <div className="flex items-start gap-3">
-          <StatusIcon className={`mt-0.5 h-5 w-5 shrink-0 ${statusStyle.text}`} />
-          <div>
-            <p className={`font-semibold ${statusStyle.text}`}>{data.headline}</p>
-          </div>
-        </div>
+      {/* Informational Welcome Alert */}
+      <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex items-center gap-3 shadow-sm mb-10">
+        <StatusIcon className="text-indigo-600 h-5 w-5 shrink-0" />
+        <p className="text-sm font-medium text-indigo-900">{data.headline}</p>
       </div>
 
       {/* Problems / Diagnosis */}
@@ -246,24 +244,31 @@ export default function CareerCoachPage() {
       )}
 
       {/* Score Transparency */}
-      <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-5">
-        <h2 className="mb-3 flex items-center gap-2 font-semibold text-text">
-          <Target className="h-4 w-4" />
-          Why Your Scores Are What They Are
+      <div className="bg-white border border-slate-200 shadow-sm rounded-3xl p-8 mb-8">
+        <h2 className="flex items-center gap-2 mb-8">
+          <Target className="text-indigo-500 h-5 w-5" />
+          <span className="font-display text-xl font-bold text-slate-900">Why Your Scores Are What They Are</span>
         </h2>
 
         {data.score_explanation.interview_probability_breakdown && (
           <div className="mb-4">
-            <h3 className="mb-2 text-sm font-medium text-text-muted">Interview Probability Weights</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <h3 className="mb-2 text-sm font-semibold text-slate-700">Interview Probability Weights</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {Object.entries(data.score_explanation.interview_probability_breakdown).map(([key, value]) => (
-                <div key={key} className="rounded-lg bg-gray-50 p-2 text-center">
-                  <div className="text-lg font-bold text-primary">{value}%</div>
-                  <div className="text-[10px] capitalize text-text-muted">{key.replace(/_/g, " ")}</div>
+                <div
+                  key={key}
+                  className="bg-slate-50 border border-slate-100 rounded-2xl p-6 text-center transition-all hover:bg-white hover:shadow-md hover:border-indigo-100 group"
+                >
+                  <div className="block font-display text-3xl font-bold text-indigo-600 group-hover:scale-110 transition-transform">
+                    {value}%
+                  </div>
+                  <div className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mt-2">
+                    {key.replace(/_/g, " ")}
+                  </div>
                 </div>
               ))}
             </div>
-            <p className="mt-2 text-xs text-text-muted">
+            <p className="text-xs text-slate-400 italic mt-6 text-center">
               These weights are dynamically adjusted based on your application outcomes.
             </p>
           </div>
@@ -271,12 +276,19 @@ export default function CareerCoachPage() {
 
         {data.score_explanation.ats_breakdown && (
           <div>
-            <h3 className="mb-2 text-sm font-medium text-text-muted">ATS Score Breakdown</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <h3 className="mb-2 text-sm font-semibold text-slate-700">ATS Score Breakdown</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {Object.entries(data.score_explanation.ats_breakdown).map(([key, value]) => (
-                <div key={key} className="rounded-lg bg-gray-50 p-2 text-center">
-                  <div className="text-lg font-bold text-text">{value}</div>
-                  <div className="text-[10px] capitalize text-text-muted">{key.replace(/_/g, " ")}</div>
+                <div
+                  key={key}
+                  className="bg-slate-50 border border-slate-100 rounded-2xl p-6 text-center transition-all hover:bg-white hover:shadow-md hover:border-indigo-100 group"
+                >
+                  <div className="block font-display text-3xl font-bold text-indigo-600 group-hover:scale-110 transition-transform">
+                    {value}
+                  </div>
+                  <div className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mt-2">
+                    {key.replace(/_/g, " ")}
+                  </div>
                 </div>
               ))}
             </div>
@@ -285,22 +297,22 @@ export default function CareerCoachPage() {
       </div>
 
       {/* CTA */}
-      <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3">
+      <div className="flex flex-wrap items-center gap-3 mt-4">
         <Link
           href="/auto-apply"
-          className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 min-h-[44px] text-sm font-medium text-white hover:bg-primary-hover active:scale-[0.98]"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 rounded-xl px-6 py-3 font-medium transition-all flex items-center gap-2"
         >
           Start Auto-Apply <ArrowRight className="h-4 w-4" />
         </Link>
         <Link
           href="/resume-analyzer"
-          className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 px-4 py-2 min-h-[44px] text-sm font-medium text-text hover:bg-gray-50 active:scale-[0.98]"
+          className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-indigo-200 rounded-xl px-6 py-3 font-medium transition-all flex items-center gap-2"
         >
           Improve Resume <ChevronRight className="h-4 w-4" />
         </Link>
         <Link
           href="/analytics"
-          className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 px-4 py-2 min-h-[44px] text-sm font-medium text-text hover:bg-gray-50 active:scale-[0.98]"
+          className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-indigo-200 rounded-xl px-6 py-3 font-medium transition-all flex items-center gap-2"
         >
           Full Analytics <ChevronRight className="h-4 w-4" />
         </Link>

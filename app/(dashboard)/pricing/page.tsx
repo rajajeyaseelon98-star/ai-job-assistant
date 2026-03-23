@@ -93,63 +93,77 @@ export default function PricingPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 sm:space-y-6 md:space-y-8">
+    <div className="max-w-6xl mx-auto w-full py-12 px-4">
       <div className="text-center">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Pricing</h1>
-        <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-text-muted">
+        <h1 className="font-display text-4xl font-extrabold text-slate-900 tracking-tight text-center mb-4">Pricing</h1>
+        <p className="text-slate-500 text-lg text-center max-w-2xl mx-auto mb-16">
           Choose the plan that fits your job search. Upgrade anytime.
         </p>
       </div>
 
-      <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
         {PLANS.map((plan) => (
           <div
             key={plan.name}
-            className={`relative rounded-2xl border bg-card p-4 sm:p-6 shadow-sm transition-shadow hover:shadow-md ${
-              plan.popular ? "border-primary ring-2 ring-primary/20" : "border-gray-200"
+            className={`bg-white border border-slate-200 rounded-3xl p-8 flex flex-col transition-all duration-300 relative ${
+              plan.planKey === "free"
+                ? "hover:border-slate-300"
+                : plan.popular
+                ? "border-indigo-600 ring-1 ring-indigo-600 shadow-xl scale-105 z-10"
+                : "border-slate-200 hover:border-indigo-300 bg-slate-50/30"
             }`}
           >
             {plan.popular && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-0.5 text-xs font-medium text-white">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg">
                 Most Popular
               </div>
             )}
 
-            <div className="mb-4 flex items-center gap-3">
-              <div className={`flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full ${plan.color}`}>
-                <plan.icon className="h-4 w-4 sm:h-5 sm:w-5" />
+            <div>
+              <div
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 ${
+                  plan.planKey === "pro"
+                    ? "bg-indigo-50 text-indigo-600"
+                    : plan.planKey === "premium"
+                    ? "bg-amber-50 text-amber-600"
+                    : "bg-slate-50 text-slate-500"
+                }`}
+              >
+                <plan.icon className="h-5 w-5" />
               </div>
-              <h2 className="text-base sm:text-lg font-bold text-text">{plan.name}</h2>
+              <h2 className="font-display text-xl font-bold text-slate-900 mb-2">{plan.name}</h2>
             </div>
 
-            <div className="mb-4 sm:mb-6">
-              <span className="text-2xl sm:text-3xl font-bold text-text">{plan.price}</span>
+            <div className="flex items-baseline gap-1 mb-6">
+              <span className="text-4xl font-bold text-slate-900">{plan.price}</span>
               {plan.period && (
-                <span className="text-sm text-text-muted">{plan.period}</span>
+                <span className="text-slate-500 font-medium">{plan.period}</span>
               )}
             </div>
 
-            <ul className="mb-6 space-y-2">
+            <ul className="space-y-4 mb-8 flex-1">
               {plan.features.map((feature) => (
-                <li key={feature} className="flex items-start gap-2 text-xs sm:text-sm text-text">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                <li key={feature} className="flex items-start gap-3 text-sm text-slate-600">
+                  <Check className="w-5 h-5 shrink-0 text-emerald-500 mt-0.5" />
                   {feature}
                 </li>
               ))}
             </ul>
 
             {plan.planKey === "free" ? (
-              <p className="text-center text-sm text-text-muted">No credit card required</p>
+              <button
+                type="button"
+                disabled
+                className="w-full bg-white border border-slate-200 text-slate-400 cursor-not-allowed rounded-xl py-4 font-bold mt-auto"
+              >
+                Current Plan
+              </button>
             ) : (
               <button
                 type="button"
                 onClick={() => handleUpgrade(plan.planKey as "pro" | "premium")}
                 disabled={upgrading === plan.planKey}
-                className={`w-full min-h-[44px] rounded-lg px-4 py-2.5 text-sm font-medium transition-colors active:scale-[0.98] ${
-                  plan.popular
-                    ? "bg-primary text-white hover:bg-primary-hover"
-                    : "border border-primary text-primary hover:bg-primary/5"
-                } disabled:opacity-50`}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 rounded-xl py-4 font-bold transition-all mt-auto disabled:opacity-50"
               >
                 {upgrading === plan.planKey ? "Processing..." : `Upgrade to ${plan.name}`}
               </button>
@@ -158,9 +172,11 @@ export default function PricingPage() {
         ))}
       </div>
 
-      <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-3 sm:p-4 md:p-6">
-        <h3 className="text-sm sm:text-base font-semibold text-amber-900">Payment integration</h3>
-        <p className="mt-2 text-xs sm:text-sm text-amber-800">
+      <div className="mt-16 bg-slate-50 border border-slate-200 rounded-3xl p-8 text-center">
+        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider mb-4">
+          Payment Integration
+        </span>
+        <p className="text-sm text-slate-500 leading-relaxed">
           Stripe and Razorpay payment integration is in progress. For now, use the plan switcher
           in Settings when running locally to test plan-gated features.
         </p>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Loader2,
   Zap,
@@ -121,33 +122,43 @@ export default function InstantShortlistPage() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="max-w-4xl mx-auto w-full py-12 px-6 space-y-10">
       <div>
-        <h1 className="flex items-center gap-2 text-xl font-bold text-text sm:text-2xl lg:text-3xl">
-          <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500" />
-          Instant Shortlist
-        </h1>
-        <p className="text-sm text-text-muted mt-1">
+        <div className="w-10 h-10 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
+          <Zap className="h-5 w-5" />
+        </div>
+        <h1 className="font-display text-4xl font-extrabold text-slate-900 tracking-tight mb-2">Instant Shortlist</h1>
+        <p className="text-slate-500 text-lg mb-10">
           Top candidates matched in seconds -- not hours
         </p>
       </div>
 
       {/* Job Selector */}
-      <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5">
-        <h2 className="mb-3 flex items-center gap-2 font-semibold text-text">
-          <Search className="h-4 w-4" />
-          Select a Job Posting
-        </h2>
+      <div className="bg-white border border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] p-8 sm:p-12 mb-10 text-center">
         {jobsLoading ? (
-          <Loader2 className="h-5 w-5 animate-spin text-text-muted" />
+          <Loader2 className="h-6 w-6 animate-spin text-slate-400 mx-auto" />
         ) : jobs.length === 0 ? (
-          <p className="text-sm text-text-muted">No job postings with skills found. Post a job with required skills first.</p>
+          <>
+            <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-3xl flex items-center justify-center mx-auto mb-6">
+              <Search className="h-8 w-8" />
+            </div>
+            <h2 className="font-display text-xl font-bold text-slate-900 mb-2">Select a Job Posting</h2>
+            <p className="text-slate-400 text-sm max-w-sm mx-auto mb-8">No job postings with required skills are available yet. Post a role to start AI sourcing.</p>
+            <Link
+              href="/recruiter/jobs/new"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30 rounded-xl px-8 py-4 font-bold transition-all inline-flex items-center gap-2"
+            >
+              <Zap className="h-4 w-4" />
+              Post a Job
+            </Link>
+          </>
         ) : (
-          <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+          <div className="flex flex-col gap-4 sm:flex-row sm:gap-3 text-left">
+            <h2 className="sr-only">Select a Job Posting</h2>
             <select
               value={selectedJob}
               onChange={(e) => setSelectedJob(e.target.value)}
-              className="flex-1 rounded-lg border border-gray-200 bg-background px-3 py-2 text-base sm:text-sm text-text min-h-[44px]"
+              className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all focus:bg-white focus:border-indigo-500 outline-none text-slate-800"
             >
               <option value="">Choose a job...</option>
               {jobs.map((j) => (
@@ -159,7 +170,7 @@ export default function InstantShortlistPage() {
             <button
               onClick={findCandidates}
               disabled={!selectedJob || loading}
-              className="flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-primary-hover active:bg-primary/80 disabled:opacity-50 min-h-[44px] w-full sm:w-auto"
+              className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 rounded-xl px-8 py-3.5 font-medium disabled:opacity-50 w-full sm:w-auto"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
               Find Candidates
@@ -172,23 +183,23 @@ export default function InstantShortlistPage() {
       {candidates.length > 0 && (
         <>
           {/* Results Header */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border-2 border-green-200 bg-green-50 p-3 sm:p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-lg">
                 🔥
               </div>
               <div>
-                <p className="font-bold text-green-800">
+                <p className="font-bold text-emerald-800">
                   {candidates.length} Perfect Candidates Found
                 </p>
-                <p className="text-xs text-green-600">
+                <p className="text-xs text-emerald-600">
                   Searched {totalSearched} candidates in {searchTime}ms
                 </p>
               </div>
             </div>
             <button
               onClick={messageAll}
-              className="flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 active:bg-green-800 min-h-[44px] w-full sm:w-auto"
+              className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 min-h-[44px] w-full sm:w-auto"
             >
               <Send className="h-4 w-4" />
               Message All
@@ -200,30 +211,30 @@ export default function InstantShortlistPage() {
             {candidates.map((c, i) => (
               <div
                 key={c.user_id}
-                className={`rounded-xl border bg-card p-3 sm:p-4 md:p-5 ${
-                  c.is_boosted ? "border-yellow-300 bg-yellow-50/30" : "border-gray-200"
+                className={`rounded-2xl border bg-white p-5 shadow-sm ${
+                  c.is_boosted ? "border-amber-300 bg-amber-50/30" : "border-slate-200"
                 }`}
               >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-sm font-bold text-indigo-600">
                       #{i + 1}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-semibold text-text">{c.name}</span>
+                        <span className="font-semibold text-slate-900">{c.name}</span>
                         {c.is_boosted && (
                           <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-[10px] font-medium text-yellow-700">
                             <Star className="h-3 w-3" /> Boosted
                           </span>
                         )}
                       </div>
-                      {c.headline && <p className="text-sm text-text-muted truncate">{c.headline}</p>}
+                      {c.headline && <p className="text-sm text-slate-500 truncate">{c.headline}</p>}
                     </div>
                   </div>
                   <div className="text-right shrink-0 self-end sm:self-start">
-                    <div className="text-xl font-bold text-primary sm:text-2xl">{c.match_score}%</div>
-                    <div className="text-[10px] text-text-muted">match</div>
+                    <div className="text-xl font-bold text-indigo-600 sm:text-2xl">{c.match_score}%</div>
+                    <div className="text-[10px] text-slate-500">match</div>
                   </div>
                 </div>
 
@@ -242,7 +253,7 @@ export default function InstantShortlistPage() {
                 </div>
 
                 {/* Score Breakdown */}
-                <div className="mt-3 flex flex-wrap gap-3 sm:gap-4 text-[11px] text-text-muted">
+                <div className="mt-3 flex flex-wrap gap-3 sm:gap-4 text-[11px] text-slate-500">
                   <span>Profile: {c.profile_strength}%</span>
                   <span>Rank: {c.rank_score}</span>
                   <span>Skills: {c.skill_overlap.length}/{c.skill_overlap.length + c.missing_skills.length}</span>
@@ -258,7 +269,7 @@ export default function InstantShortlistPage() {
                     <button
                       onClick={() => sendPush(c.user_id)}
                       disabled={pushLoading === c.user_id}
-                      className="flex items-center gap-1 rounded-lg border border-primary px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/5 active:bg-primary/10 disabled:opacity-50 min-h-[44px] sm:min-h-0"
+                      className="flex items-center gap-1 rounded-xl border border-indigo-200 px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 min-h-[44px] sm:min-h-0"
                     >
                       {pushLoading === c.user_id ? (
                         <Loader2 className="h-3 w-3 animate-spin" />
@@ -277,39 +288,56 @@ export default function InstantShortlistPage() {
 
       {/* Empty State */}
       {candidates.length === 0 && !loading && selectedJob && searchTime !== null && (
-        <div className="rounded-xl border border-gray-200 bg-card p-6 sm:p-8 text-center">
-          <Users className="mx-auto mb-2 h-10 w-10 text-text-muted" />
-          <p className="font-medium text-text">No matching candidates found</p>
-          <p className="text-sm text-text-muted">Try a different job or adjust required skills.</p>
+        <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50 text-center">
+          <Users className="mx-auto mb-2 h-10 w-10 text-slate-400" />
+          <p className="font-medium text-slate-900">No matching candidates found</p>
+          <p className="text-sm text-slate-500">Try a different job or adjust required skills.</p>
         </div>
       )}
 
       {/* How It Works */}
-      <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5">
-        <h3 className="mb-2 font-medium text-text">How Instant Shortlist Works</h3>
-        <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-3">
-          <div className="flex items-start gap-2">
-            <Clock className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+      <div>
+        <h3 className="font-display text-lg font-bold text-slate-800 mb-8 flex items-center gap-3">
+          How Instant Shortlist Works
+          <span className="h-px w-10 bg-indigo-300" />
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 p-8 bg-slate-50/50 border border-slate-200/60 rounded-[32px]">
+          <div>
+            <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-indigo-600 mb-6 transition-transform hover:scale-110">
+              <Clock className="h-5 w-5" />
+            </div>
             <div>
-              <p className="text-sm font-medium text-text">5-Second Matching</p>
-              <p className="text-xs text-text-muted">AI scans all candidates by skill graph instantly</p>
+              <span className="font-display font-bold text-slate-900 text-sm mb-2 block">5-Second Matching</span>
+              <p className="text-xs text-slate-500 leading-relaxed font-medium">AI scans all candidates by skill graph instantly</p>
             </div>
           </div>
-          <div className="flex items-start gap-2">
-            <Users className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <div>
+            <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-indigo-600 mb-6 transition-transform hover:scale-110">
+              <Users className="h-5 w-5" />
+            </div>
             <div>
-              <p className="text-sm font-medium text-text">Smart Ranking</p>
-              <p className="text-xs text-text-muted">Skills 50% + Profile 20% + Activity 20% + Boost 10%</p>
+              <span className="font-display font-bold text-slate-900 text-sm mb-2 block">Smart Ranking</span>
+              <p className="text-xs text-slate-500 leading-relaxed font-medium">Skills 50% + Profile 20% + Activity 20% + Boost 10%</p>
             </div>
           </div>
-          <div className="flex items-start gap-2">
-            <Send className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <div>
+            <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-indigo-600 mb-6 transition-transform hover:scale-110">
+              <Send className="h-5 w-5" />
+            </div>
             <div>
-              <p className="text-sm font-medium text-text">One-Click Outreach</p>
-              <p className="text-xs text-text-muted">Message all candidates or reach out individually</p>
+              <span className="font-display font-bold text-slate-900 text-sm mb-2 block">One-Click Outreach</span>
+              <p className="text-xs text-slate-500 leading-relaxed font-medium">Message all candidates or reach out individually</p>
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="mt-12 text-center">
+        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold uppercase tracking-wider">
+          <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
+          Indexing
+        </span>
+        <span className="text-slate-400 text-[11px] mt-2 block">AI is currently indexing candidate database...</span>
       </div>
     </div>
   );

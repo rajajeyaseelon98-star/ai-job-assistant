@@ -7,9 +7,10 @@ interface ShareScoreButtonProps {
   score: number;
   type: "ats" | "match" | "interview";
   label?: string;
+  className?: string;
 }
 
-export function ShareScoreButton({ score, type, label }: ShareScoreButtonProps) {
+export function ShareScoreButton({ score, type, label, className }: ShareScoreButtonProps) {
   const [copied, setCopied] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
 
@@ -59,7 +60,7 @@ export function ShareScoreButton({ score, type, label }: ShareScoreButtonProps) 
             setShowOptions(!showOptions);
           }
         }}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-text-muted hover:bg-gray-50 hover:text-text transition-colors"
+        className={className || "inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-text-muted hover:bg-gray-50 hover:text-text transition-colors"}
       >
         {copied ? (
           <>

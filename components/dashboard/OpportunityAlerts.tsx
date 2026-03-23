@@ -68,7 +68,7 @@ export function OpportunityAlerts() {
 
   return (
     <div className="space-y-2 sm:space-y-3">
-      <h3 className="flex items-center gap-2 text-lg sm:text-xl md:text-2xl font-semibold text-text">
+      <h3 className="font-display flex items-center gap-2 text-lg font-semibold text-slate-900 sm:text-xl md:text-2xl">
         <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500 shrink-0" />
         <span className="truncate">Opportunities</span>
         <span className="rounded-full bg-orange-100 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-medium text-orange-600 shrink-0">
@@ -88,7 +88,7 @@ export function OpportunityAlerts() {
             <Icon className={`mt-0.5 h-4 w-4 sm:h-5 sm:w-5 shrink-0 ${style.icon}`} />
             <div className="min-w-0 flex-1">
               <p className={`text-sm sm:text-base font-medium ${style.text} truncate`}>{alert.title}</p>
-              <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-text-muted line-clamp-2">{alert.message}</p>
+              <p className="mt-0.5 line-clamp-2 text-xs text-slate-600 sm:mt-1 sm:text-sm">{alert.message}</p>
               {alert.action_url && (
                 <Link
                   href={alert.action_url}
@@ -103,7 +103,7 @@ export function OpportunityAlerts() {
               className="shrink-0 rounded-md hover:bg-white/50 active:bg-white/70 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors"
               aria-label="Dismiss alert"
             >
-              <X className="h-4 w-4 sm:h-5 sm:w-5 text-text-muted" />
+              <X className="h-4 w-4 text-slate-400 sm:h-5 sm:w-5" />
             </button>
           </div>
         );

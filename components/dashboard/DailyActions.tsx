@@ -49,7 +49,7 @@ const ACTION_ICONS: Record<string, React.ElementType> = {
 };
 
 const PRIORITY_STYLES: Record<number, string> = {
-  0: "border-gray-200 bg-card",
+  0: "border-slate-100 bg-white",
   1: "border-blue-200 bg-blue-50/50",
   2: "border-orange-200 bg-orange-50/50",
 };
@@ -102,7 +102,7 @@ export function DailyActions() {
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 animate-pulse">
+      <div className="animate-pulse rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="h-32" />
       </div>
     );
@@ -111,23 +111,23 @@ export function DailyActions() {
   if (actions.length === 0) return null;
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-card">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       {/* Header with progress */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 border-b border-gray-100 px-4 sm:px-5 md:px-6 py-3 sm:py-4">
+      <div className="flex flex-col gap-2 border-b border-slate-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-5 md:px-6 sm:py-4">
         <div>
-          <h3 className="text-sm sm:text-base md:text-lg font-semibold text-text">Today&apos;s Action Plan</h3>
-          <p className="text-xs sm:text-sm text-text-muted">
+          <h3 className="font-display text-sm font-semibold text-slate-900 sm:text-base md:text-lg">Today&apos;s Action Plan</h3>
+          <p className="font-sans text-xs text-slate-500 sm:text-sm">
             {progress.completed}/{progress.total} completed
           </p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="h-2 w-full sm:w-24 md:w-28 rounded-full bg-gray-200">
+          <div className="h-2 w-full rounded-full bg-slate-200 sm:w-24 md:w-28">
             <div
-              className="h-2 rounded-full bg-green-500 transition-all"
+              className="h-2 rounded-full bg-indigo-600 transition-all"
               style={{ width: `${progress.percentage}%` }}
             />
           </div>
-          <span className="text-xs sm:text-sm font-medium text-text-muted shrink-0">{progress.percentage}%</span>
+          <span className="shrink-0 text-xs font-medium text-slate-500 sm:text-sm">{progress.percentage}%</span>
         </div>
       </div>
 
@@ -152,7 +152,7 @@ export function DailyActions() {
                 className="mt-0.5 shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center active:opacity-70 active:bg-gray-100 rounded-md transition-colors"
               >
                 {isCompleting ? (
-                  <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-primary" />
+                  <Loader2 className="h-4 w-4 animate-spin text-indigo-600 sm:h-5 sm:w-5" />
                 ) : action.completed ? (
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
                 ) : (
@@ -198,8 +198,8 @@ export function DailyActions() {
 
       {/* Completion message */}
       {progress.percentage === 100 && (
-        <div className="border-t border-gray-100 bg-green-50 px-4 sm:px-5 md:px-6 py-3 sm:py-4 text-center rounded-b-xl">
-          <p className="text-sm sm:text-base font-medium text-green-700">
+        <div className="rounded-b-xl border-t border-slate-100 bg-emerald-50 px-4 py-3 text-center sm:px-5 md:px-6 sm:py-4">
+          <p className="text-sm font-medium text-emerald-800 sm:text-base">
             All tasks completed! Your streak grows stronger.
           </p>
         </div>

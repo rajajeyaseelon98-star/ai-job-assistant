@@ -90,13 +90,13 @@ export function RecruiterSidebar() {
       />
 
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-screen w-[260px] flex-col border-r border-gray-200 bg-card shadow-xl transition-transform duration-300 ease-in-out lg:w-[240px] lg:translate-x-0 lg:shadow-none ${
+        className={`fixed left-0 top-0 z-50 flex h-screen w-[260px] flex-col border-r border-slate-200 bg-white shadow-xl transition-transform duration-300 ease-in-out lg:w-[240px] lg:translate-x-0 lg:shadow-none ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3 lg:border-b-0 lg:px-4 lg:py-4">
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 lg:border-b-0 lg:px-4 lg:py-4">
           <Link href="/recruiter" className="min-w-0">
-            <span className="text-base font-semibold tracking-tight text-foreground lg:text-lg">Recruiter Panel</span>
+            <span className="text-base font-display font-bold tracking-tight text-slate-900 lg:text-lg">Recruiter Panel</span>
           </Link>
           <button
             type="button"
@@ -120,10 +120,10 @@ export function RecruiterSidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-200 ease-in-out ${
+                  className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-200 ease-in-out ${
                     isActive
-                      ? "bg-primary/10 text-primary shadow-sm"
-                      : "text-text-muted hover:bg-surface-muted hover:text-foreground active:bg-slate-200/60"
+                      ? "bg-indigo-50 text-indigo-700"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-indigo-600 active:bg-slate-100"
                   }`}
                 >
                   <Icon className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
@@ -134,10 +134,10 @@ export function RecruiterSidebar() {
           </div>
         </nav>
 
-        <div className="shrink-0 border-t border-border px-3 py-3 safe-bottom">
+        <div className="shrink-0 border-t border-slate-200 px-3 py-3 safe-bottom">
           <Link
             href="/select-role?next=/dashboard"
-            className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5 text-sm text-text-muted shadow-sm transition-all duration-200 hover:border-primary/25 hover:bg-surface-muted hover:text-foreground"
+            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all duration-200 hover:border-indigo-200 hover:bg-slate-50 hover:text-indigo-600"
           >
             <ArrowLeftRight className="h-4 w-4 shrink-0" />
             <span className="truncate">Switch to Job Seeker</span>

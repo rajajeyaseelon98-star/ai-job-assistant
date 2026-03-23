@@ -71,126 +71,132 @@ export function ApplicationForm({ initial, onSave, onCancel }: ApplicationFormPr
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-3 shadow-card sm:p-4 md:p-5">
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-sm sm:text-base font-semibold text-foreground">
-          {isEdit ? "Edit Application" : "Add Application"}
-        </h3>
-        <button type="button" onClick={onCancel} className="text-text-muted hover:text-text active:text-text/70 min-h-[44px] min-w-[44px] flex items-center justify-center">
-          <X className="h-5 w-5" />
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div>
-            <label className="label-field text-xs">Company *</label>
-            <input
-              type="text"
-              value={company}
-              onChange={(e) => setCompany(e.target.value)}
-              placeholder="Google, Amazon..."
-              className="input-field"
-            />
-          </div>
-          <div>
-            <label className="label-field text-xs">Role *</label>
-            <input
-              type="text"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              placeholder="Senior Frontend Developer"
-              className="input-field"
-            />
-          </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden">
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 sm:px-8">
+          <h3 className="font-display text-lg font-bold text-slate-900">
+            {isEdit ? "Edit Application" : "Add Application"}
+          </h3>
+          <button type="button" onClick={onCancel} className="text-slate-400 hover:text-slate-700 p-1 rounded-md hover:bg-slate-50">
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+        <form onSubmit={handleSubmit} className="space-y-4 px-6 py-6 sm:px-8">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-slate-700">Company *</label>
+              <input
+                type="text"
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                placeholder="Google, Amazon..."
+                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-slate-700">Role *</label>
+              <input
+                type="text"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                placeholder="Senior Frontend Developer"
+                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-slate-700">Status</label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as ApplicationStatus)}
+                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
+              >
+                {Object.entries(STATUS_LABELS).map(([val, label]) => (
+                  <option key={val} value={val}>{label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-slate-700">Applied Date</label>
+              <input
+                type="date"
+                value={appliedDate}
+                onChange={(e) => setAppliedDate(e.target.value)}
+                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-slate-700">Location</label>
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="Remote, NYC..."
+                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-slate-700">Job URL</label>
+              <input
+                type="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://..."
+                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-slate-700">Salary</label>
+              <input
+                type="text"
+                value={salary}
+                onChange={(e) => setSalary(e.target.value)}
+                placeholder="$120k - $150k"
+                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
+              />
+            </div>
+          </div>
+
           <div>
-            <label className="label-field text-xs">Status</label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value as ApplicationStatus)}
-              className="input-field"
+            <label className="mb-2 block text-sm font-semibold text-slate-700">Notes</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              placeholder="Recruiter name, interview feedback, next steps..."
+              className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full min-h-[100px] resize-y transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
+            />
+          </div>
+
+          {error && (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+          )}
+
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 rounded-xl px-6 py-2.5 font-medium transition-all inline-flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              {Object.entries(STATUS_LABELS).map(([val, label]) => (
-                <option key={val} value={val}>{label}</option>
-              ))}
-            </select>
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
+              {isEdit ? "Update" : "Add Application"}
+            </button>
+            <Button type="button" variant="secondary" onClick={onCancel} className="w-full sm:w-auto">
+              Cancel
+            </Button>
           </div>
-          <div>
-            <label className="label-field text-xs">Applied Date</label>
-            <input
-              type="date"
-              value={appliedDate}
-              onChange={(e) => setAppliedDate(e.target.value)}
-              className="input-field"
-            />
-          </div>
-          <div>
-            <label className="label-field text-xs">Location</label>
-            <input
-              type="text"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Remote, NYC..."
-              className="input-field"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div>
-            <label className="label-field text-xs">Job URL</label>
-            <input
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://..."
-              className="input-field"
-            />
-          </div>
-          <div>
-            <label className="label-field text-xs">Salary</label>
-            <input
-              type="text"
-              value={salary}
-              onChange={(e) => setSalary(e.target.value)}
-              placeholder="$120k - $150k"
-              className="input-field"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="label-field text-xs">Notes</label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={3}
-            placeholder="Recruiter name, interview feedback, next steps..."
-            className="input-field min-h-[100px] resize-y py-2.5 sm:min-h-[88px]"
-          />
-        </div>
-
-        {error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
-        )}
-
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Plus className="h-4 w-4" />
-            )}
-            {isEdit ? "Update" : "Add Application"}
-          </Button>
-          <Button type="button" variant="secondary" onClick={onCancel} className="w-full sm:w-auto">
-            Cancel
-          </Button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

@@ -16,29 +16,42 @@ function applyChannel(job: AutoApplyJobResult): "platform" | "external" {
 export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
   const prob = job.interview_probability;
   const channel = applyChannel(job);
+  const scorePill =
+    job.match_score >= 80
+      ? "bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-full text-sm font-bold"
+      : job.match_score >= 60
+        ? "bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1 rounded-full text-sm font-bold"
+        : "bg-rose-50 text-rose-700 border border-rose-200 px-3 py-1 rounded-full text-sm font-bold";
+  const interviewFill = !prob
+    ? "bg-slate-300"
+    : prob.level === "HIGH"
+      ? "bg-emerald-500"
+      : prob.level === "MEDIUM"
+        ? "bg-amber-500"
+        : "bg-rose-500";
 
   return (
-    <div className={`rounded-xl border p-3 sm:p-4 transition-colors ${
-      job.selected ? "border-primary bg-primary/5" : "border-gray-200 bg-card"
+    <div className={`relative rounded-2xl border bg-white p-6 shadow-sm transition-all ${
+      job.selected ? "border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50/30" : "border-slate-200"
     } ${job.applied ? "opacity-60" : ""}`}>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="text-xs sm:text-sm font-semibold text-text truncate">{job.title}</h3>
+            <h3 className="font-display truncate text-xl font-bold text-slate-900">{job.title}</h3>
             {job.url && (
-              <a href={job.url} target="_blank" rel="noopener noreferrer" className="shrink-0 text-text-muted hover:text-primary active:text-primary/70 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center">
+              <a href={job.url} target="_blank" rel="noopener noreferrer" className="min-h-[44px] min-w-[44px] shrink-0 flex items-center justify-center text-slate-400 hover:text-indigo-600 sm:min-h-0 sm:min-w-0">
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
             )}
           </div>
-          <p className="text-xs sm:text-sm text-text-muted">{job.company}</p>
+          <p className="text-sm text-slate-500">{job.company}</p>
 
           <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-text-muted">
             <span
-              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${
+              className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium ${
                 channel === "platform"
-                  ? "bg-emerald-50 text-emerald-800"
-                  : "bg-sky-50 text-sky-800"
+                  ? "border-emerald-100/50 bg-emerald-50 text-emerald-700"
+                  : "border-slate-200 bg-slate-100 text-slate-600"
               }`}
               title={
                 channel === "platform"
@@ -56,7 +69,7 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
                 </>
               )}
             </span>
-            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-text-muted">
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
               Source: {job.source}
             </span>
             {job.location && (
@@ -75,15 +88,13 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
           </div>
 
           {job.match_reason && (
-            <p className="mt-2 text-xs text-text-muted">{job.match_reason}</p>
+            <p className="mt-2 text-xs text-slate-500">{job.match_reason}</p>
           )}
         </div>
 
         <div className="flex flex-row sm:flex-col items-center gap-3 sm:gap-2 border-t sm:border-t-0 pt-2 sm:pt-0">
           {/* Match Score */}
-          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${
-            job.match_score >= 80 ? "bg-green-500" : job.match_score >= 60 ? "bg-yellow-500" : "bg-red-400"
-          }`}>
+          <div className={scorePill}>
             {job.match_score}
           </div>
 
@@ -102,14 +113,14 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
           )}
 
           {!job.applied && (
-            <label className="flex items-center gap-1.5 cursor-pointer min-h-[44px] sm:min-h-0">
+            <label className="flex min-h-[44px] cursor-pointer items-center gap-1.5 sm:min-h-0">
               <input
                 type="checkbox"
                 checked={job.selected}
                 onChange={() => onToggleSelect(job.job_id)}
-                className="h-5 w-5 sm:h-4 sm:w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                className="h-5 w-5 cursor-pointer rounded border-slate-300 text-indigo-600 transition-all focus:ring-indigo-600"
               />
-              <span className="text-xs text-text-muted">Apply</span>
+              <span className="text-xs text-slate-500">Apply</span>
             </label>
           )}
           {job.applied && (
@@ -120,9 +131,9 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
 
       {/* Interview Probability Details */}
       {prob && (
-        <div className="mt-3 rounded-lg border border-gray-100 bg-gray-50 p-2 sm:p-3">
+        <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
           <div className="flex flex-wrap items-center justify-between gap-1 mb-1.5">
-            <span className="text-xs font-semibold text-text flex items-center gap-1">
+            <span className="flex items-center gap-1 text-sm font-semibold text-slate-700">
               <TrendingUp className="h-3 w-3" /> Interview Chance: {prob.score}%
             </span>
             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
@@ -135,13 +146,9 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
           </div>
 
           {/* Progress bar */}
-          <div className="h-1.5 w-full rounded-full bg-gray-200 mb-2">
+          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
             <div
-              className={`h-1.5 rounded-full transition-all ${
-                prob.level === "HIGH" ? "bg-green-500"
-                : prob.level === "MEDIUM" ? "bg-yellow-500"
-                : "bg-red-400"
-              }`}
+              className={`h-1.5 rounded-full transition-all ${interviewFill}`}
               style={{ width: `${prob.score}%` }}
             />
           </div>
@@ -171,9 +178,9 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
       )}
 
       {job.cover_letter && (
-        <details className="mt-3">
+        <details className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
           <summary className="cursor-pointer text-xs font-medium text-primary">View cover letter snippet</summary>
-          <p className="mt-1.5 text-xs text-text-muted leading-relaxed">{job.cover_letter}</p>
+          <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{job.cover_letter}</p>
         </details>
       )}
     </div>

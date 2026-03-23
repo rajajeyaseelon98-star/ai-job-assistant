@@ -74,50 +74,50 @@ export default function SalaryInsightsPage() {
       : "text-gray-600";
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="max-w-4xl mx-auto w-full py-8 space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Salary Intelligence</h1>
-        <p className="text-sm sm:text-base text-text-muted">
+        <h1 className="font-display text-3xl font-bold text-slate-900 tracking-tight mb-2">Salary Intelligence</h1>
+        <p className="text-slate-500 text-base mb-8 leading-relaxed">
           Research salary ranges, trends, and comparisons for any role
         </p>
       </div>
 
       {/* Search Form */}
-      <form onSubmit={handleSearch} className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-6">
-        <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="sm:col-span-2">
-            <label className="mb-1 block text-sm font-medium text-text">Job Title</label>
+      <form onSubmit={handleSearch} className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 sm:p-8 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div>
+            <label className="text-sm font-semibold text-slate-700 mb-2 block">Job Title</label>
             <div className="relative">
-              <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+              <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
                 placeholder="e.g. Software Engineer, Data Scientist"
-                className="w-full min-h-[44px] rounded-lg border border-gray-200 py-2 pl-10 pr-4 text-base sm:text-sm focus:border-primary focus:outline-none"
+                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl pl-10 pr-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none appearance-none"
                 required
               />
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-text">Location</label>
+            <label className="text-sm font-semibold text-slate-700 mb-2 block">Location</label>
             <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+              <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. Bangalore"
-                className="w-full min-h-[44px] rounded-lg border border-gray-200 py-2 pl-10 pr-4 text-base sm:text-sm focus:border-primary focus:outline-none"
+                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl pl-10 pr-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none appearance-none"
               />
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-text">Experience</label>
+            <label className="text-sm font-semibold text-slate-700 mb-2 block">Experience</label>
             <select
               value={experience}
               onChange={(e) => setExperience(e.target.value)}
-              className="w-full min-h-[44px] rounded-lg border border-gray-200 px-3 py-2 text-base sm:text-sm focus:border-primary focus:outline-none"
+              className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none appearance-none"
             >
               <option value="">Any</option>
               <option value="0">0-2 years</option>
@@ -130,7 +130,7 @@ export default function SalaryInsightsPage() {
         <button
           type="submit"
           disabled={loading || !jobTitle.trim()}
-          className="mt-4 w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2 text-sm font-medium text-white hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 rounded-xl px-8 py-3.5 font-medium transition-all w-full md:w-auto inline-flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
           Search Salaries
@@ -145,45 +145,46 @@ export default function SalaryInsightsPage() {
       )}
 
       {!loading && searched && insight && (
-        <div className="space-y-4 sm:space-y-6">
+        <div className="mt-12 pt-12 border-t border-slate-200 space-y-4 sm:space-y-6">
+          <h2 className="font-display text-2xl font-bold text-slate-900 mb-6">Salary Insights</h2>
           {/* Salary Range Card */}
-          <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-6">
+          <div className="bg-white border border-slate-200 shadow-sm rounded-3xl p-8 mb-8">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2">
-              <h2 className="text-lg sm:text-xl font-semibold text-text truncate">{insight.job_title}</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-900 truncate">{insight.job_title}</h2>
               <div className={`flex items-center gap-1 text-sm font-medium ${trendColor}`}>
                 <TrendIcon className="h-4 w-4" />
                 {insight.trend === "rising" ? "Rising" : insight.trend === "declining" ? "Declining" : "Stable"}
               </div>
             </div>
             {insight.location && (
-              <p className="mt-1 text-sm text-text-muted flex items-center gap-1">
+              <p className="mt-1 text-sm text-slate-500 flex items-center gap-1">
                 <MapPin className="h-3 w-3" /> {insight.location}
               </p>
             )}
-            <p className="text-xs text-text-muted mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               {insight.experience_range} | {insight.data_points} data points
             </p>
 
             {insight.salary_range.avg > 0 ? (
               <>
-                <div className="mt-4 sm:mt-6 grid grid-cols-3 gap-2 sm:gap-4 text-center">
-                  <div>
-                    <div className="text-xs sm:text-sm text-text-muted">Minimum</div>
-                    <div className="text-lg sm:text-xl font-bold text-text flex items-center justify-center">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 mt-6">
+                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:border-indigo-100 transition-all text-center">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Low</div>
+                    <div className="font-display text-2xl font-bold text-indigo-600 flex items-center justify-center">
                       <IndianRupee className="h-3 w-3 sm:h-4 sm:w-4" />
                       {formatSalary(insight.salary_range.min)}
                     </div>
                   </div>
-                  <div className="border-x border-gray-200">
-                    <div className="text-xs sm:text-sm text-text-muted">Average</div>
-                    <div className="text-xl sm:text-2xl font-bold text-primary flex items-center justify-center">
+                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:border-indigo-100 transition-all text-center">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Median</div>
+                    <div className="font-display text-2xl font-bold text-indigo-600 flex items-center justify-center">
                       <IndianRupee className="h-4 w-4 sm:h-5 sm:w-5" />
                       {formatSalary(insight.salary_range.avg)}
                     </div>
                   </div>
-                  <div>
-                    <div className="text-xs sm:text-sm text-text-muted">Maximum</div>
-                    <div className="text-lg sm:text-xl font-bold text-text flex items-center justify-center">
+                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:border-indigo-100 transition-all text-center">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">High</div>
+                    <div className="font-display text-2xl font-bold text-indigo-600 flex items-center justify-center">
                       <IndianRupee className="h-3 w-3 sm:h-4 sm:w-4" />
                       {formatSalary(insight.salary_range.max)}
                     </div>
@@ -191,8 +192,8 @@ export default function SalaryInsightsPage() {
                 </div>
 
                 {/* Percentile Bar */}
-                <div className="mt-6">
-                  <h3 className="mb-2 text-sm font-medium text-text">Salary Distribution</h3>
+                <div className="bg-white border border-slate-200 shadow-sm rounded-3xl p-8 mb-8">
+                  <h3 className="font-display text-lg font-bold text-slate-900 mb-6">Salary Distribution</h3>
                   <div className="relative h-8 w-full rounded-full bg-gray-100">
                     <div
                       className="absolute left-0 top-0 h-full rounded-full bg-primary/20"
@@ -210,7 +211,7 @@ export default function SalaryInsightsPage() {
                       style={{ left: "50%" }}
                     />
                   </div>
-                  <div className="mt-1 flex justify-between text-xs text-text-muted">
+                  <div className="mt-1 flex justify-between text-xs text-slate-500">
                     <span>P25: {formatSalary(insight.percentiles.p25)}</span>
                     <span>P50: {formatSalary(insight.percentiles.p50)}</span>
                     <span>P75: {formatSalary(insight.percentiles.p75)}</span>
@@ -226,19 +227,19 @@ export default function SalaryInsightsPage() {
 
           {/* Comparable Roles */}
           {insight.comparable_roles.length > 0 && (
-            <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-6">
-              <h3 className="mb-3 sm:mb-4 text-lg sm:text-xl font-semibold text-text flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            <div className="bg-white border border-slate-200 shadow-sm rounded-3xl p-8 mb-8">
+              <h3 className="font-display text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600" />
                 Comparable Roles
               </h3>
               <div className="space-y-2 sm:space-y-3">
                 {insight.comparable_roles.map((role) => (
                   <div
                     key={role.title}
-                    className="flex items-center justify-between rounded-lg bg-gray-50 px-3 sm:px-4 py-2.5 sm:py-3"
+                    className="flex items-center justify-between rounded-lg bg-slate-50 px-3 sm:px-4 py-2.5 sm:py-3 border border-slate-100"
                   >
-                    <span className="text-sm font-medium text-text truncate">{role.title}</span>
-                    <span className="text-sm font-bold text-text flex items-center">
+                    <span className="text-sm font-medium text-slate-700 truncate">{role.title}</span>
+                    <span className="text-sm font-bold text-slate-900 flex items-center">
                       <IndianRupee className="h-3 w-3" />
                       {formatSalary(role.avg_salary)}
                     </span>
@@ -256,6 +257,17 @@ export default function SalaryInsightsPage() {
           <h3 className="font-medium text-text">No results found</h3>
           <p className="mt-1 text-sm text-text-muted">
             Try a different job title or broader search terms.
+          </p>
+        </div>
+      )}
+
+      {!loading && !searched && (
+        <div className="max-w-md mx-auto text-center py-20 px-6">
+          <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-6">
+            <IndianRupee className="h-8 w-8" />
+          </div>
+          <p className="text-slate-400 text-sm italic">
+            Search a role, location, and experience level to generate salary intelligence.
           </p>
         </div>
       )}

@@ -31,14 +31,18 @@ function CoverLetterContent() {
   }, [idFromUrl]);
 
   return (
-    <div className="space-y-4 sm:space-y-6 md:space-y-8">
-      <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Cover Letter Generator</h1>
-      <p className="text-sm sm:text-base text-text-muted">
+    <div className="max-w-3xl mx-auto w-full py-8 space-y-4 sm:space-y-6 md:space-y-8">
+      <h1 className="font-display text-3xl font-bold text-slate-900 tracking-tight mb-2">
+        Cover Letter Generator
+      </h1>
+      <p className="text-slate-500 text-base mb-8 leading-relaxed">
         Enter company, role, job description, and your resume to generate a professional cover letter.
       </p>
 
-      <section className="rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 shadow-sm">
-        <h2 className="mb-4 text-lg sm:text-xl font-semibold text-text">Generate cover letter</h2>
+      <section className="mb-10 rounded-2xl border border-slate-200 bg-white shadow-sm p-6 sm:p-8">
+        <h2 className="font-display text-xl font-semibold text-slate-900 mb-6">
+          Generate cover letter
+        </h2>
         <CoverLetterForm
           defaultCompanyName={generated?.companyName ?? ""}
           defaultRole={generated?.jobTitle ?? ""}
@@ -49,8 +53,7 @@ function CoverLetterContent() {
       </section>
 
       {generated && (
-        <section>
-          <h2 className="mb-4 text-lg sm:text-xl font-semibold text-text">Generated cover letter</h2>
+        <section className="mt-12 pt-12 border-t border-slate-200">
           <CoverLetterResult
             id={generated.id}
             text={generated.coverLetter}
@@ -64,7 +67,16 @@ function CoverLetterContent() {
 
 export default function CoverLetterPage() {
   return (
-    <Suspense fallback={<div className="space-y-4 sm:space-y-6"><h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Cover Letter Generator</h1><p className="text-text-muted">Loading…</p></div>}>
+    <Suspense
+      fallback={
+        <div className="max-w-3xl mx-auto w-full py-8 space-y-4 sm:space-y-6">
+          <h1 className="font-display text-3xl font-bold text-slate-900 tracking-tight mb-2">
+            Cover Letter Generator
+          </h1>
+          <p className="text-slate-500 text-base mb-8 leading-relaxed">Loading…</p>
+        </div>
+      }
+    >
       <CoverLetterContent />
     </Suspense>
   );

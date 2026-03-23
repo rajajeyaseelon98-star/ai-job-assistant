@@ -9,6 +9,7 @@ import { ImprovedResumeView, improvedToPlainText } from "@/components/resume/Imp
 import { dispatchUsageUpdated } from "@/components/layout/Topbar";
 import { AIProgressIndicator } from "@/components/ui/AIProgressIndicator";
 import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
+import { Info } from "lucide-react";
 import type { ATSAnalysisResult } from "@/types/resume";
 import type { ImprovedResumeContent } from "@/types/analysis";
 import { humanizeImproveResumeError, humanizeNetworkError } from "@/lib/friendlyApiError";
@@ -225,8 +226,9 @@ function ResumeAnalyzerContent() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 md:space-y-8">
-      <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Resume Analyzer</h1>
+    <div className="mx-auto w-full max-w-3xl py-8 space-y-4 sm:space-y-6 md:space-y-8">
+      <h1 className="mb-2 font-display text-3xl font-bold tracking-tight text-slate-900">Resume Analyzer</h1>
+      <p className="mb-8 text-base text-slate-500">Add your resume for ATS analysis — upload a file or paste text.</p>
 
       {/* Smart upgrade trigger */}
       {usageInfo && usageInfo.limit > 0 && (
@@ -247,18 +249,15 @@ function ResumeAnalyzerContent() {
       )}
 
       <section>
-        <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Add your resume</h2>
-        <p className="mb-3 text-sm text-text-muted">
-          Upload a file or paste text — both work for ATS analysis.
-        </p>
-        <div className="mb-4 flex flex-wrap gap-2 rounded-lg border border-gray-200 bg-card p-1">
+        <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Input method</h2>
+        <div className="mb-6 inline-flex w-full overflow-x-auto rounded-xl bg-slate-100/80 p-1.5 sm:w-auto">
           <button
             type="button"
             onClick={() => setResumeInputMode("upload")}
-            className={`min-h-[44px] flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors sm:flex-none sm:px-4 ${
+            className={`whitespace-nowrap px-6 py-2.5 text-sm font-medium transition-all ${
               resumeInputMode === "upload"
-                ? "bg-primary text-white shadow-sm"
-                : "text-text-muted hover:bg-gray-50"
+                ? "rounded-lg bg-white text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
             }`}
           >
             Upload PDF / DOCX
@@ -269,10 +268,10 @@ function ResumeAnalyzerContent() {
               setResumeInputMode("paste");
               if (resumeText === null) setResumeText("");
             }}
-            className={`min-h-[44px] flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors sm:flex-none sm:px-4 ${
+            className={`whitespace-nowrap px-6 py-2.5 text-sm font-medium transition-all ${
               resumeInputMode === "paste"
-                ? "bg-primary text-white shadow-sm"
-                : "text-text-muted hover:bg-gray-50"
+                ? "rounded-lg bg-white text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
             }`}
           >
             Paste resume text
@@ -282,8 +281,9 @@ function ResumeAnalyzerContent() {
           <ResumeUpload onUploadComplete={handleUploadComplete} />
         ) : (
           <div className="space-y-2">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20">
             <textarea
-              className="w-full rounded-lg border border-gray-300 p-3 text-base sm:text-sm text-text min-h-[180px]"
+              className="w-full min-h-[320px] resize-y bg-transparent p-6 text-base leading-relaxed text-slate-700 placeholder:text-slate-400 outline-none"
               rows={10}
               value={resumeText ?? ""}
               onChange={(e) => {
@@ -292,7 +292,8 @@ function ResumeAnalyzerContent() {
               }}
               placeholder="Paste your full resume here (no upload needed)…"
             />
-            <p className="text-xs text-text-muted">
+            </div>
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
               Tip: paste from Word, Google Docs, or any text source. Then analyze below.
             </p>
           </div>
@@ -321,7 +322,7 @@ function ResumeAnalyzerContent() {
               type="button"
               onClick={runAnalysis}
               disabled={loading}
-              className="w-full sm:w-auto min-h-[44px] rounded-lg bg-primary px-4 py-2 font-medium text-sm sm:text-base text-white hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50"
+              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 font-medium text-white shadow-md shadow-indigo-600/20 transition-all hover:bg-indigo-700 disabled:opacity-50 sm:w-auto"
             >
               {loading ? "Analyzing…" : "Analyze resume"}
             </button>
@@ -335,12 +336,18 @@ function ResumeAnalyzerContent() {
         <section>
           <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Resume analysis</h2>
           <ResumeAnalysisResult data={analysis} />
-          <div className="mt-4 sm:mt-6 flex flex-col gap-3">
-            <p className="text-xs sm:text-sm font-medium text-text">Optional: tailor for a specific job</p>
+          <div className="relative mt-10 overflow-hidden rounded-3xl bg-indigo-900 p-8 text-center shadow-xl">
+            <div
+              className="pointer-events-none absolute left-1/2 top-0 h-48 w-48 -translate-x-1/2 rounded-full bg-indigo-500/30 blur-3xl"
+              aria-hidden
+            />
+            <div className="relative flex flex-col gap-3">
+            <p className="font-display text-2xl font-bold text-white mb-2">Tailor & Improve with AI</p>
+            <p className="text-indigo-200">Optional: add target role context for stronger output.</p>
             {(improveJobTitle.trim() || improveJobDescription.trim()) && (
-              <div className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-gray-50/80 p-3 sm:p-4">
-                <p className="text-xs font-medium text-text">How should we use the job info?</p>
-                <label className="flex cursor-pointer items-start gap-2 text-sm text-text">
+              <div className="flex flex-col gap-2 rounded-xl border border-white/15 bg-white/5 p-4 text-left">
+                <p className="text-xs font-medium text-indigo-100">How should we use the job info?</p>
+                <label className="flex cursor-pointer items-start gap-2 text-sm text-indigo-100">
                   <input
                     type="radio"
                     name="tailorIntent"
@@ -352,7 +359,7 @@ function ResumeAnalyzerContent() {
                     <strong>Tailor for this job</strong> — align resume to this role (ok for career change).
                   </span>
                 </label>
-                <label className="flex cursor-pointer items-start gap-2 text-sm text-text">
+                <label className="flex cursor-pointer items-start gap-2 text-sm text-indigo-100">
                   <input
                     type="radio"
                     name="tailorIntent"
@@ -371,32 +378,33 @@ function ResumeAnalyzerContent() {
               placeholder="Job title (e.g. Frontend Developer)"
               value={improveJobTitle}
               onChange={(e) => setImproveJobTitle(e.target.value)}
-              className="w-full max-w-md rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm text-text min-h-[44px]"
+              className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-white placeholder:text-indigo-200 outline-none transition-all focus:bg-white focus:text-slate-900 focus:placeholder:text-slate-400"
             />
             <textarea
               placeholder="Paste job description for better optimization (optional)"
               value={improveJobDescription}
               onChange={(e) => setImproveJobDescription(e.target.value)}
               rows={3}
-              className="w-full max-w-2xl rounded-lg border border-gray-300 p-3 text-base sm:text-sm text-text min-h-[44px]"
+              className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-white placeholder:text-indigo-200 outline-none transition-all focus:bg-white focus:text-slate-900 focus:placeholder:text-slate-400"
             />
             <button
               type="button"
               onClick={handleImproveResume}
               disabled={improving}
-              className="w-full sm:w-fit min-h-[44px] rounded-lg bg-primary px-4 py-2 font-medium text-sm sm:text-base text-white hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50"
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-8 py-3.5 text-lg font-bold text-indigo-900 shadow-lg transition-all hover:bg-slate-50 disabled:opacity-50 sm:w-auto"
             >
               {improving ? "AI generating improved resume…" : "Improve my resume"}
             </button>
             {improving && <AIProgressIndicator message="AI is rewriting your resume…" />}
             {improveError && (
-              <p className="text-sm text-red-600">
+              <p className="text-sm text-rose-200">
                 {improveError}
                 {improveError.includes("Pro") && (
                   <> <Link href="/pricing" className="font-medium text-primary hover:underline">Upgrade to Pro</Link></>
                 )}
               </p>
             )}
+            </div>
           </div>
         </section>
       )}
@@ -405,22 +413,24 @@ function ResumeAnalyzerContent() {
         <section>
           <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Improved resume</h2>
           {(analysisForRecheck ?? analysis) && (
-            <div className="mb-4 rounded-lg border-2 border-primary/40 bg-gradient-to-br from-primary/10 to-primary/5 p-4 sm:p-5">
-              <p className="mb-1 text-sm font-semibold text-text">Next step</p>
-              <p className="mb-3 text-sm text-text-muted">
-                See your new ATS score after the improvements.
-              </p>
-              <button
-                type="button"
-                onClick={handleRecheckImproved}
-                disabled={recheckLoading}
-                className="w-full sm:w-auto min-h-[48px] rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50"
-              >
-                {recheckLoading ? "Scoring your improved resume…" : "See your new ATS score →"}
-              </button>
-              <p className="mt-2 text-xs text-text-muted">
-                Should show 90%+ if the improvements addressed the previous feedback.
-              </p>
+            <div className="mt-6 flex items-start gap-3 rounded-xl border border-indigo-100 bg-indigo-50 p-4 shadow-sm">
+              <Info className="mt-0.5 h-5 w-5 shrink-0 text-indigo-600" />
+              <div className="w-full">
+                <p className="text-sm leading-relaxed text-indigo-800">
+                  See your new ATS score after the improvements.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleRecheckImproved}
+                  disabled={recheckLoading}
+                  className="mt-3 w-full rounded-lg border border-indigo-200 bg-white px-5 py-2.5 text-sm font-semibold text-indigo-700 shadow-sm transition-colors hover:bg-indigo-50 disabled:opacity-50 sm:w-auto"
+                >
+                  {recheckLoading ? "Scoring your improved resume…" : "See your new ATS score →"}
+                </button>
+                <p className="mt-2 text-sm leading-relaxed text-indigo-800">
+                  Should show 90%+ if the improvements addressed the previous feedback.
+                </p>
+              </div>
             </div>
           )}
           <ImprovedResumeView content={improvedContent} improvedResumeId={improvedResumeId ?? undefined} />

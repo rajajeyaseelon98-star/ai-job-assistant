@@ -123,10 +123,10 @@ export function Sidebar() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed left-3 top-3 z-40 rounded-lg p-2 text-foreground transition-colors duration-200 hover:bg-surface-muted active:bg-slate-200/80 lg:hidden"
+        className="fixed left-3 top-3 z-40 rounded-lg p-2 text-slate-700 transition-colors duration-200 hover:bg-slate-100 active:bg-slate-200/80 lg:hidden"
         aria-label="Open menu"
       >
-        <Menu className="h-5 w-5 text-text" />
+        <Menu className="h-5 w-5" />
       </button>
 
       {/* Mobile overlay with fade animation */}
@@ -140,32 +140,34 @@ export function Sidebar() {
 
       {/* Sidebar with slide animation */}
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-screen w-[260px] flex-col border-r border-border bg-card shadow-card-md transition-transform duration-300 ease-in-out lg:w-[240px] lg:translate-x-0 lg:shadow-nav ${
+        className={`fixed left-0 top-0 z-50 flex h-screen w-[260px] flex-col border-r border-slate-200 bg-white shadow-sm transition-transform duration-300 ease-in-out lg:w-[240px] lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Header */}
-        <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3 lg:border-b-0 lg:px-4 lg:py-4">
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 lg:border-b-0 lg:px-4 lg:py-4">
           <Link href="/dashboard" className="min-w-0">
-            <span className="text-base font-semibold tracking-tight text-foreground lg:text-lg">AI Job Assistant</span>
+            <span className="font-display text-base font-semibold tracking-tight text-slate-900 lg:text-lg">
+              AI Job Assistant
+            </span>
           </Link>
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="rounded-lg p-1.5 transition-colors duration-200 hover:bg-surface-muted active:bg-slate-200/80 lg:hidden"
+            className="rounded-lg p-1.5 text-slate-500 transition-colors duration-200 hover:bg-slate-50 hover:text-slate-800 active:bg-slate-100 lg:hidden"
             aria-label="Close menu"
           >
-            <X className="h-5 w-5 text-text-muted" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Scrollable nav */}
         <nav className="flex-1 overflow-y-auto px-3 py-2">
           {navGroups.map((group, gi) => (
-            <div key={gi} className={group.label ? "mt-3 first:mt-0" : ""}>
+            <div key={gi} className={group.label ? "mt-5 first:mt-0" : ""}>
               {group.label && (
-                <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-                  {group.label}
+                <p className="mb-3 px-3 font-display text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  {group.label.toUpperCase()}
                 </p>
               )}
               <div className="flex flex-col gap-0.5">
@@ -176,10 +178,10 @@ export function Sidebar() {
                     <Link
                       key={item.href}
                       href={item.href}
-                      className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200 ease-in-out ${
+                      className={`flex items-center gap-3 rounded-lg border-l-2 py-2 pl-2.5 pr-3 text-sm transition-colors duration-200 ease-in-out ${
                         isActive
-                          ? "bg-primary/10 text-primary shadow-sm"
-                          : "text-text-muted hover:bg-surface-muted hover:text-foreground active:bg-slate-200/60"
+                          ? "border-indigo-600 bg-indigo-50 font-medium text-indigo-700"
+                          : "border-transparent text-slate-600 hover:bg-slate-50 hover:text-indigo-600"
                       }`}
                     >
                       <Icon className="h-4 w-4 shrink-0" />
@@ -193,12 +195,12 @@ export function Sidebar() {
         </nav>
 
         {/* Footer */}
-        <div className="shrink-0 border-t border-border px-3 py-3 safe-bottom">
+        <div className="safe-bottom shrink-0 border-t border-slate-200 px-3 py-3">
           <Link
             href="/select-role?next=/recruiter"
-            className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5 text-sm text-text-muted shadow-sm transition-all duration-200 hover:border-primary/25 hover:bg-surface-muted hover:text-foreground"
+            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600 shadow-sm transition-all duration-200 hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-indigo-700"
           >
-            <ArrowLeftRight className="h-4 w-4 shrink-0" />
+            <ArrowLeftRight className="h-4 w-4 shrink-0 text-slate-500" />
             <span className="truncate">Switch to Recruiter</span>
           </Link>
         </div>

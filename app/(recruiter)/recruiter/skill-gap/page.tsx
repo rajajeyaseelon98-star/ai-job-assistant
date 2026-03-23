@@ -48,49 +48,51 @@ export default function SkillGapPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 sm:space-y-6">
-      <h1 className="text-xl font-bold text-text sm:text-2xl lg:text-3xl">AI Skill Gap Report</h1>
-      <p className="text-sm text-text-muted">Analyze how a candidate&#39;s skills match against job requirements.</p>
+    <div className="max-w-4xl mx-auto w-full py-8 space-y-8">
+      <h1 className="font-display text-3xl font-bold text-slate-900 tracking-tight mb-2">AI Skill Gap Report</h1>
+      <p className="text-sm text-slate-500">Analyze how a candidate&#39;s skills match against job requirements.</p>
 
       <div className="flex flex-wrap gap-2">
         <button onClick={() => setMode("application")}
-          className={`rounded-lg px-4 py-2 text-sm font-medium min-h-[44px] sm:min-h-0 ${mode === "application" ? "bg-primary text-white" : "border border-gray-300 text-text active:bg-gray-100"}`}>
+          className={`rounded-xl px-4 py-2.5 text-sm font-medium ${mode === "application" ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/20" : "border border-slate-200 text-slate-600 hover:bg-slate-50"}`}>
           By Application ID
         </button>
         <button onClick={() => setMode("manual")}
-          className={`rounded-lg px-4 py-2 text-sm font-medium min-h-[44px] sm:min-h-0 ${mode === "manual" ? "bg-primary text-white" : "border border-gray-300 text-text active:bg-gray-100"}`}>
+          className={`rounded-xl px-4 py-2.5 text-sm font-medium ${mode === "manual" ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/20" : "border border-slate-200 text-slate-600 hover:bg-slate-50"}`}>
           Manual Input
         </button>
       </div>
 
-      <form onSubmit={handleAnalyze} className="space-y-3 sm:space-y-4 rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5">
+      <form onSubmit={handleAnalyze} className="bg-white border border-slate-200 shadow-sm rounded-3xl p-8 space-y-6">
         {mode === "application" ? (
           <div>
-            <label className="mb-1 block text-sm font-medium text-text">Application ID *</label>
+            <label className="mb-2 block text-sm font-semibold text-slate-700">Application ID *</label>
             <input type="text" value={applicationId} onChange={(e) => setApplicationId(e.target.value)}
               placeholder="Paste application UUID..."
-              className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]" />
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all focus:bg-white focus:border-indigo-500 outline-none text-slate-800" />
           </div>
         ) : (
           <>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-text">Job Posting ID *</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">Job Posting ID *</label>
               <input type="text" value={jobId} onChange={(e) => setJobId(e.target.value)} placeholder="Job UUID..."
-                className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none min-h-[44px]" />
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all focus:bg-white focus:border-indigo-500 outline-none text-slate-800" />
+              </div>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-text">Resume Text *</label>
+              <label className="mb-2 block text-sm font-semibold text-slate-700">Resume Text *</label>
               <textarea value={resumeText} onChange={(e) => setResumeText(e.target.value)} rows={6}
                 placeholder="Paste candidate's resume text..."
-                className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text focus:border-primary focus:outline-none" />
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all focus:bg-white focus:border-indigo-500 outline-none text-slate-800" />
             </div>
           </>
         )}
 
-        {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+        {error && <p className="rounded-xl bg-rose-50 border border-rose-100 px-4 py-3 text-sm text-rose-700">{error}</p>}
 
         <button type="submit" disabled={loading}
-          className="flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 min-h-[44px] w-full sm:w-auto">
+          className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 rounded-xl px-8 py-3.5 font-medium disabled:opacity-50 w-full md:w-auto">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <BarChart3 className="h-4 w-4" />}
           {loading ? "Analyzing..." : "Analyze Skill Gap"}
         </button>

@@ -20,8 +20,9 @@ export default async function SettingsPage() {
     .single();
 
   return (
-    <div className="space-y-4 sm:space-y-5 md:space-y-6">
-      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-text">Settings</h1>
+    <div className="max-w-4xl mx-auto w-full py-8 space-y-4 sm:space-y-5 md:space-y-6">
+      <h1 className="font-display text-3xl font-bold text-slate-900 tracking-tight">Settings</h1>
+      <p className="text-slate-500 text-base mt-2">Manage your profile, preferences, and account settings.</p>
 
       <SettingsForm
         name={profile?.name ?? ""}

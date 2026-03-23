@@ -33,7 +33,7 @@ export function StreakWidget() {
 
   if (loading || !streak) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 animate-pulse">
+      <div className="animate-pulse rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="h-16" />
       </div>
     );
@@ -44,67 +44,67 @@ export function StreakWidget() {
     : 100;
 
   return (
-    <div className="rounded-xl border border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-orange-100">
-            <Flame className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-50 ring-1 ring-amber-100">
+            <Flame className="h-5 w-5 text-amber-600" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="text-xl sm:text-2xl md:text-3xl font-bold text-orange-700">{streak.current_streak}</span>
-              <span className="text-xs sm:text-sm text-orange-600">day streak</span>
+              <span className="text-2xl font-bold text-amber-700 md:text-3xl">{streak.current_streak}</span>
+              <span className="text-xs text-amber-700/90 sm:text-sm">day streak</span>
             </div>
-            <p className="text-[10px] sm:text-xs text-orange-500 truncate">{streak.streak_level}</p>
+            <p className="truncate text-[10px] text-amber-600/90 sm:text-xs">{streak.streak_level}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3 text-xs">
+        <div className="flex items-center gap-2 text-xs sm:gap-3">
           {streak.streak_multiplier > 1 && (
-            <div className="flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 min-h-[28px]">
-              <Zap className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-yellow-600" />
-              <span className="font-medium text-yellow-700">{streak.streak_multiplier}x XP</span>
+            <div className="flex min-h-[28px] items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-1">
+              <Zap className="h-3 w-3 text-amber-600 sm:h-3.5 sm:w-3.5" />
+              <span className="font-medium text-amber-800">{streak.streak_multiplier}x XP</span>
             </div>
           )}
           {streak.streak_freeze_count > 0 && (
-            <div className="flex items-center gap-1 rounded-full bg-blue-100 px-2 py-1 min-h-[28px]">
-              <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-blue-600" />
-              <span className="font-medium text-blue-700">{streak.streak_freeze_count} freeze</span>
+            <div className="flex min-h-[28px] items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-1">
+              <Shield className="h-3 w-3 text-slate-600 sm:h-3.5 sm:w-3.5" />
+              <span className="font-medium text-slate-700">{streak.streak_freeze_count} freeze</span>
             </div>
           )}
         </div>
       </div>
 
       {/* Progress bar to next reward */}
-      <div className="mt-3 sm:mt-4">
-        <div className="flex items-center justify-between text-[10px] sm:text-xs text-orange-500">
+      <div className="mt-4">
+        <div className="flex items-center justify-between text-[10px] text-slate-500 sm:text-xs">
           <span className="truncate">Next reward at {streak.next_reward_at} days</span>
-          <span className="shrink-0 ml-2">{progressToNext}%</span>
+          <span className="ml-2 shrink-0">{progressToNext}%</span>
         </div>
-        <div className="mt-1 h-1.5 sm:h-2 rounded-full bg-orange-200">
+        <div className="mt-1.5 h-2 rounded-full bg-slate-200">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-orange-400 to-amber-400 transition-all"
+            className="h-full rounded-full bg-indigo-600 transition-all"
             style={{ width: `${progressToNext}%` }}
           />
         </div>
       </div>
 
       {/* Stats row */}
-      <div className="mt-3 sm:mt-4 grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 text-center text-[10px] sm:text-xs">
-        <div className="rounded-lg bg-white/40 px-2 py-2 sm:py-3">
-          <div className="font-bold text-sm sm:text-base text-orange-700">{streak.longest_streak}</div>
-          <div className="text-orange-500 truncate">Best Streak</div>
+      <div className="mt-4 grid grid-cols-3 gap-2 text-center text-[10px] sm:gap-3 sm:text-xs">
+        <div className="rounded-lg border border-slate-100 bg-slate-50 px-2 py-2 sm:py-3">
+          <div className="text-sm font-bold text-amber-700 sm:text-base">{streak.longest_streak}</div>
+          <div className="truncate text-amber-600/90">Best Streak</div>
         </div>
-        <div className="rounded-lg bg-white/40 px-2 py-2 sm:py-3">
-          <div className="font-bold text-sm sm:text-base text-orange-700">{streak.total_active_days}</div>
-          <div className="text-orange-500 truncate">Active Days</div>
+        <div className="rounded-lg border border-slate-100 bg-slate-50 px-2 py-2 sm:py-3">
+          <div className="text-sm font-bold text-amber-700 sm:text-base">{streak.total_active_days}</div>
+          <div className="truncate text-amber-600/90">Active Days</div>
         </div>
-        <div className="rounded-lg bg-white/40 px-2 py-2 sm:py-3">
-          <div className="flex items-center justify-center gap-0.5 font-bold text-sm sm:text-base text-orange-700">
+        <div className="rounded-lg border border-slate-100 bg-slate-50 px-2 py-2 sm:py-3">
+          <div className="flex items-center justify-center gap-0.5 text-sm font-bold text-amber-700 sm:text-base">
             <Trophy className="h-3 w-3 sm:h-4 sm:w-4" />
             {streak.xp_points}
           </div>
-          <div className="text-orange-500 truncate">XP Points</div>
+          <div className="truncate text-amber-600/90">XP Points</div>
         </div>
       </div>
     </div>

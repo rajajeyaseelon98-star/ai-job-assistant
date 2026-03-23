@@ -80,63 +80,60 @@ export default function AnalyticsPage() {
   const totalFunnel = funnel.applied + funnel.interviewing + funnel.offers + funnel.rejected + funnel.pending;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-4 sm:space-y-6">
+    <div className="max-w-4xl mx-auto w-full py-8 space-y-4 sm:space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-xl sm:text-2xl lg:text-3xl font-bold text-text">
-          <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Career Analytics
+        <h1 className="font-display text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+          <BarChart3 className="h-6 w-6 text-indigo-600" /> Career Analytics
         </h1>
-        <p className="mt-1 text-sm sm:text-base text-text-muted">
+        <p className="text-slate-500 text-base mb-10 mt-2">
           AI-powered insights from your application history. The system learns and adapts.
         </p>
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <MetricCard
-          icon={<Briefcase className="h-5 w-5 text-blue-500" />}
+          icon={<Briefcase className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-colors" />}
           label="Applications"
           value={insights.total_applications}
-          color="blue"
         />
         <MetricCard
-          icon={<Target className="h-5 w-5 text-purple-500" />}
+          icon={<Target className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-colors" />}
           label="Interviews"
           value={insights.total_interviews}
           subtext={`${insights.interview_rate}% rate`}
-          color="purple"
         />
         <MetricCard
-          icon={<Award className="h-5 w-5 text-green-500" />}
+          icon={<Award className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-colors" />}
           label="Offers"
           value={insights.total_offers}
           subtext={insights.total_interviews > 0 ? `${insights.offer_rate}% conversion` : undefined}
-          color="green"
         />
         <MetricCard
-          icon={<Clock className="h-5 w-5 text-amber-500" />}
+          icon={<Clock className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-colors" />}
           label="Avg Response"
           value={insights.avg_response_days !== null ? `${insights.avg_response_days}d` : "N/A"}
-          color="amber"
         />
       </div>
 
       {/* Conversion Funnel */}
       {totalFunnel > 0 && (
-        <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5">
-          <h2 className="text-lg sm:text-xl font-semibold text-text mb-4 flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" /> Conversion Funnel
+        <div className="bg-white border border-slate-200 shadow-sm rounded-3xl p-8 mb-8">
+          <h2 className="flex items-center gap-2 mb-10">
+            <TrendingUp className="h-5 w-5 text-indigo-500" />
+            <span className="font-display text-xl font-bold text-slate-900">Conversion Funnel</span>
           </h2>
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-2">
-            <FunnelStep label="Saved" count={funnel.pending} total={totalFunnel} color="bg-gray-400" />
-            <ArrowRight className="h-4 w-4 text-text-muted shrink-0 rotate-90 sm:rotate-0" />
-            <FunnelStep label="Applied" count={funnel.applied} total={totalFunnel} color="bg-blue-500" />
-            <ArrowRight className="h-4 w-4 text-text-muted shrink-0 rotate-90 sm:rotate-0" />
-            <FunnelStep label="Interview" count={funnel.interviewing} total={totalFunnel} color="bg-purple-500" />
-            <ArrowRight className="h-4 w-4 text-text-muted shrink-0 rotate-90 sm:rotate-0" />
-            <FunnelStep label="Offer" count={funnel.offers} total={totalFunnel} color="bg-green-500" />
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-2">
+            <FunnelStep label="Saved" count={funnel.pending} total={totalFunnel} color="bg-indigo-600" />
+            <ArrowRight className="hidden md:block text-slate-200 px-2 mt-2 h-4 w-4" />
+            <FunnelStep label="Applied" count={funnel.applied} total={totalFunnel} color="bg-indigo-600" />
+            <ArrowRight className="hidden md:block text-slate-200 px-2 mt-2 h-4 w-4" />
+            <FunnelStep label="Interview" count={funnel.interviewing} total={totalFunnel} color="bg-indigo-600" />
+            <ArrowRight className="hidden md:block text-slate-200 px-2 mt-2 h-4 w-4" />
+            <FunnelStep label="Offer" count={funnel.offers} total={totalFunnel} color="bg-indigo-600" />
           </div>
           {funnel.rejected > 0 && (
-            <div className="mt-3 flex items-center gap-2 text-xs text-text-muted">
+            <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
               <XCircle className="h-3.5 w-3.5 text-red-400" />
               {funnel.rejected} rejected ({totalFunnel > 0 ? Math.round((funnel.rejected / totalFunnel) * 100) : 0}%)
             </div>
@@ -146,15 +143,13 @@ export default function AnalyticsPage() {
 
       {/* AI Recommendations */}
       {insights.recommendations.length > 0 && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 sm:p-4 md:p-5">
-          <h2 className="text-lg sm:text-xl font-semibold text-amber-900 mb-3 flex items-center gap-2">
-            <Lightbulb className="h-4 w-4 sm:h-5 sm:w-5" /> AI Recommendations
-          </h2>
+        <div className="bg-amber-50 border border-amber-100 rounded-2xl p-6 mb-6 flex items-start gap-4 shadow-sm">
+          <Lightbulb className="text-amber-600 shrink-0 mt-0.5 h-5 w-5" />
           <ul className="space-y-2">
             {insights.recommendations.map((rec, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-amber-800">
+              <li key={i} className="flex items-start gap-2 text-sm font-medium text-amber-900 leading-relaxed">
                 <CheckCircle className="h-4 w-4 mt-0.5 shrink-0 text-amber-600" />
-                {rec}
+                <span>{rec}</span>
               </li>
             ))}
           </ul>
@@ -208,11 +203,15 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Learning System Status */}
-      <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 sm:p-4">
-        <h3 className="text-sm font-semibold text-blue-900 mb-2">
+      <div className="bg-indigo-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl mt-12">
+        <div className="absolute right-6 top-5 flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-[11px] font-semibold tracking-wide text-indigo-100">Live</span>
+        </div>
+        <h3 className="font-display text-xl font-bold mb-3 flex items-center gap-2">
           AI Learning System Active
         </h3>
-        <p className="text-xs text-blue-800">
+        <p className="text-indigo-100 text-sm leading-relaxed max-w-2xl">
           The system is analyzing your {insights.total_applications} applications to improve job matching.
           Current scoring weights: Skills {Math.round(insights.weight_adjustments.skill_weight * 100)}%,
           Experience {Math.round(insights.weight_adjustments.experience_weight * 100)}%,
@@ -232,22 +231,20 @@ function MetricCard({
   label,
   value,
   subtext,
-  color,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number | string;
   subtext?: string;
-  color: string;
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4">
+    <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 transition-all hover:shadow-md hover:border-indigo-100 group">
       <div className="flex items-center gap-2 mb-2">
         {icon}
-        <span className="text-xs font-medium text-text-muted">{label}</span>
+        <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{label}</span>
       </div>
-      <p className={`text-2xl font-bold text-${color}-600`}>{value}</p>
-      {subtext && <p className="text-xs text-text-muted mt-0.5">{subtext}</p>}
+      <span className="block font-display text-3xl font-bold text-slate-900">{value}</span>
+      {subtext && <p className="text-xs font-medium text-slate-500 mt-1">{subtext}</p>}
     </div>
   );
 }
@@ -265,16 +262,16 @@ function FunnelStep({
 }) {
   const pct = total > 0 ? Math.round((count / total) * 100) : 0;
   return (
-    <div className="flex-1 text-center">
-      <div className="text-lg font-bold text-text">{count}</div>
-      <div className="text-[11px] text-text-muted mb-1">{label}</div>
-      <div className="h-2 w-full rounded-full bg-gray-200">
+    <div className="flex-1 w-full text-center relative">
+      <span className="block font-display text-2xl font-bold text-slate-900">{count}</span>
+      <span className="block text-xs font-semibold text-slate-500 mt-1">{label}</span>
+      <div className="h-2 bg-slate-100 rounded-full mt-4 overflow-hidden">
         <div
           className={`h-2 rounded-full ${color}`}
           style={{ width: `${Math.max(pct, 5)}%` }}
         />
       </div>
-      <div className="text-[10px] text-text-muted mt-0.5">{pct}%</div>
+      <div className="text-[10px] text-slate-400 mt-1">{pct}%</div>
     </div>
   );
 }

@@ -63,6 +63,22 @@ const config: Config = {
         4.5: "1.125rem",
         18: "4.5rem",
       },
+      fontFamily: {
+        sans: [
+          "var(--font-inter)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
+        /** Geometric display — auth & marketing headings */
+        display: [
+          "var(--font-display)",
+          "var(--font-inter)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
+      },
       screens: {
         xs: "480px",
       },

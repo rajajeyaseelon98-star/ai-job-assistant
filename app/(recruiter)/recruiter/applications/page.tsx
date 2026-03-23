@@ -8,6 +8,15 @@ import { STAGE_LABELS, STAGE_COLORS } from "@/types/recruiter";
 const PIPELINE_STAGES: ApplicationStage[] = [
   "applied", "shortlisted", "interview_scheduled", "interviewed", "offer_sent", "hired", "rejected",
 ];
+const STAGE_DOT_COLORS: Record<ApplicationStage, string> = {
+  applied: "bg-blue-500",
+  shortlisted: "bg-indigo-500",
+  interview_scheduled: "bg-amber-500",
+  interviewed: "bg-amber-500",
+  offer_sent: "bg-emerald-500",
+  hired: "bg-emerald-500",
+  rejected: "bg-rose-500",
+};
 
 export default function RecruiterApplicationsPage() {
   const [apps, setApps] = useState<JobApplication[]>([]);
@@ -89,18 +98,22 @@ export default function RecruiterApplicationsPage() {
           <p className="text-sm text-text-muted">No applications yet.</p>
         </div>
       ) : view === "pipeline" ? (
-        <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-4 -mx-1 px-1">
+        <div className="bg-slate-50/50 border border-slate-200 rounded-3xl p-6 min-h-[75vh]">
+          <div className="flex gap-6 overflow-x-auto pb-4 custom-scrollbar">
           {PIPELINE_STAGES.map((stage) => {
             const stageApps = apps.filter((a) => a.stage === stage);
             return (
-              <div key={stage} className="min-w-[180px] sm:min-w-[200px] flex-1">
-                <div className="mb-2 flex items-center gap-2">
-                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STAGE_COLORS[stage]}`}>
-                    {STAGE_LABELS[stage]}
+              <div key={stage} className="flex-1 min-w-[300px] max-w-[350px] flex flex-col">
+                <div className="flex items-center justify-between mb-4 sticky top-0 bg-transparent z-10">
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2 w-2 rounded-full ${STAGE_DOT_COLORS[stage]}`} />
+                    <span className="font-display text-sm font-bold text-slate-700">{STAGE_LABELS[stage]}</span>
+                  </div>
+                  <span className="text-[11px] font-bold text-slate-400 bg-slate-200/50 px-2 py-0.5 rounded-full">
+                    {stageApps.length}
                   </span>
-                  <span className="text-xs text-text-muted">{stageApps.length}</span>
                 </div>
-                <div className="space-y-2 rounded-lg bg-gray-50 p-2 min-h-[100px]">
+                <div className="space-y-2 min-h-[100px]">
                   {stageApps.map((app) => (
                     <AppCard
                       key={app.id}
@@ -115,6 +128,7 @@ export default function RecruiterApplicationsPage() {
               </div>
             );
           })}
+          </div>
         </div>
       ) : (
         <div className="space-y-2">
@@ -157,20 +171,16 @@ function AppCard({
   const job = app.job as Record<string, unknown> | undefined;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+    <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-4 mb-3 hover:border-indigo-300 hover:shadow-md transition-all cursor-grab group">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <h4 className="text-sm font-semibold text-text truncate">
+          <h4 className="font-display text-sm font-bold text-slate-900 group-hover:text-indigo-600 mb-1 truncate">
             {(candidate?.name as string) || (candidate?.email as string) || "Candidate"}
           </h4>
-          <p className="text-xs text-text-muted truncate">{(job?.title as string) || "Job"}</p>
+          <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-3 mb-3">{(job?.title as string) || "Job"}</p>
         </div>
         {app.match_score !== null && (
-          <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${
-            app.match_score >= 80 ? "bg-green-100 text-green-700" :
-            app.match_score >= 60 ? "bg-yellow-100 text-yellow-700" :
-            "bg-red-100 text-red-700"
-          }`}>
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold border border-indigo-100">
             {app.match_score}%
           </span>
         )}
@@ -192,14 +202,14 @@ function AppCard({
       </div>
 
       {app.ai_summary && (
-        <p className="mt-2 text-xs text-text-muted italic">{app.ai_summary}</p>
+        <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-3 mb-3">{app.ai_summary}</p>
       )}
 
       <div className="mt-2 flex items-center gap-2">
         <button
           onClick={() => onScreen(app.id)}
           disabled={screeningId === app.id}
-          className="flex items-center gap-1 rounded bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700 hover:bg-purple-200 active:bg-purple-300 disabled:opacity-50 min-h-[36px] sm:min-h-0"
+          className="w-full bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-700 py-1.5 rounded-lg text-[10px] font-bold transition-all border border-transparent hover:border-indigo-100 flex items-center justify-center gap-1 disabled:opacity-50"
         >
           {screeningId === app.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Brain className="h-3 w-3" />}
           AI Screen

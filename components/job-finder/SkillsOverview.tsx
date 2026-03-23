@@ -9,26 +9,26 @@ interface SkillsOverviewProps {
 
 export function SkillsOverview({ skills }: SkillsOverviewProps) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 shadow-sm">
-      <h3 className="mb-3 sm:mb-4 text-lg sm:text-xl md:text-2xl font-semibold text-text">Extracted Profile</h3>
+    <div className="mb-12 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      <h3 className="mb-6 font-display text-xl font-bold text-slate-900">Extracted Profile</h3>
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Briefcase className="h-4 w-4 text-primary shrink-0" />
-        <span className="text-xs sm:text-sm font-medium text-text">Experience Level:</span>
-        <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary capitalize">
+        <Briefcase className="h-4 w-4 text-slate-400 shrink-0" />
+        <span className="text-sm font-semibold text-slate-700">Experience Level:</span>
+        <span className="inline-block mr-2 mb-2 rounded-md border border-violet-100 bg-violet-50 px-3 py-1 text-xs font-medium capitalize text-violet-700">
           {skills.experience_level || "Unknown"}
         </span>
       </div>
 
       {skills.preferred_roles.length > 0 && (
         <div className="mb-3">
-          <div className="mb-1 flex items-center gap-2">
-            <Briefcase className="h-4 w-4 text-blue-500" />
-            <span className="text-xs sm:text-sm font-medium text-text">Best-fit Roles</span>
+          <div className="mb-3 flex items-center gap-2">
+            <Briefcase className="h-4 w-4 text-slate-400" />
+            <span className="text-sm font-semibold text-slate-700">Best-fit Roles</span>
           </div>
           <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {skills.preferred_roles.map((role) => (
-              <span key={role} className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs text-blue-700">
+              <span key={role} className="inline-block mr-2 mb-2 rounded-md border border-violet-100 bg-violet-50 px-3 py-1 text-xs font-medium text-violet-700">
                 {role}
               </span>
             ))}
@@ -38,13 +38,13 @@ export function SkillsOverview({ skills }: SkillsOverviewProps) {
 
       {skills.technical.length > 0 && (
         <div className="mb-3">
-          <div className="mb-1 flex items-center gap-2">
-            <Code className="h-4 w-4 text-green-500" />
-            <span className="text-xs sm:text-sm font-medium text-text">Technical Skills</span>
+          <div className="mb-3 flex items-center gap-2">
+            <Code className="h-4 w-4 text-slate-400" />
+            <span className="text-sm font-semibold text-slate-700">Technical Skills</span>
           </div>
           <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {skills.technical.map((skill) => (
-              <span key={skill} className="rounded-full bg-green-50 px-2.5 py-0.5 text-xs text-green-700">
+              <span key={skill} className="inline-block mr-2 mb-2 rounded-md border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
                 {skill}
               </span>
             ))}
@@ -54,13 +54,13 @@ export function SkillsOverview({ skills }: SkillsOverviewProps) {
 
       {skills.tools.length > 0 && (
         <div className="mb-3">
-          <div className="mb-1 flex items-center gap-2">
-            <Wrench className="h-4 w-4 text-orange-500" />
-            <span className="text-xs sm:text-sm font-medium text-text">Tools & Platforms</span>
+          <div className="mb-3 flex items-center gap-2">
+            <Wrench className="h-4 w-4 text-slate-400" />
+            <span className="text-sm font-semibold text-slate-700">Tools & Platforms</span>
           </div>
           <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {skills.tools.map((tool) => (
-              <span key={tool} className="rounded-full bg-orange-50 px-2.5 py-0.5 text-xs text-orange-700">
+              <span key={tool} className="inline-block mr-2 mb-2 rounded-md border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
                 {tool}
               </span>
             ))}
@@ -70,13 +70,13 @@ export function SkillsOverview({ skills }: SkillsOverviewProps) {
 
       {skills.soft.length > 0 && (
         <div className="mb-3">
-          <div className="mb-1 flex items-center gap-2">
-            <Heart className="h-4 w-4 text-pink-500" />
-            <span className="text-xs sm:text-sm font-medium text-text">Soft Skills</span>
+          <div className="mb-3 flex items-center gap-2">
+            <Heart className="h-4 w-4 text-slate-400" />
+            <span className="text-sm font-semibold text-slate-700">Soft Skills</span>
           </div>
           <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {skills.soft.map((skill) => (
-              <span key={skill} className="rounded-full bg-pink-50 px-2.5 py-0.5 text-xs text-pink-700">
+              <span key={skill} className="inline-block mr-2 mb-2 rounded-md border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
                 {skill}
               </span>
             ))}
@@ -86,13 +86,13 @@ export function SkillsOverview({ skills }: SkillsOverviewProps) {
 
       {skills.industries.length > 0 && (
         <div>
-          <div className="mb-1 flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-purple-500" />
-            <span className="text-xs sm:text-sm font-medium text-text">Industries</span>
+          <div className="mb-3 flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-slate-400" />
+            <span className="text-sm font-semibold text-slate-700">Industries</span>
           </div>
           <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {skills.industries.map((ind) => (
-              <span key={ind} className="rounded-full bg-purple-50 px-2.5 py-0.5 text-xs text-purple-700">
+              <span key={ind} className="inline-block mr-2 mb-2 rounded-md border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
                 {ind}
               </span>
             ))}

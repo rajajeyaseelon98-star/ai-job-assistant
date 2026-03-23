@@ -38,30 +38,34 @@ export default function InterviewPrepPage() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 md:space-y-8">
-      <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Interview Preparation</h1>
-      <p className="text-sm sm:text-base text-text-muted">
+    <div className="max-w-4xl mx-auto w-full py-8 space-y-4 sm:space-y-6 md:space-y-8">
+      <h1 className="font-display text-3xl font-bold text-slate-900 tracking-tight mb-2">
+        Interview Preparation
+      </h1>
+      <p className="text-slate-500 text-base mb-8">
         Enter a job role to get technical and behavioral questions with brief answers.
       </p>
 
-      <section className="rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 shadow-sm">
-        <h2 className="mb-4 text-lg sm:text-xl font-semibold text-text">Select role & experience</h2>
+      <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 sm:p-8 mb-10">
+        <h2 className="font-display text-xl font-bold text-slate-900 mb-6">
+          Select role & experience
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-medium text-text">Job role</label>
+              <label className="text-sm font-semibold text-slate-700 mb-2 block">Job role</label>
               <input
                 type="text"
-                className="mt-1 w-full min-h-[44px] rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm text-text"
+                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none appearance-none"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 placeholder="React Developer"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-text">Experience level</label>
+              <label className="text-sm font-semibold text-slate-700 mb-2 block">Experience level</label>
               <select
-                className="mt-1 w-full min-h-[44px] rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm text-text"
+                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none appearance-none"
                 value={experienceLevel}
                 onChange={(e) => setExperienceLevel(e.target.value)}
               >
@@ -74,7 +78,7 @@ export default function InterviewPrepPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full sm:w-auto min-h-[44px] rounded-lg bg-primary px-4 py-2 font-medium text-white hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 rounded-xl px-8 py-3.5 font-medium transition-all w-full sm:w-auto inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Generating…" : "Generate questions"}
           </button>
@@ -85,7 +89,6 @@ export default function InterviewPrepPage() {
 
       {data && (
         <section>
-          <h2 className="mb-4 text-lg sm:text-xl font-semibold text-text">Questions</h2>
           <InterviewQuestions data={data} />
         </section>
       )}

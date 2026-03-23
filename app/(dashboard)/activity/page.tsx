@@ -97,17 +97,17 @@ export default function ActivityFeedPage() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="max-w-5xl mx-auto w-full py-8 space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Activity Feed</h1>
-        <p className="text-sm sm:text-base text-text-muted">
+        <h1 className="font-display text-3xl font-bold text-slate-900 tracking-tight">Activity Feed</h1>
+        <p className="text-slate-500 text-base mt-2">
           Track your journey and see community milestones
         </p>
       </div>
 
       {/* Platform Stats (Social Proof) */}
       {stats && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
           {[
             { label: "Users", value: stats.total_users.toLocaleString(), icon: Users },
             { label: "Applications", value: stats.total_applications.toLocaleString(), icon: Send },
@@ -118,34 +118,36 @@ export default function ActivityFeedPage() {
           ].map((stat) => (
             <div
               key={stat.label}
-              className="rounded-xl border border-gray-200 bg-card p-3 text-center"
+              className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 text-center transition-all hover:shadow-md hover:border-indigo-100 group"
             >
-              <stat.icon className="mx-auto mb-1 h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              <div className="text-base sm:text-lg font-bold text-text">{stat.value}</div>
-              <div className="text-xs text-text-muted truncate">{stat.label}</div>
+              <div className="mb-2 flex justify-center text-slate-400 group-hover:text-indigo-600 transition-colors">
+                <stat.icon className="w-5 h-5" />
+              </div>
+              <span className="block font-display text-2xl font-bold text-slate-900">{stat.value}</span>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1 truncate">{stat.label}</div>
             </div>
           ))}
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-gray-200 overflow-x-auto">
+      <div className="border-b border-slate-200 mb-8 flex gap-8">
         <button
           onClick={() => setTab("my")}
-          className={`min-h-[44px] px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+          className={`text-sm whitespace-nowrap ${
             tab === "my"
-              ? "border-b-2 border-primary text-primary"
-              : "text-text-muted hover:text-text"
+              ? "text-indigo-600 border-b-2 border-indigo-600 pb-4 text-sm font-semibold"
+              : "text-slate-500 hover:text-slate-700 pb-4 text-sm font-medium transition-colors"
           }`}
         >
           My Activity
         </button>
         <button
           onClick={() => setTab("public")}
-          className={`min-h-[44px] px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+          className={`text-sm whitespace-nowrap ${
             tab === "public"
-              ? "border-b-2 border-primary text-primary"
-              : "text-text-muted hover:text-text"
+              ? "text-indigo-600 border-b-2 border-indigo-600 pb-4 text-sm font-semibold"
+              : "text-slate-500 hover:text-slate-700 pb-4 text-sm font-medium transition-colors"
           }`}
         >
           Community
@@ -158,37 +160,54 @@ export default function ActivityFeedPage() {
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       ) : activities.length === 0 ? (
-        <div className="rounded-xl border border-gray-200 bg-card p-8 text-center">
-          <Activity className="mx-auto mb-3 h-10 w-10 text-text-muted" />
-          <h3 className="font-medium text-text">No activity yet</h3>
-          <p className="mt-1 text-sm text-text-muted">
+        <div className="bg-white border border-slate-200 shadow-sm rounded-3xl overflow-hidden">
+          <div className="py-20 px-6 text-center max-w-lg mx-auto">
+            <div className="w-16 h-16 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+              <Activity className="h-7 w-7" />
+            </div>
+            <h3 className="font-display text-xl font-bold text-slate-900 mb-2">No activity yet</h3>
+            <p className="text-slate-500 text-sm leading-relaxed mb-6">
             {tab === "my"
               ? "Start applying to jobs, improving your resume, or setting up smart auto-apply to see your activity here."
               : "Community milestones will appear here as users reach achievements."}
-          </p>
+            </p>
+            {tab === "my" && (
+              <p className="text-sm text-slate-500">
+                Start with{" "}
+                <a href="/auto-apply" className="text-indigo-600 font-semibold hover:underline">
+                  AI Auto-Apply
+                </a>{" "}
+                or{" "}
+                <a href="/resume-analyzer" className="text-indigo-600 font-semibold hover:underline">
+                  Resume Analyzer
+                </a>
+                .
+              </p>
+            )}
+          </div>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="bg-white border border-slate-200 shadow-sm rounded-3xl overflow-hidden">
           {activities.map((item) => {
             const Icon = ACTIVITY_ICONS[item.activity_type] || Activity;
-            const color = ACTIVITY_COLORS[item.activity_type] || "text-gray-600 bg-gray-100";
+            const color = ACTIVITY_COLORS[item.activity_type] || "text-slate-500 bg-slate-100";
 
             return (
               <div
                 key={item.id}
-                className="flex items-start gap-3 sm:gap-4 rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5"
+                className="flex gap-4 p-5 border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors"
               >
-                <div className={`flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full ${color}`}>
-                  <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${color}`}>
+                  <Icon className="h-4 w-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm sm:text-base font-medium text-text truncate">{item.title}</h3>
-                  {item.description && (
-                    <p className="mt-0.5 text-xs sm:text-sm text-text-muted line-clamp-2">{item.description}</p>
-                  )}
-                  <span className="mt-1 text-xs text-text-muted">
+                  <h3 className="text-sm font-semibold text-slate-900">{item.title}</h3>
+                  <span className="text-xs text-slate-400 mt-1 block">
                     {timeAgo(item.created_at)}
                   </span>
+                  {item.description && (
+                    <p className="mt-2 text-xs text-slate-500 bg-white border border-slate-100 p-2 rounded-lg">{item.description}</p>
+                  )}
                 </div>
                 {item.is_public && tab === "my" && (
                   <span className="shrink-0 rounded bg-green-100 px-2 py-0.5 text-xs text-green-700">

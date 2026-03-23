@@ -59,9 +59,9 @@ function JobMatchContent() {
   }, [matchId]);
 
   return (
-    <div className="space-y-4 sm:space-y-6 md:space-y-8">
-      <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Job Match</h1>
-      <p className="text-sm sm:text-base text-text-muted">
+    <div className="mx-auto w-full max-w-3xl space-y-4 py-8 sm:space-y-6 md:space-y-8">
+      <h1 className="mb-2 font-display text-3xl font-bold tracking-tight text-slate-900">Job Match</h1>
+      <p className="mb-8 text-base leading-relaxed text-slate-500">
         <strong className="text-text">Job Match</strong> scores your fit and lists gaps — it does{" "}
         <strong>not</strong> rewrite your resume. For a full rewrite for this job, use{" "}
         <span className="font-medium text-text">Resume Tailoring</span> after you see your score.
@@ -71,7 +71,7 @@ function JobMatchContent() {
       )}
       {pastLoading && <p className="text-sm text-text-muted">Loading past match…</p>}
 
-      <section className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 lg:p-6 shadow-sm">
+      <section className="mb-12 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
         <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Paste job description</h2>
         <JobMatchForm
           defaultResumeText={formDefaults.resumeText}
@@ -102,7 +102,7 @@ function JobMatchContent() {
 
 export default function JobMatchPage() {
   return (
-    <Suspense fallback={<div className="space-y-4 sm:space-y-6"><h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Job Match</h1><p className="text-text-muted">Loading…</p></div>}>
+    <Suspense fallback={<div className="mx-auto w-full max-w-3xl space-y-4 py-8 sm:space-y-6"><h1 className="font-display text-3xl font-bold tracking-tight text-slate-900">Job Match</h1><p className="text-slate-500">Loading…</p></div>}>
       <JobMatchContent />
     </Suspense>
   );

@@ -9,30 +9,41 @@ export default function ImportLinkedInPage() {
   const [result, setResult] = useState<ImprovedResumeContent | null>(null);
 
   return (
-    <div className="space-y-4 sm:space-y-6 md:space-y-8">
+    <div className="max-w-3xl mx-auto w-full py-8 space-y-4 sm:space-y-6 md:space-y-8">
       <div>
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">LinkedIn Import</h1>
-        <p className="mt-1 text-xs sm:text-sm text-text-muted">
+        <h1 className="font-display text-3xl font-bold text-slate-900 tracking-tight mb-2">
+          LinkedIn Import
+        </h1>
+        <p className="text-slate-500 text-base mb-8 leading-relaxed">
           Import your LinkedIn profile to automatically generate a professional, ATS-optimized resume.
         </p>
-        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-900">
+        <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 mb-8 flex items-center gap-3 shadow-sm text-sm text-amber-800 font-medium">
           <strong>Optional / Advanced.</strong> Most users should start with{" "}
-          <a href="/resume-builder" className="font-medium underline">
+          <a
+            href="/resume-builder"
+            className="text-indigo-600 underline underline-offset-4 hover:text-indigo-700 font-medium"
+          >
             Quick Resume Builder
           </a>{" "}
           or{" "}
-          <a href="/resume-analyzer" className="font-medium underline">
+          <a
+            href="/resume-analyzer"
+            className="text-indigo-600 underline underline-offset-4 hover:text-indigo-700 font-medium"
+          >
             Resume Analyzer
           </a>
           . Complete your profile in{" "}
-          <a href="/settings" className="font-medium underline">
+          <a
+            href="/settings"
+            className="text-indigo-600 underline underline-offset-4 hover:text-indigo-700 font-medium"
+          >
             Settings
           </a>{" "}
           anytime.
         </div>
       </div>
 
-      <section className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-6 shadow-sm">
+      <section>
         <LinkedInImportForm onResult={setResult} />
       </section>
 

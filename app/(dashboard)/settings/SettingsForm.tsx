@@ -71,27 +71,31 @@ export function SettingsForm({
 
   return (
     <>
-      <section className="rounded-xl border border-gray-200 bg-card p-4 sm:p-6 shadow-sm">
-        <h2 className="font-semibold text-text">Profile</h2>
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-text-muted">Name</label>
-            <input
-              type="text"
-              className="mt-1 w-full max-w-md min-h-[44px] rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm text-text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
-            />
+      <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 sm:p-8 mb-8">
+        <h2 className="font-display text-xl font-bold text-slate-900 mb-6 pb-4 border-b border-slate-50">Profile</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="text-sm font-semibold text-slate-700 mb-2 block">Name</label>
+              <input
+                type="text"
+                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none appearance-none"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-slate-700 mb-2 block">Email</label>
+              <div className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full">
+                {email}
+              </div>
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-text-muted">Email</label>
-            <p className="mt-1 text-text">{email}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-text-muted">Experience level</label>
+            <label className="text-sm font-semibold text-slate-700 mb-2 block">Experience level</label>
             <select
-              className="mt-1 w-full max-w-md min-h-[44px] rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm text-text"
+              className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full md:max-w-sm transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none appearance-none"
               value={experienceLevel}
               onChange={(e) => setExperienceLevel(e.target.value)}
             >
@@ -104,41 +108,43 @@ export function SettingsForm({
           <button
             type="submit"
             disabled={saving}
-            className="w-full sm:w-auto min-h-[44px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover active:bg-primary-hover disabled:opacity-50"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 rounded-xl px-6 py-2.5 font-medium transition-all mt-6 disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save"}
           </button>
         </form>
       </section>
 
-      <section className="rounded-xl border border-gray-200 bg-card p-4 sm:p-6 shadow-sm">
-        <h2 className="font-semibold text-text">Career preferences</h2>
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-text-muted">Preferred role</label>
-            <input
-              type="text"
-              className="mt-1 w-full max-w-md min-h-[44px] rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm text-text"
-              value={preferredRole}
-              onChange={(e) => setPreferredRole(e.target.value)}
-              placeholder="e.g. Frontend Developer"
-            />
+      <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 sm:p-8 mb-8">
+        <h2 className="font-display text-xl font-bold text-slate-900 mb-6 pb-4 border-b border-slate-50">Career preferences</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="text-sm font-semibold text-slate-700 mb-2 block">Preferred role</label>
+              <input
+                type="text"
+                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none appearance-none"
+                value={preferredRole}
+                onChange={(e) => setPreferredRole(e.target.value)}
+                placeholder="e.g. Frontend Developer"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-slate-700 mb-2 block">Preferred location</label>
+              <input
+                type="text"
+                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none appearance-none"
+                value={preferredLocation}
+                onChange={(e) => setPreferredLocation(e.target.value)}
+                placeholder="e.g. Remote, Bangalore"
+              />
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-text-muted">Preferred location</label>
+            <label className="text-sm font-semibold text-slate-700 mb-2 block">Salary expectation</label>
             <input
               type="text"
-              className="mt-1 w-full max-w-md min-h-[44px] rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm text-text"
-              value={preferredLocation}
-              onChange={(e) => setPreferredLocation(e.target.value)}
-              placeholder="e.g. Remote, Bangalore"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-text-muted">Salary expectation</label>
-            <input
-              type="text"
-              className="mt-1 w-full max-w-md min-h-[44px] rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm text-text"
+              className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full md:max-w-sm transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none appearance-none"
               value={salaryExpectation}
               onChange={(e) => setSalaryExpectation(e.target.value)}
               placeholder="e.g. 8-12 LPA"
@@ -147,42 +153,45 @@ export function SettingsForm({
           <button
             type="submit"
             disabled={saving}
-            className="w-full sm:w-auto min-h-[44px] rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover active:bg-primary-hover disabled:opacity-50"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 rounded-xl px-6 py-2.5 font-medium transition-all mt-6 disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save preferences"}
           </button>
         </form>
       </section>
 
-      <section className="rounded-xl border border-gray-200 bg-card p-4 sm:p-6 shadow-sm">
-        <h2 className="font-semibold text-text">Advanced</h2>
-        <p className="mt-2 text-sm text-text-muted">
+      <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 sm:p-8 mb-8">
+        <h2 className="font-display text-xl font-bold text-slate-900 mb-6 pb-4 border-b border-slate-50">Advanced</h2>
+        <p className="text-sm text-slate-500">
           Optional tools — not required for the main flow (upload resume → score → apply).
         </p>
-        <ul className="mt-3 space-y-2 text-sm">
+        <ul className="mt-4 space-y-3 text-sm">
           <li>
-            <Link href="/import-linkedin" className="font-medium text-primary hover:underline">
+            <Link href="/import-linkedin" className="text-indigo-600 font-medium hover:underline underline-offset-4 flex items-center gap-2">
               LinkedIn import
             </Link>
-            <span className="text-text-muted"> — generate a draft from profile text or PDF</span>
+            <span className="text-slate-500"> — generate a draft from profile text or PDF</span>
           </li>
           <li>
-            <Link href="/resume-builder" className="font-medium text-primary hover:underline">
+            <Link href="/resume-builder" className="text-indigo-600 font-medium hover:underline underline-offset-4 flex items-center gap-2">
               Quick Resume Builder
             </Link>
-            <span className="text-text-muted"> — guided draft, then open in Resume Analyzer</span>
+            <span className="text-slate-500"> — guided draft, then open in Resume Analyzer</span>
           </li>
         </ul>
       </section>
 
-      <section className="rounded-xl border border-gray-200 bg-card p-4 sm:p-6 shadow-sm">
-        <h2 className="font-semibold text-text">Subscription</h2>
-        <p className="mt-2 text-sm text-text-muted">
-          Current plan: <span className="capitalize font-medium text-text">{planType}</span>
+      <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 sm:p-8 mb-8">
+        <h2 className="font-display text-xl font-bold text-slate-900 mb-6 pb-4 border-b border-slate-50">Subscription</h2>
+        <p className="mt-2 text-sm text-slate-500">
+          Current plan:{" "}
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-wider">
+            {planType}
+          </span>
         </p>
         <Link
           href="/pricing"
-          className="mt-4 inline-block min-h-[44px] leading-[44px] text-sm font-medium text-primary hover:underline"
+          className="text-indigo-600 font-semibold hover:text-indigo-700 text-sm mt-4 block"
         >
           Upgrade or change plan →
         </Link>
@@ -190,16 +199,16 @@ export function SettingsForm({
 
       <DevPlanSwitcher currentPlan={planType as "free" | "pro" | "premium"} />
 
-      <section className="rounded-xl border border-red-200 bg-red-50/50 p-4 sm:p-6 shadow-sm">
-        <h2 className="font-semibold text-red-800">Danger zone</h2>
-        <p className="mt-2 text-sm text-red-700">
+      <section className="bg-rose-50 border border-rose-100 rounded-2xl p-6">
+        <h2 className="text-rose-800 font-bold text-sm mb-1">Danger zone</h2>
+        <p className="text-rose-600 text-xs mb-4">
           Delete your account and all your data. This cannot be undone.
         </p>
         <button
           type="button"
           onClick={handleDeleteAccount}
           disabled={deleting}
-          className="mt-4 w-full sm:w-auto min-h-[44px] rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 active:bg-red-100 disabled:opacity-50"
+          className="bg-white border border-rose-200 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl px-6 py-2.5 font-medium transition-all disabled:opacity-50"
         >
           {deleting ? "Deleting…" : "Delete account"}
         </button>

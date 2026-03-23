@@ -11,27 +11,32 @@ export function HistoryResumeSection({ items }: { items: Item[] }) {
     new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
   return (
-    <section className="rounded-xl border border-gray-200 bg-card shadow-sm">
-      <div className="border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4">
-        <h2 className="font-semibold text-text">Resume Analysis</h2>
+    <section className="mb-12">
+      <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
+        <h2 className="font-display text-lg font-bold text-slate-800">Resume Analysis</h2>
       </div>
-      <ul className="divide-y divide-gray-100">
+      <ul className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         {items.length === 0 ? (
-          <li className="px-4 sm:px-6 py-6 text-center text-sm text-text-muted">
+          <li className="p-8 text-center text-xs text-slate-400 italic">
             No resume analyses yet.
           </li>
         ) : (
           items.map((a) => (
-            <li key={a.id} className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3 sm:py-4">
-              <span className="text-sm sm:text-base text-text truncate">
-                {dateStr(a.created_at)} – ATS Score {a.score}
-              </span>
-              <Link
-                href={`/resume-analyzer?analysisId=${a.id}`}
-                className="shrink-0 min-h-[44px] flex items-center text-sm font-medium text-primary hover:underline active:text-primary-hover"
-              >
-                View
-              </Link>
+            <li key={a.id} className="flex items-center justify-between p-4 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors group">
+              <div className="flex items-center gap-4">
+                <span className="text-sm font-medium text-slate-600">{dateStr(a.created_at)}</span>
+                <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                  ATS {a.score}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/resume-analyzer?analysisId=${a.id}`}
+                  className="bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-200 shadow-sm rounded-lg px-3 py-1.5 text-xs font-semibold transition-all flex items-center gap-1.5"
+                >
+                  View
+                </Link>
+              </div>
             </li>
           ))
         )}

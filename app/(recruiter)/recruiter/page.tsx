@@ -64,12 +64,12 @@ export default function RecruiterDashboardPage() {
   }, []);
 
   return (
-    <div className="space-y-4 sm:space-y-6 md:space-y-8">
+    <div className="max-w-[1600px] mx-auto w-full py-8 px-6 space-y-4 sm:space-y-6 md:space-y-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <h1 className="text-xl font-bold text-text sm:text-2xl lg:text-3xl">Recruiter Dashboard</h1>
+        <h1 className="font-display text-3xl font-bold text-slate-900 tracking-tight mb-2">Recruiter Dashboard</h1>
         <Link
           href="/recruiter/jobs/new"
-          className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80 min-h-[44px] w-full sm:w-auto"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 rounded-xl px-6 py-2.5 font-medium transition-all flex items-center gap-2 w-full sm:w-auto justify-center"
         >
           <Plus className="h-4 w-4" />
           Post New Job
@@ -77,75 +77,67 @@ export default function RecruiterDashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 md:gap-6">
-        <Link href="/recruiter/jobs" className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-              <Briefcase className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-xs text-text-muted">Active Jobs</p>
-              <p className="text-xl font-bold text-text">{loading ? "..." : stats.activeJobs}</p>
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        <Link href="/recruiter/jobs" className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 transition-all hover:shadow-md">
+          <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center mb-4 text-indigo-600">
+            <Briefcase className="h-5 w-5" />
+          </div>
+          <div>
+            <span className="block font-display text-3xl font-bold text-slate-900">{loading ? "..." : stats.activeJobs}</span>
+            <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-1">Active Jobs</span>
           </div>
         </Link>
 
-        <Link href="/recruiter/applications" className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
-              <ClipboardList className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-xs text-text-muted">Total Applications</p>
-              <p className="text-xl font-bold text-text">{loading ? "..." : stats.totalApplications}</p>
-            </div>
+        <Link href="/recruiter/applications" className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 transition-all hover:shadow-md">
+          <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center mb-4 text-indigo-600">
+            <ClipboardList className="h-5 w-5" />
+          </div>
+          <div>
+            <span className="block font-display text-3xl font-bold text-slate-900">{loading ? "..." : stats.totalApplications}</span>
+            <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-1">Total Applications</span>
           </div>
         </Link>
 
-        <Link href="/recruiter/applications?stage=applied" className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100">
-              <TrendingUp className="h-5 w-5 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-xs text-text-muted">New (Unreviewed)</p>
-              <p className="text-xl font-bold text-text">{loading ? "..." : stats.newApplications}</p>
-            </div>
+        <Link href="/recruiter/applications?stage=applied" className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 transition-all hover:shadow-md">
+          <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center mb-4 text-indigo-600">
+            <TrendingUp className="h-5 w-5" />
+          </div>
+          <div>
+            <span className="block font-display text-3xl font-bold text-slate-900">{loading ? "..." : stats.newApplications}</span>
+            <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-1">New (Unreviewed)</span>
           </div>
         </Link>
 
-        <Link href="/recruiter/messages" className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
-              <MessageSquare className="h-5 w-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-xs text-text-muted">Unread Messages</p>
-              <p className="text-xl font-bold text-text">{loading ? "..." : stats.unreadMessages}</p>
-            </div>
+        <Link href="/recruiter/messages" className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 transition-all hover:shadow-md">
+          <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center mb-4 text-indigo-600">
+            <MessageSquare className="h-5 w-5" />
+          </div>
+          <div>
+            <span className="block font-display text-3xl font-bold text-slate-900">{loading ? "..." : stats.unreadMessages}</span>
+            <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-1">Unread Messages</span>
           </div>
         </Link>
       </div>
 
       {/* Quick Actions */}
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-text">Quick Actions</h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 md:gap-6">
+        <h2 className="font-display text-xl font-bold text-slate-900 mb-6">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
           {[
-            { href: "/recruiter/jobs/new", label: "Post a Job", icon: Briefcase, color: "bg-blue-50 text-blue-600" },
-            { href: "/recruiter/candidates", label: "Search Candidates", icon: Users, color: "bg-green-50 text-green-600" },
-            { href: "/recruiter/applications", label: "Review Applications", icon: ClipboardList, color: "bg-yellow-50 text-yellow-600" },
-            { href: "/recruiter/messages", label: "Messages", icon: MessageSquare, color: "bg-purple-50 text-purple-600" },
+            { href: "/recruiter/jobs/new", label: "Post a Job", icon: Briefcase },
+            { href: "/recruiter/candidates", label: "Search Candidates", icon: Users },
+            { href: "/recruiter/applications", label: "Review Applications", icon: ClipboardList },
+            { href: "/recruiter/messages", label: "Messages", icon: MessageSquare },
           ].map((action) => (
             <Link
               key={action.href}
               href={action.href}
-              className="flex items-center gap-3 rounded-xl border border-gray-200 bg-card p-3 sm:p-4 shadow-sm hover:shadow-md active:shadow-sm transition-shadow min-h-[44px]"
+              className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 hover:border-indigo-300 hover:bg-indigo-50/30 transition-all cursor-pointer group"
             >
-              <div className={`flex h-10 w-10 items-center justify-center rounded-full ${action.color}`}>
+              <div className="w-10 h-10 rounded-lg bg-slate-50 text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors flex items-center justify-center">
                 <action.icon className="h-5 w-5" />
               </div>
-              <span className="text-sm font-medium text-text">{action.label}</span>
+              <span className="font-semibold text-slate-700 text-sm">{action.label}</span>
             </Link>
           ))}
         </div>
@@ -153,7 +145,7 @@ export default function RecruiterDashboardPage() {
 
       {/* Recent Applications */}
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-text">Recent Applications</h2>
+        <h2 className="font-display text-xl font-bold text-slate-900 mb-6">Recent Applications</h2>
         {loading ? (
           <p className="text-sm text-text-muted">Loading...</p>
         ) : recentApps.length === 0 ? (
@@ -161,18 +153,24 @@ export default function RecruiterDashboardPage() {
             <p className="text-sm text-text-muted">No applications yet. Post a job to start receiving applications.</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
             {recentApps.map((app) => (
-              <div key={app.id as string} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-gray-200 bg-card px-3 py-3 sm:px-4">
+              <div key={app.id as string} className="flex items-center justify-between p-4 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-all">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-text truncate">
+                  <p className="font-semibold text-slate-900 text-sm truncate">
                     {String((app.candidate as Record<string, unknown>)?.name || (app.candidate as Record<string, unknown>)?.email || "Candidate")}
                   </p>
-                  <p className="text-xs text-text-muted">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     {String((app.job as Record<string, unknown>)?.title || "Job")} - Score: {String(app.match_score || "N/A")}%
                   </p>
                 </div>
-                <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
+                <span
+                  className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                    String(app.stage).toLowerCase().includes("reject")
+                      ? "bg-rose-100 text-rose-700"
+                      : "bg-blue-100 text-blue-700"
+                  }`}
+                >
                   {app.stage as string}
                 </span>
               </div>

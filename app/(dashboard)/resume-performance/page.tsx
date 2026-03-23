@@ -115,18 +115,18 @@ export default function ResumePerformancePage() {
   const topPct = 100 - benchmark.percentile;
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="max-w-4xl mx-auto w-full py-8 space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Resume Performance</h1>
-          <p className="text-xs sm:text-sm text-text-muted">
+          <h1 className="font-display text-3xl font-bold text-slate-900 tracking-tight">Resume Performance</h1>
+          <p className="text-slate-500 text-base mt-2">
             Track which resume gets the most interviews
           </p>
         </div>
         <button
           onClick={shareBenchmark}
           disabled={sharing}
-          className="w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover active:bg-primary-hover disabled:opacity-50"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 rounded-xl px-5 py-2.5 text-sm font-medium transition-all flex items-center gap-2 w-full sm:w-auto disabled:opacity-50"
         >
           <Share2 className="h-4 w-4" />
           Share Your Rank
@@ -134,31 +134,31 @@ export default function ResumePerformancePage() {
       </div>
 
       {/* Hiring Benchmark */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-        <div className="rounded-xl border border-purple-200 bg-purple-50 p-3 sm:p-4 text-center">
-          <Crown className="mx-auto mb-1 h-5 w-5 text-purple-600" />
-          <div className="text-xl sm:text-2xl font-bold text-purple-700">Top {topPct}%</div>
-          <div className="text-xs text-purple-600">Your Ranking</div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+        <div className="bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 shadow-sm rounded-2xl p-6 text-center relative overflow-hidden">
+          <Crown className="text-indigo-600 mb-3 mx-auto h-5 w-5" />
+          <span className="block font-display text-3xl font-bold text-indigo-900">Top {topPct}%</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 mt-1">Your Ranking</span>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 text-center">
-          <Star className="mx-auto mb-1 h-5 w-5 text-yellow-500" />
-          <div className="text-xl sm:text-2xl font-bold text-text">{benchmark.your_score}</div>
-          <div className="text-xs text-text-muted">Your Score</div>
+        <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center transition-all hover:shadow-md">
+          <Star className="mx-auto mb-1 h-5 w-5 text-amber-500" />
+          <span className="block font-display text-2xl font-bold text-slate-900">{benchmark.your_score}</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Your Score</span>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 text-center">
+        <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center transition-all hover:shadow-md">
           <BarChart3 className="mx-auto mb-1 h-5 w-5 text-blue-500" />
-          <div className="text-xl sm:text-2xl font-bold text-text">{benchmark.avg_score}</div>
-          <div className="text-xs text-text-muted">Average Score</div>
+          <span className="block font-display text-2xl font-bold text-slate-900">{benchmark.avg_score}</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Average Score</span>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 text-center">
-          <Target className="mx-auto mb-1 h-5 w-5 text-green-500" />
-          <div className="text-xl sm:text-2xl font-bold text-text">{performance.optimal_daily_apply_count}</div>
-          <div className="text-xs text-text-muted">Optimal Daily Apps</div>
+        <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center transition-all hover:shadow-md">
+          <Target className="mx-auto mb-1 h-5 w-5 text-emerald-500" />
+          <span className="block font-display text-2xl font-bold text-slate-900">{performance.optimal_daily_apply_count}</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Optimal Daily Apps</span>
         </div>
       </div>
 
       {/* Benchmark insight */}
-      <div className="rounded-lg bg-gray-50 px-4 py-4 sm:px-5 sm:py-5 text-xs sm:text-sm text-text-muted">
+      <div className="text-sm text-slate-500 mb-8 p-4 bg-slate-50 border border-slate-100 rounded-xl text-center italic">
         {benchmark.top_factor}
       </div>
 
@@ -192,64 +192,65 @@ export default function ResumePerformancePage() {
 
       {/* Resume Versions */}
       <div>
-        <h2 className="mb-3 text-base sm:text-lg font-semibold text-text">Resume Version Performance</h2>
+        <h2 className="font-display text-xl font-bold text-slate-900 mb-6">Resume Version Performance</h2>
         {performance.resume_versions.length === 0 ? (
           <p className="text-sm text-text-muted">No resume versions to compare yet.</p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {performance.resume_versions.map((v) => {
               const isBest = v.resume_id === performance.best_resume_id;
               return (
                 <div
                   key={v.resume_id}
-                  className={`rounded-xl border p-3 sm:p-4 ${
-                    isBest ? "border-green-300 bg-green-50" : "border-gray-200 bg-card"
-                  }`}
+                  className="bg-white border border-slate-200 shadow-sm rounded-2xl p-5 hover:border-indigo-300 transition-all"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-text-muted" />
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
+                        <FileText className="h-5 w-5" />
+                      </div>
                       <div>
-                        <h3 className="font-medium text-text">
+                        <h3 className="font-display font-bold text-slate-900 text-base">
                           {v.version_label || "Resume"}
                           {isBest && (
-                            <span className="ml-2 rounded bg-green-200 px-2 py-0.5 text-xs text-green-800">
+                            <span className="ml-2 rounded bg-green-100 px-2 py-0.5 text-xs text-green-700 border border-green-200">
                               Best Performer
                             </span>
                           )}
                         </h3>
                         {v.target_role && (
-                          <p className="text-xs text-text-muted">Target: {v.target_role}</p>
+                          <p className="text-xs text-slate-500">Target: {v.target_role}</p>
                         )}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-text">{v.interview_rate}%</div>
-                      <div className="text-xs text-text-muted">Interview Rate</div>
-                    </div>
-                  </div>
 
-                  <div className="mt-3 grid grid-cols-4 gap-2 text-center text-xs">
-                    <div>
-                      <div className="font-bold text-text">{v.total_applications}</div>
-                      <div className="text-text-muted">Applied</div>
+                    <div className="grid grid-cols-4 gap-8 md:gap-12 flex-1">
+                      <div className="text-center md:text-left">
+                        <span className="block font-display text-lg font-bold text-slate-900">{v.total_applications}</span>
+                        <span className="block text-[10px] font-bold uppercase text-slate-400">Applied</span>
+                      </div>
+                      <div className="text-center md:text-left">
+                        <span className="block font-display text-lg font-bold text-slate-900">{v.total_interviews}</span>
+                        <span className="block text-[10px] font-bold uppercase text-slate-400">Interviews</span>
+                      </div>
+                      <div className="text-center md:text-left">
+                        <span className="block font-display text-lg font-bold text-slate-900">{v.total_offers}</span>
+                        <span className="block text-[10px] font-bold uppercase text-slate-400">Offers</span>
+                      </div>
+                      <div className="text-center md:text-left">
+                        <span className="block font-display text-lg font-bold text-slate-900">{v.total_rejections}</span>
+                        <span className="block text-[10px] font-bold uppercase text-slate-400">Rejected</span>
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-bold text-green-600">{v.total_interviews}</div>
-                      <div className="text-text-muted">Interviews</div>
-                    </div>
-                    <div>
-                      <div className="font-bold text-blue-600">{v.total_offers}</div>
-                      <div className="text-text-muted">Offers</div>
-                    </div>
-                    <div>
-                      <div className="font-bold text-red-500">{v.total_rejections}</div>
-                      <div className="text-text-muted">Rejected</div>
+
+                    <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl px-6 py-3 text-center min-w-[120px]">
+                      <span className="block font-display text-2xl font-bold text-indigo-600">{v.interview_rate}%</span>
+                      <span className="text-[10px] font-bold uppercase text-indigo-400">Interview Rate</span>
                     </div>
                   </div>
 
                   {v.best_for_roles.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">
+                    <div className="mt-1 flex flex-wrap gap-1 md:ml-16">
                       {v.best_for_roles.map((role) => (
                         <span key={role} className="rounded bg-primary/10 px-2 py-0.5 text-[10px] text-primary">
                           {role}

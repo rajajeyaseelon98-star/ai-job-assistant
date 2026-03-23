@@ -47,32 +47,37 @@ export function HistoryCoverLetterSection({ items }: { items: Item[] }) {
   }
 
   return (
-    <section className="rounded-xl border border-gray-200 bg-card shadow-sm">
-      <div className="border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4">
-        <h2 className="font-semibold text-text">Cover Letters</h2>
+    <section className="mb-12">
+      <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
+        <h2 className="font-display text-lg font-bold text-slate-800">Cover Letters</h2>
       </div>
-      <ul className="divide-y divide-gray-100">
+      <ul className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         {items.length === 0 ? (
-          <li className="px-4 sm:px-6 py-6 text-center text-sm text-text-muted">
+          <li className="p-8 text-center text-xs text-slate-400 italic">
             No cover letters yet.
           </li>
         ) : (
           items.map((c) => (
-            <li key={c.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-4 sm:px-6 py-3 sm:py-4">
-              <span className="text-sm sm:text-base text-text truncate">
-                {c.company_name || c.job_title || "Cover letter"} – {dateStr(c.created_at)}
-              </span>
-              <div className="flex items-center gap-3 sm:gap-2">
+            <li key={c.id} className="flex items-center justify-between p-4 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors group">
+              <div className="flex items-center gap-4 min-w-0">
+                <span className="text-sm font-medium text-slate-600 truncate">
+                  {c.company_name || c.job_title || "Cover letter"}
+                </span>
+                <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                  {dateStr(c.created_at)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
                 <Link
                   href={`/cover-letter?id=${c.id}`}
-                  className="min-h-[44px] sm:min-h-0 flex items-center text-sm font-medium text-primary hover:underline active:text-primary-hover"
+                  className="bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-200 shadow-sm rounded-lg px-3 py-1.5 text-xs font-semibold transition-all flex items-center gap-1.5"
                 >
                   View
                 </Link>
                 <button
                   type="button"
                   onClick={() => handleDownload(c.id)}
-                  className="min-h-[44px] sm:min-h-0 flex items-center text-sm font-medium text-text-muted hover:text-text active:text-text"
+                  className="bg-slate-50 border border-transparent text-slate-600 hover:bg-slate-100 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all"
                 >
                   Download
                 </button>
@@ -80,7 +85,7 @@ export function HistoryCoverLetterSection({ items }: { items: Item[] }) {
                   type="button"
                   onClick={() => handleDelete(c.id)}
                   disabled={deletingId === c.id}
-                  className="min-h-[44px] sm:min-h-0 flex items-center text-sm font-medium text-red-600 hover:underline active:text-red-700 disabled:opacity-50"
+                  className="text-slate-300 hover:text-rose-500 p-1.5 transition-colors disabled:opacity-50"
                 >
                   Delete
                 </button>

@@ -68,27 +68,27 @@ export function CoverLetterResult({ id, text, onSaved }: CoverLetterResultProps)
   }
 
   return (
-    <div className="space-y-3 sm:space-y-4">
-      <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-text">Your Cover Letter</h3>
-      <div className="flex flex-col sm:flex-row flex-wrap gap-2">
+    <div>
+      <h3 className="font-display text-2xl font-bold text-slate-900 mb-6">Your Cover Letter</h3>
+      <div className="flex flex-wrap items-center gap-2 mb-6 bg-slate-100/50 p-1.5 rounded-xl border border-slate-200/60 inline-flex">
         <button
           type="button"
           onClick={copy}
-          className="w-full sm:w-auto min-h-[44px] rounded-lg border border-gray-300 bg-card px-4 py-2 text-sm sm:text-base font-medium text-text hover:bg-gray-50 active:bg-gray-100 transition-colors"
+          className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 shadow-sm rounded-lg px-4 py-2 text-sm font-medium transition-all flex items-center gap-2"
         >
           {copied ? "Copied!" : "Copy"}
         </button>
         <button
           type="button"
           onClick={downloadTxt}
-          className="w-full sm:w-auto min-h-[44px] rounded-lg border border-gray-300 bg-card px-4 py-2 text-sm sm:text-base font-medium text-text hover:bg-gray-50 active:bg-gray-100 transition-colors"
+          className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 shadow-sm rounded-lg px-4 py-2 text-sm font-medium transition-all flex items-center gap-2"
         >
           Download TXT
         </button>
         <button
           type="button"
           onClick={downloadPdf}
-          className="w-full sm:w-auto min-h-[44px] rounded-lg border border-gray-300 bg-card px-4 py-2 text-sm sm:text-base font-medium text-text hover:bg-gray-50 active:bg-gray-100 transition-colors"
+          className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 shadow-sm rounded-lg px-4 py-2 text-sm font-medium transition-all flex items-center gap-2"
         >
           Download PDF
         </button>
@@ -99,14 +99,14 @@ export function CoverLetterResult({ id, text, onSaved }: CoverLetterResultProps)
                 type="button"
                 onClick={saveEdit}
                 disabled={saving}
-                className="w-full sm:w-auto min-h-[44px] rounded-lg bg-primary px-4 py-2 text-sm sm:text-base font-medium text-white hover:bg-primary-hover active:bg-primary/80 disabled:opacity-50 transition-colors"
+                className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 shadow-sm rounded-lg px-4 py-2 text-sm font-medium transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? "Saving..." : "Save"}
               </button>
               <button
                 type="button"
                 onClick={() => { setEditing(false); setContent(text); }}
-                className="w-full sm:w-auto min-h-[44px] rounded-lg border border-gray-300 bg-card px-4 py-2 text-sm sm:text-base font-medium text-text hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 shadow-sm rounded-lg px-4 py-2 text-sm font-medium transition-all flex items-center gap-2"
               >
                 Cancel
               </button>
@@ -115,22 +115,22 @@ export function CoverLetterResult({ id, text, onSaved }: CoverLetterResultProps)
             <button
               type="button"
               onClick={() => { setEditing(true); setContent(displayText); }}
-              className="w-full sm:w-auto min-h-[44px] rounded-lg border border-gray-300 bg-card px-4 py-2 text-sm sm:text-base font-medium text-text hover:bg-gray-50 active:bg-gray-100 transition-colors"
+              className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 shadow-sm rounded-lg px-4 py-2 text-sm font-medium transition-all flex items-center gap-2"
             >
               Edit
             </button>
           )
         )}
       </div>
-      <div ref={printRef}>
+      <div ref={printRef} className="bg-white border border-slate-200 shadow-md rounded-2xl p-8 sm:p-12 prose prose-slate max-w-none text-slate-700 leading-loose">
         {editing ? (
           <textarea
-            className="w-full rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 text-sm sm:text-base leading-relaxed text-text min-h-[300px] sm:min-h-[400px]"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 sm:px-5 sm:py-5 text-sm sm:text-base leading-loose text-slate-700 min-h-[300px] sm:min-h-[400px] resize-y transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
             value={content}
             onChange={(e) => setContent(e.target.value)}
           />
         ) : (
-          <div className="whitespace-pre-wrap rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 text-sm sm:text-base leading-relaxed text-text overflow-x-auto">
+          <div className="whitespace-pre-wrap overflow-x-auto">
             {displayText}
           </div>
         )}

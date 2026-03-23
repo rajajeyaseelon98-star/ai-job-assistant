@@ -70,33 +70,34 @@ export default function TopCandidatesPage() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="max-w-5xl mx-auto w-full py-12 px-6 space-y-8">
       <div>
-        <h1 className="text-xl font-bold text-text sm:text-2xl lg:text-3xl flex items-center gap-2">
-          <Crown className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500" />
-          Top Candidates
-        </h1>
-        <p className="text-sm text-text-muted mt-1">
+        <div className="w-10 h-10 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
+          <Crown className="h-5 w-5" />
+        </div>
+        <h1 className="font-display text-4xl font-extrabold text-slate-900 tracking-tight mb-2">Top Candidates</h1>
+        <p className="text-slate-500 text-lg mb-10 max-w-2xl">
           Discover highest-ranked candidates based on skills, experience, and profile quality
         </p>
       </div>
 
       {/* Skill Filter */}
-      <form onSubmit={handleFilterSearch} className="flex flex-col gap-2 sm:flex-row">
+      <form onSubmit={handleFilterSearch} className="bg-white border border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] p-4 mb-12 flex items-center gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+          <Search className="absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={skillFilter}
             onChange={(e) => setSkillFilter(e.target.value)}
             placeholder="Filter by skills (e.g. React, Python, AWS)"
-            className="w-full rounded-lg border border-gray-200 py-2 pl-10 pr-4 text-base sm:text-sm focus:border-primary focus:outline-none min-h-[44px]"
+            className="flex-1 bg-slate-50 border border-transparent rounded-2xl px-6 py-4 pl-11 focus:bg-white focus:border-indigo-500/20 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none text-slate-900 font-medium w-full"
           />
         </div>
         <button
           type="submit"
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover active:bg-primary/80 min-h-[44px] w-full sm:w-auto"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30 rounded-xl px-8 py-4 font-bold transition-all flex items-center gap-2"
         >
+          <Search className="h-4 w-4" />
           Filter
         </button>
       </form>
@@ -107,34 +108,40 @@ export default function TopCandidatesPage() {
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       ) : candidates.length === 0 ? (
-        <div className="rounded-xl border border-gray-200 bg-card p-6 sm:p-8 text-center">
-          <Crown className="mx-auto mb-3 h-10 w-10 text-text-muted" />
-          <h3 className="font-medium text-text">No candidates found</h3>
-          <p className="mt-1 text-sm text-text-muted">
+        <div className="bg-slate-50/50 border-2 border-dashed border-slate-200 rounded-[40px] py-32 text-center flex flex-col items-center justify-center">
+          <div className="w-24 h-24 bg-white text-slate-100 rounded-[32px] flex items-center justify-center mb-8 shadow-sm relative">
+            <Crown className="text-slate-300 w-10 h-10" />
+          </div>
+          <h3 className="font-display text-2xl font-bold text-slate-900 mb-3">Elite Talent Queue Is Empty</h3>
+          <p className="text-slate-400 text-sm max-w-sm mx-auto leading-relaxed">
             {skillFilter
               ? "No candidates match these skills. Try broader terms."
               : "Top candidates will appear as users create profiles and improve their resumes."}
           </p>
+          <div className="mt-10 px-4 py-2 bg-indigo-50 rounded-full inline-flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 animate-pulse" />
+            <span className="text-indigo-600 text-[10px] font-bold uppercase tracking-widest">AI Ranking in Progress</span>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
           {candidates.map((candidate, index) => (
             <div
               key={candidate.user_id}
-              className={`rounded-xl border bg-card p-3 sm:p-4 transition-shadow hover:shadow-md ${
-                candidate.is_boosted ? "border-yellow-300 bg-yellow-50/30" : "border-gray-200"
+              className={`bg-white border border-slate-200 rounded-2xl p-6 mb-4 flex items-center justify-between hover:border-indigo-300 hover:shadow-lg transition-all ${
+                candidate.is_boosted ? "border-amber-300 bg-amber-50/30" : "border-slate-200"
               }`}
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
                 {/* Rank */}
                 <div className="flex items-center gap-3 sm:block">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-primary">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-lg font-bold text-indigo-600">
                     {index + 1}
                   </div>
                   {/* Mobile-only: Name inline with rank */}
                   <div className="sm:hidden min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-text truncate">{candidate.name}</h3>
+                      <h3 className="font-semibold text-slate-900 truncate">{candidate.name}</h3>
                       {candidate.is_boosted && (
                         <span className="flex items-center gap-0.5 shrink-0 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
                           <Zap className="h-3 w-3" /> Boosted
@@ -142,7 +149,7 @@ export default function TopCandidatesPage() {
                       )}
                     </div>
                     {candidate.headline && (
-                      <p className="text-sm text-text-muted truncate">{candidate.headline}</p>
+                      <p className="text-sm text-slate-500 truncate">{candidate.headline}</p>
                     )}
                   </div>
                 </div>
@@ -150,7 +157,7 @@ export default function TopCandidatesPage() {
                 {/* Info - desktop */}
                 <div className="hidden sm:block flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-text">{candidate.name}</h3>
+                    <h3 className="font-semibold text-slate-900">{candidate.name}</h3>
                     {candidate.is_boosted && (
                       <span className="flex items-center gap-0.5 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
                         <Zap className="h-3 w-3" /> Boosted
@@ -158,13 +165,13 @@ export default function TopCandidatesPage() {
                     )}
                   </div>
                   {candidate.headline && (
-                    <p className="text-sm text-text-muted">{candidate.headline}</p>
+                    <p className="text-sm text-slate-500">{candidate.headline}</p>
                   )}
                   <div className="mt-2 flex flex-wrap gap-1">
                     {candidate.top_skills.map((skill) => (
                       <span
                         key={skill}
-                        className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+                        className="rounded-full bg-indigo-50 border border-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700"
                       >
                         {skill}
                       </span>
@@ -177,7 +184,7 @@ export default function TopCandidatesPage() {
                   {candidate.top_skills.map((skill) => (
                     <span
                       key={skill}
-                      className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+                      className="rounded-full bg-indigo-50 border border-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700"
                     >
                       {skill}
                     </span>
@@ -189,13 +196,13 @@ export default function TopCandidatesPage() {
                   <div className="flex items-center gap-3 sm:gap-2">
                     {candidate.ats_score && (
                       <div className="text-center">
-                        <div className="text-xs text-text-muted">ATS</div>
-                        <div className="font-bold text-text">{candidate.ats_score}%</div>
+                        <div className="text-xs text-slate-500">ATS</div>
+                        <div className="font-bold text-slate-900">{candidate.ats_score}%</div>
                       </div>
                     )}
                     <div className="text-center">
-                      <div className="text-xs text-text-muted">Rank</div>
-                      <div className="flex items-center gap-0.5 font-bold text-primary">
+                      <div className="text-xs text-slate-500">Rank</div>
+                      <div className="flex items-center gap-0.5 font-bold text-indigo-600">
                         <Star className="h-3 w-3" />
                         {candidate.rank_score.toFixed(0)}
                       </div>
@@ -205,14 +212,14 @@ export default function TopCandidatesPage() {
                   <div className="flex gap-1">
                     <a
                       href={`/recruiter/candidates/${candidate.user_id}`}
-                      className="rounded-lg border border-gray-200 p-2 sm:px-2 sm:py-1 text-xs text-text-muted hover:bg-gray-50 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
+                      className="rounded-xl border border-slate-200 p-2 sm:px-2 sm:py-1 text-xs text-slate-500 hover:bg-slate-50 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
                     >
                       <ArrowUpRight className="h-4 w-4 sm:h-3 sm:w-3" />
                     </a>
                     <button
                       onClick={() => handlePush(candidate.user_id, candidate.name)}
                       disabled={pushing === candidate.user_id}
-                      className="flex items-center gap-1 rounded-lg bg-primary px-3 py-2 sm:py-1 text-xs font-medium text-white hover:bg-primary-hover active:bg-primary/80 disabled:opacity-50 min-h-[44px] sm:min-h-0"
+                      className="flex items-center gap-1 rounded-xl bg-indigo-600 px-3 py-2 sm:py-1 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50 min-h-[44px] sm:min-h-0"
                     >
                       <Send className="h-3 w-3" />
                       {pushing === candidate.user_id ? "..." : "Reach Out"}

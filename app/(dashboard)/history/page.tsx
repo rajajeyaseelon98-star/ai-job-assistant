@@ -42,9 +42,9 @@ export default async function HistoryPage() {
     .limit(50);
 
   return (
-    <div className="space-y-4 sm:space-y-6 md:space-y-8">
-      <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">History</h1>
-      <p className="text-xs sm:text-sm text-text-muted">
+    <div className="max-w-4xl mx-auto w-full py-8 space-y-4 sm:space-y-6 md:space-y-8">
+      <h1 className="font-display text-3xl font-bold text-slate-900 tracking-tight">History</h1>
+      <p className="text-slate-500 text-sm mt-2">
         Your resume analyses, job matches, improved resumes, and cover letters.
       </p>
 

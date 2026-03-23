@@ -71,11 +71,11 @@ export function JobMatchForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6">
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
       <div>
-        <label className="block text-sm font-medium text-text mb-1">Resume text</label>
+        <label className="mb-2 block text-sm font-semibold text-slate-700">Resume text</label>
         <textarea
-          className="mt-1 w-full rounded-lg border border-gray-300 p-3 text-base sm:text-sm text-text min-h-[120px] focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          className="w-full min-h-[160px] resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
           rows={6}
           value={resumeText}
           onChange={(e) => setResumeText(e.target.value)}
@@ -83,19 +83,19 @@ export function JobMatchForm({
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-text mb-1">Job title (optional)</label>
+        <label className="mb-2 block text-sm font-semibold text-slate-700">Job title (optional)</label>
         <input
           type="text"
-          className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm text-text min-h-[44px] focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
           value={jobTitle}
           onChange={(e) => setJobTitle(e.target.value)}
           placeholder="e.g. React Developer"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-text mb-1">Job description</label>
+        <label className="mb-2 block text-sm font-semibold text-slate-700">Job description</label>
         <textarea
-          className="mt-1 w-full rounded-lg border border-gray-300 p-3 text-base sm:text-sm text-text min-h-[120px] focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          className="w-full min-h-[160px] resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
           rows={8}
           value={jobDescription}
           onChange={(e) => setJobDescription(e.target.value)}
@@ -106,7 +106,7 @@ export function JobMatchForm({
       <button
         type="submit"
         disabled={loading}
-        className="w-full sm:w-auto min-h-[44px] rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover active:bg-primary/80 disabled:opacity-50"
+        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 font-medium text-white shadow-md shadow-indigo-600/20 transition-all hover:bg-indigo-700 disabled:opacity-50 sm:w-auto"
       >
         {loading ? "Matching…" : "Match resume"}
       </button>

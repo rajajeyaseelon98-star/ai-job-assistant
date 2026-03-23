@@ -14,6 +14,7 @@ import {
   FileText,
   CheckCircle2,
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -226,46 +227,46 @@ export default function JobBoardPage() {
   /* ---------------------------------------------------------------- */
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-4 py-8 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text">Job Board</h1>
-        <p className="mt-1 text-xs sm:text-sm text-text-muted">
+        <h1 className="mb-2 font-display text-3xl font-bold tracking-tight text-slate-900">Job Board</h1>
+        <p className="mb-8 text-base leading-relaxed text-slate-500">
           Browse and apply to open positions from recruiters.
         </p>
       </div>
 
       {/* Filters */}
-      <form onSubmit={handleSearchSubmit} className="space-y-3">
+      <form onSubmit={handleSearchSubmit} className="mb-8 space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row">
           {/* Search */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Search job titles..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full min-h-[44px] rounded-xl border border-gray-200 bg-background py-2.5 pl-10 pr-4 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 pl-10 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
             />
           </div>
 
           {/* Location */}
           <div className="relative sm:w-52">
-            <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+            <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Location..."
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="w-full min-h-[44px] rounded-xl border border-gray-200 bg-background py-2.5 pl-10 pr-4 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 pl-10 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
             />
           </div>
 
           {/* Search button */}
           <button
             type="submit"
-            className="w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-2.5 font-medium text-white shadow-md shadow-indigo-600/20 transition-all hover:bg-indigo-700"
           >
             <Search className="h-4 w-4" />
             Search
@@ -280,7 +281,7 @@ export default function JobBoardPage() {
               setWorkType(e.target.value);
               setPage(1);
             }}
-            className="min-h-[44px] rounded-xl border border-gray-200 bg-background px-3 py-2 text-base sm:text-sm text-text"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 sm:w-auto"
           >
             <option value="">All work types</option>
             {Object.entries(WORK_TYPE_LABELS).map(([val, label]) => (
@@ -296,7 +297,7 @@ export default function JobBoardPage() {
               setEmploymentType(e.target.value);
               setPage(1);
             }}
-            className="min-h-[44px] rounded-xl border border-gray-200 bg-background px-3 py-2 text-base sm:text-sm text-text"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 sm:w-auto"
           >
             <option value="">All employment types</option>
             {Object.entries(EMPLOYMENT_TYPE_LABELS).map(([val, label]) => (
@@ -316,7 +317,7 @@ export default function JobBoardPage() {
                 setEmploymentType("");
                 setPage(1);
               }}
-              className="min-h-[44px] flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-2 text-sm text-text-muted hover:text-text active:bg-gray-100"
+              className="min-h-[44px] flex items-center gap-1 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700"
             >
               <X className="h-3.5 w-3.5" />
               Clear filters
@@ -346,7 +347,7 @@ export default function JobBoardPage() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="flex flex-col gap-4">
           {jobs.map((job) => (
             <button
               key={job.id}
@@ -355,11 +356,11 @@ export default function JobBoardPage() {
                 setSelectedJob(job);
                 setShowApplyForm(false);
               }}
-              className="group relative rounded-xl border border-gray-200 bg-card p-3 sm:p-5 text-left shadow-sm transition-shadow hover:shadow-md active:bg-gray-50"
+              className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 text-left transition-all duration-200 hover:border-indigo-300 hover:shadow-md"
             >
               {/* Applied badge */}
               {appliedJobIds.has(job.id) && (
-                <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
+                <span className="absolute right-6 top-6 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-700">
                   <CheckCircle2 className="h-3 w-3" />
                   Applied
                 </span>
@@ -375,35 +376,37 @@ export default function JobBoardPage() {
                       className="h-6 w-6 rounded object-cover"
                     />
                   ) : (
-                    <Building2 className="h-5 w-5 text-text-muted" />
+                    <Building2 className="h-5 w-5 text-slate-400" />
                   )}
-                  <span className="text-xs font-medium text-text-muted">
+                  <span className="text-xs font-medium text-slate-500">
                     {job.companies.name}
                   </span>
                 </div>
               )}
 
               {/* Title */}
-              <h3 className="text-sm sm:text-base font-semibold text-text group-hover:text-primary truncate">
+              <h3 className="mb-2 truncate font-display text-xl font-bold text-slate-900 transition-colors group-hover:text-indigo-600">
                 {job.title}
               </h3>
 
               {/* Meta row */}
-              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-muted">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 {job.location && (
-                  <span className="flex items-center gap-1">
+                  <span className="inline-flex items-center gap-1.5 rounded-md border border-slate-100 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
                     <MapPin className="h-3.5 w-3.5" />
                     {job.location}
                   </span>
                 )}
                 {job.work_type && (
-                  <span className="flex items-center gap-1">
+                  <span className="inline-flex items-center gap-1.5 rounded-md border border-slate-100 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
                     <Briefcase className="h-3.5 w-3.5" />
                     {WORK_TYPE_LABELS[job.work_type] || job.work_type}
                   </span>
                 )}
                 {job.employment_type && (
-                  <span>{EMPLOYMENT_TYPE_LABELS[job.employment_type] || job.employment_type}</span>
+                  <span className="inline-flex items-center gap-1.5 rounded-md border border-slate-100 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
+                    {EMPLOYMENT_TYPE_LABELS[job.employment_type] || job.employment_type}
+                  </span>
                 )}
               </div>
 
@@ -434,7 +437,7 @@ export default function JobBoardPage() {
               )}
 
               {/* Posted date */}
-              <p className="mt-3 flex items-center gap-1 text-xs text-text-muted">
+              <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
                 <Clock className="h-3 w-3" />
                 {timeAgo(job.created_at)}
               </p>
@@ -473,30 +476,21 @@ export default function JobBoardPage() {
       {/* ============================================================ */}
       {selectedJob && (
         <div
-          className="fixed inset-0 z-50 flex items-start sm:items-start justify-center overflow-y-auto bg-black/50 p-0 sm:p-4 sm:pt-16"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm sm:p-6"
           onClick={() => {
             setSelectedJob(null);
             setShowApplyForm(false);
           }}
         >
           <div
-            className="relative w-full max-w-2xl sm:rounded-2xl border border-gray-200 bg-card p-4 sm:p-6 shadow-xl min-h-screen sm:min-h-0"
+            className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close */}
-            <button
-              onClick={() => {
-                setSelectedJob(null);
-                setShowApplyForm(false);
-              }}
-              className="absolute right-4 top-4 rounded-lg p-1 text-text-muted hover:bg-gray-100 hover:text-text"
-            >
-              <X className="h-5 w-5" />
-            </button>
-
-            {/* Company header */}
-            {selectedJob.companies && (
-              <div className="mb-3 flex items-center gap-2">
+            <div className="sticky top-0 z-10 flex items-start justify-between border-b border-slate-100 bg-white/90 px-8 py-6 backdrop-blur-md">
+              <div>
+                {/* Company header */}
+                {selectedJob.companies && (
+                  <div className="mb-3 flex items-center gap-2">
                 {selectedJob.companies.logo_url ? (
                   <img
                     src={selectedJob.companies.logo_url}
@@ -504,25 +498,36 @@ export default function JobBoardPage() {
                     className="h-8 w-8 rounded object-cover"
                   />
                 ) : (
-                  <Building2 className="h-6 w-6 text-text-muted" />
+                  <Building2 className="h-6 w-6 text-slate-400" />
                 )}
                 <div>
-                  <span className="text-sm font-medium text-text">
+                  <span className="text-sm font-medium text-slate-900">
                     {selectedJob.companies.name}
                   </span>
                   {selectedJob.companies.industry && (
-                    <span className="ml-2 text-xs text-text-muted">
+                    <span className="ml-2 text-xs text-slate-500">
                       {selectedJob.companies.industry}
                     </span>
                   )}
                 </div>
               </div>
-            )}
+                )}
+                <h2 className="mb-2 font-display text-2xl font-bold text-slate-900">{selectedJob.title}</h2>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedJob(null);
+                  setShowApplyForm(false);
+                }}
+                className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
-            <h2 className="text-lg sm:text-xl font-bold text-text">{selectedJob.title}</h2>
-
+              <div className="prose prose-slate prose-headings:font-display prose-headings:font-bold prose-headings:text-slate-900 max-w-none whitespace-pre-wrap overflow-y-auto p-8">
             {/* Meta */}
-            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-text-muted">
+            <div className="mt-0 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-slate-500">
               {selectedJob.location && (
                 <span className="flex items-center gap-1">
                   <MapPin className="h-4 w-4" /> {selectedJob.location}
@@ -546,14 +551,14 @@ export default function JobBoardPage() {
 
             {/* Salary */}
             {formatSalary(selectedJob.salary_min, selectedJob.salary_max, selectedJob.salary_currency) && (
-              <p className="mt-3 text-base font-semibold text-text">
+              <p className="mt-3 text-base font-semibold text-slate-900">
                 {formatSalary(selectedJob.salary_min, selectedJob.salary_max, selectedJob.salary_currency)}
               </p>
             )}
 
             {/* Experience */}
             {(selectedJob.experience_min != null || selectedJob.experience_max != null) && (
-              <p className="mt-1 text-sm text-text-muted">
+              <p className="mt-1 text-sm text-slate-500">
                 Experience:{" "}
                 {selectedJob.experience_min != null && selectedJob.experience_max != null
                   ? `${selectedJob.experience_min}-${selectedJob.experience_max} years`
@@ -566,12 +571,12 @@ export default function JobBoardPage() {
             {/* Skills */}
             {selectedJob.skills_required && selectedJob.skills_required.length > 0 && (
               <div className="mt-4">
-                <h4 className="mb-1.5 text-sm font-medium text-text">Skills</h4>
+                <h4 className="mb-1.5 text-sm font-medium text-slate-900">Skills</h4>
                 <div className="flex flex-wrap gap-1.5">
                   {selectedJob.skills_required.map((skill) => (
                     <span
                       key={skill}
-                      className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
+                      className="rounded-md border border-slate-200 bg-slate-100 px-2.5 py-1 text-sm text-slate-700"
                     >
                       {skill}
                     </span>
@@ -582,41 +587,46 @@ export default function JobBoardPage() {
 
             {/* Description */}
             <div className="mt-4">
-              <h4 className="mb-1 text-sm font-medium text-text">Description</h4>
-              <div className="prose prose-sm max-w-none text-text-muted whitespace-pre-wrap">
-                {selectedJob.description}
-              </div>
+              <h4 className="mb-1 text-sm font-medium text-slate-900">Description</h4>
+              {selectedJob.description ? (
+                <div className="prose prose-slate prose-headings:font-display prose-headings:font-bold prose-headings:text-slate-900 max-w-none whitespace-pre-wrap">
+                  <ReactMarkdown>{selectedJob.description}</ReactMarkdown>
+                </div>
+              ) : null}
             </div>
 
             {/* Requirements */}
             {selectedJob.requirements && (
               <div className="mt-4">
-                <h4 className="mb-1 text-sm font-medium text-text">Requirements</h4>
-                <div className="prose prose-sm max-w-none text-text-muted whitespace-pre-wrap">
-                  {selectedJob.requirements}
-                </div>
+                <h4 className="mb-1 text-sm font-medium text-slate-900">Requirements</h4>
+                {selectedJob.requirements ? (
+                  <div className="prose prose-slate prose-headings:font-display prose-headings:font-bold prose-headings:text-slate-900 max-w-none whitespace-pre-wrap">
+                    <ReactMarkdown>{selectedJob.requirements}</ReactMarkdown>
+                  </div>
+                ) : null}
               </div>
             )}
+            </div>
 
             {/* Action area */}
-            <div className="mt-6 border-t border-gray-200 pt-4">
+            <div className="sticky bottom-0 z-10 flex items-center justify-end border-t border-slate-100 bg-slate-50 px-8 py-5">
               {appliedJobIds.has(selectedJob.id) ? (
-                <div className="flex items-center gap-2 rounded-xl bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
-                  <CheckCircle2 className="h-5 w-5" />
+                <div className="flex w-full items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+                  <CheckCircle2 className="h-5 w-5 shrink-0" />
                   You have already applied to this position.
                 </div>
               ) : !showApplyForm ? (
                 <button
                   onClick={() => setShowApplyForm(true)}
-                  className="w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80"
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-8 py-3 font-medium text-white shadow-md shadow-indigo-500/25 transition-all hover:from-indigo-700 hover:to-violet-700"
                 >
                   <FileText className="h-4 w-4" />
                   Apply Now
                 </button>
               ) : (
                 /* Apply form */
-                <div className="space-y-4">
-                  <h4 className="text-sm font-semibold text-text">Submit your application</h4>
+                <div className="w-full space-y-4">
+                  <h4 className="text-sm font-semibold text-slate-900">Submit your application</h4>
 
                   {/* Resume select */}
                   <div>
@@ -635,7 +645,7 @@ export default function JobBoardPage() {
                       <select
                         value={selectedResume}
                         onChange={(e) => setSelectedResume(e.target.value)}
-                        className="w-full min-h-[44px] rounded-xl border border-gray-200 bg-background px-3 py-2 text-base sm:text-sm text-text"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
                       >
                         <option value="">No resume</option>
                         {resumes.map((r) => (
@@ -658,7 +668,7 @@ export default function JobBoardPage() {
                       rows={5}
                       maxLength={5000}
                       placeholder="Write a brief cover letter..."
-                      className="w-full rounded-xl border border-gray-200 bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
                     />
                   </div>
 
@@ -670,7 +680,7 @@ export default function JobBoardPage() {
                     <button
                       onClick={handleApply}
                       disabled={applying}
-                      className="min-h-[44px] flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80 disabled:opacity-60"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 text-sm font-medium text-white shadow-md shadow-indigo-500/25 transition-all hover:from-indigo-700 hover:to-violet-700 disabled:opacity-60"
                     >
                       {applying ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -682,7 +692,7 @@ export default function JobBoardPage() {
                     <button
                       type="button"
                       onClick={() => setShowApplyForm(false)}
-                      className="min-h-[44px] rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-text-muted hover:text-text active:bg-gray-100"
+                      className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 transition-all hover:bg-slate-50"
                     >
                       Cancel
                     </button>

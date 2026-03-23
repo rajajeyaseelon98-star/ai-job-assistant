@@ -25,19 +25,21 @@ const actions = [
 
 export function ExploreMoreActions() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
       {actions.map((a) => {
         const Icon = a.icon;
         return (
           <Link
             key={a.href}
             href={a.href}
-            className="flex items-center gap-2 sm:gap-3 rounded-xl border border-gray-200 bg-card px-4 py-3 sm:px-5 sm:py-4 shadow-sm transition-shadow hover:shadow-md active:bg-gray-50 min-h-[44px]"
+            className="group flex min-h-[44px] min-w-[44px] cursor-pointer rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition-all hover:-translate-y-px hover:border-indigo-300 hover:shadow-md"
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-text-muted">
-              <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 shrink-0 rounded-lg flex items-center justify-center bg-slate-50 border border-slate-100 text-slate-500 group-hover:bg-indigo-50 group-hover:border-indigo-100 group-hover:text-indigo-600 transition-colors">
+                <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+              </div>
+              <span className="font-display truncate text-sm font-medium text-slate-900 sm:text-base">{a.label}</span>
             </div>
-            <span className="font-medium text-sm sm:text-base text-text truncate">{a.label}</span>
           </Link>
         );
       })}

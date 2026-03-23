@@ -88,10 +88,10 @@ export function JobFinderForm({ onResult }: JobFinderFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6">
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
       {/* File upload */}
       <div>
-        <label className="mb-1 block text-sm font-medium text-text">Upload Resume (PDF/DOCX)</label>
+        <label className="mb-2 block text-sm font-semibold text-slate-700">Upload Resume (PDF/DOCX)</label>
         <input
           ref={fileRef}
           type="file"
@@ -105,7 +105,7 @@ export function JobFinderForm({ onResult }: JobFinderFormProps) {
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="w-full sm:w-auto min-h-[44px] flex items-center justify-center sm:justify-start gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm text-text-muted hover:border-primary hover:text-primary active:bg-gray-50 transition-colors"
+          className="flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600 transition-all hover:border-indigo-500"
         >
           <Upload className="h-4 w-4" />
           Choose file or drag & drop
@@ -114,7 +114,7 @@ export function JobFinderForm({ onResult }: JobFinderFormProps) {
 
       {/* Resume text */}
       <div>
-        <label className="mb-1 block text-sm font-medium text-text">
+        <label className="mb-2 block text-sm font-semibold text-slate-700">
           Or paste your resume text
         </label>
         <textarea
@@ -122,10 +122,10 @@ export function JobFinderForm({ onResult }: JobFinderFormProps) {
           onChange={(e) => setResumeText(e.target.value)}
           rows={6}
           placeholder="Paste your full resume text here..."
-          className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[120px]"
+          className="w-full min-h-[120px] resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
         />
         {resumeText && (
-          <p className="mt-1 text-xs text-text-muted">
+          <p className="mt-2 text-xs text-slate-500">
             {resumeText.length} characters
           </p>
         )}
@@ -133,17 +133,17 @@ export function JobFinderForm({ onResult }: JobFinderFormProps) {
 
       {/* Location */}
       <div>
-        <label className="mb-1 block text-sm font-medium text-text">
+        <label className="mb-2 block text-sm font-semibold text-slate-700">
           Preferred Location (optional)
         </label>
         <div className="relative">
-          <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+          <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="e.g., San Francisco, Remote, New York..."
-            className="w-full rounded-lg border border-gray-300 bg-background py-2 pl-9 pr-3 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[44px]"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-9 pr-4 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
           />
         </div>
       </div>
@@ -162,7 +162,7 @@ export function JobFinderForm({ onResult }: JobFinderFormProps) {
       <button
         type="submit"
         disabled={loading || !resumeText.trim()}
-        className="w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50"
+        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 font-medium text-white shadow-md shadow-indigo-600/20 transition-all hover:bg-indigo-700 disabled:opacity-50 sm:w-auto"
       >
         {loading ? (
           <>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, Linkedin, Loader2, FileText } from "lucide-react";
+import { Upload, Linkedin, Loader2, FileText, Info } from "lucide-react";
 import type { ImprovedResumeContent } from "@/types/analysis";
 
 interface LinkedInImportFormProps {
@@ -80,88 +80,117 @@ export function LinkedInImportForm({ onResult }: LinkedInImportFormProps) {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Instructions */}
-      <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6">
-        <h3 className="mb-2 text-lg sm:text-xl font-semibold text-blue-800">How to get your LinkedIn data</h3>
-        <ol className="space-y-1.5 sm:space-y-1 text-xs sm:text-sm text-blue-700">
-          <li><strong>Option 1:</strong> Go to your LinkedIn profile, select all text (Ctrl+A), and copy-paste it below.</li>
-          <li><strong>Option 2:</strong> On LinkedIn, click &quot;More&quot; on your profile, then &quot;Save to PDF&quot;. Upload the PDF here.</li>
-          <li><strong>Option 3:</strong> Go to LinkedIn Settings &rarr; Data Privacy &rarr; Get a copy of your data. Upload the exported file.</li>
-        </ol>
+    <div>
+      {/* Instruction box */}
+      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 mb-10">
+        <h3 className="font-display text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+          <Info className="h-4 w-4 text-indigo-600" />
+          How to get your data
+        </h3>
+        <div className="space-y-4">
+          <div className="flex gap-3 items-start">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 mt-1 shrink-0">
+              Option 1
+            </span>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Go to your LinkedIn profile, select all text (Ctrl+A), and copy-paste it below.
+            </p>
+          </div>
+          <div className="flex gap-3 items-start">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 mt-1 shrink-0">
+              Option 2
+            </span>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              On LinkedIn, click &quot;More&quot; on your profile, then &quot;Save to PDF&quot;. Upload the PDF here.
+            </p>
+          </div>
+          <div className="flex gap-3 items-start">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 mt-1 shrink-0">
+              Option 3
+            </span>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Go to LinkedIn Settings &rarr; Data Privacy &rarr; Get a copy of your data. Upload the exported file.
+            </p>
+          </div>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6">
-        {/* File upload for LinkedIn PDF */}
-        <div>
-          <label className="mb-1 block text-sm font-medium text-text">Upload LinkedIn PDF</label>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".pdf"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) handleFileUpload(f);
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            className="w-full sm:w-auto min-h-[44px] flex items-center justify-center sm:justify-start gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm text-text-muted hover:border-primary hover:text-primary active:bg-gray-50 transition-colors"
-          >
-            <Upload className="h-4 w-4" />
-            <span>Upload LinkedIn PDF export</span>
-            <FileText className="h-4 w-4 ml-1" />
-          </button>
-        </div>
-
-        {/* Text paste */}
-        <div>
-          <label className="mb-1 block text-sm font-medium text-text">
-            Or paste your LinkedIn profile text
-          </label>
-          <textarea
-            value={profileText}
-            onChange={(e) => setProfileText(e.target.value)}
-            rows={8}
-            placeholder={"Copy everything from your LinkedIn profile page and paste here...\n\nInclude: headline, about, experience, education, skills, certifications, projects, etc."}
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[120px]"
-          />
-          {profileText && (
-            <p className="mt-1 text-xs text-text-muted">{profileText.length} characters</p>
-          )}
-        </div>
-
-        {error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
-        )}
-
-        {step && (
-          <div className="flex items-center gap-2 text-sm text-primary">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            {step}
+      {/* Action card */}
+      <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 sm:p-10 mb-8">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+          {/* File upload for LinkedIn PDF */}
+          <div>
+            <label className="text-sm font-semibold text-slate-700 mb-3 block">
+              Upload LinkedIn PDF
+            </label>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".pdf"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleFileUpload(f);
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm rounded-xl px-4 py-2.5 text-sm font-medium transition-all inline-flex items-center gap-2 mb-8"
+            >
+              <Upload className="h-4 w-4" />
+              <span>Upload LinkedIn PDF export</span>
+              <FileText className="h-4 w-4" />
+            </button>
           </div>
-        )}
 
-        <button
-          type="submit"
-          disabled={loading || !profileText.trim()}
-          className="w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Creating Resume...
-            </>
-          ) : (
-            <>
-              <Linkedin className="h-4 w-4" />
-              Import & Create Resume
-            </>
+          {/* Text paste */}
+          <div>
+            <div className="text-sm font-semibold text-slate-700 mb-3 block pt-4 border-t border-slate-100">
+              Or paste your LinkedIn profile text
+            </div>
+            <textarea
+              value={profileText}
+              onChange={(e) => setProfileText(e.target.value)}
+              rows={8}
+              placeholder={"Copy everything from your LinkedIn profile page and paste here...\n\nInclude: headline, about, experience, education, skills, certifications, projects, etc."}
+              className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none min-h-[200px]"
+            />
+            {profileText && (
+              <p className="mt-1 text-xs text-text-muted">{profileText.length} characters</p>
+            )}
+          </div>
+
+          {error && (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
           )}
-        </button>
-      </form>
+
+          {step && (
+            <div className="flex items-center gap-2 text-sm text-primary">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {step}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading || !profileText.trim()}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 rounded-xl px-8 py-3.5 font-medium transition-all w-full sm:w-auto inline-flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Creating Resume...
+              </>
+            ) : (
+              <>
+                <Linkedin className="h-4 w-4" />
+                Import & Create Resume
+              </>
+            )}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

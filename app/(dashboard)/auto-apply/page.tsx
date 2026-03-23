@@ -86,15 +86,15 @@ export default function AutoApplyPage() {
   const showCompleted = currentRun && currentRun.status === "completed";
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 sm:space-y-6">
+    <div className="mx-auto w-full max-w-3xl space-y-4 py-8 sm:space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-xl sm:text-2xl lg:text-3xl font-bold text-text">
-          <Rocket className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> AI Auto-Apply
+        <h1 className="mb-2 flex items-center gap-3 font-display text-3xl font-bold tracking-tight text-slate-900">
+          <Rocket className="h-6 w-6 text-indigo-600" /> AI Auto-Apply
         </h1>
-        <p className="mt-1 text-xs sm:text-sm text-text-muted">
+        <p className="mb-8 text-base leading-relaxed text-slate-500">
           Upload your resume — we find matches, score them, and you confirm before we apply. Each job shows{" "}
-          <strong className="text-text">Direct apply (our platform)</strong> vs{" "}
-          <strong className="text-text">External apply</strong> (partner / job board link) so you always know.
+          <strong className="text-slate-900">Direct apply (our platform)</strong> vs{" "}
+          <strong className="text-slate-900">External apply</strong> (partner / job board link) so you always know.
         </p>
       </div>
 
@@ -124,11 +124,11 @@ export default function AutoApplyPage() {
 
       {/* Past Runs */}
       {pastRuns.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="flex items-center gap-2 text-base sm:text-lg font-semibold text-text">
-            <History className="h-4 w-4 sm:h-5 sm:w-5" /> Past Runs
+        <div className="mt-8 space-y-3 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <h2 className="mb-4 flex items-center gap-2 px-4 pt-4 font-display text-xl font-bold text-slate-900">
+            <History className="h-4 w-4 sm:h-5 sm:w-5 text-slate-500" /> Past Runs
           </h2>
-          <div className="space-y-2">
+          <div className="divide-y divide-slate-100">
             {pastRuns.slice(0, 10).map((run) => (
               <button
                 key={run.id}
@@ -137,23 +137,25 @@ export default function AutoApplyPage() {
                     .then((r) => (r.ok ? r.json() : null))
                     .then((data) => { if (data) setCurrentRun(data); });
                 }}
-                className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-card px-3 sm:px-4 py-3 text-left hover:bg-gray-50 active:scale-[0.98] min-h-[44px]"
+                className="w-full p-4 text-left transition-colors hover:bg-slate-50"
               >
-                <div>
-                  <p className="text-sm font-medium text-text">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                  <p className="text-sm font-medium text-slate-900">
                     {new Date(run.created_at).toLocaleDateString()} &middot; {run.jobs_matched || 0} matches
                   </p>
-                  <p className="text-xs text-text-muted">
+                  <p className="text-xs text-slate-500">
                     {run.jobs_applied || 0} applied &middot; Status: {run.status}
                   </p>
                 </div>
-                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                  run.status === "completed" ? "bg-green-100 text-green-700" :
-                  run.status === "failed" ? "bg-red-100 text-red-700" :
-                  "bg-blue-100 text-blue-700"
+                <span className={`rounded-md border px-2.5 py-1 text-xs font-medium ${
+                  run.status === "completed" ? "border-emerald-100 bg-emerald-50 text-emerald-700" :
+                  run.status === "failed" ? "border-rose-100 bg-rose-50 text-rose-700" :
+                  "border-blue-100 bg-blue-50 text-blue-700"
                 }`}>
                   {run.status}
                 </span>
+                </div>
               </button>
             ))}
           </div>

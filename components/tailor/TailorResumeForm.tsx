@@ -118,11 +118,13 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
       {/* Resume Input */}
-      <div className="rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 shadow-sm">
-        <h3 className="mb-3 flex items-center gap-2 text-lg sm:text-xl font-semibold text-text">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary shrink-0">1</span>
+      <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <div className="mb-6 flex items-center gap-3">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 text-sm font-bold text-indigo-600">1</span>
+          <h3 className="font-display text-xl font-semibold text-slate-900">
           Your Resume
-        </h3>
+          </h3>
+        </div>
 
         <input
           ref={fileRef}
@@ -137,47 +139,50 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="mb-2 w-full sm:w-auto min-h-[44px] flex items-center justify-center sm:justify-start gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm text-text-muted hover:border-primary hover:text-primary active:bg-gray-50 transition-colors"
+          className="mb-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50"
         >
           <Upload className="h-4 w-4" />
           Upload PDF/DOCX
         </button>
-        <p className="mb-3 text-xs text-text-muted">
+        <p className="mb-3 text-xs text-slate-500">
           If a PDF won’t parse, export as DOCX or paste your text — both work.
         </p>
 
+        <label className="mb-2 block text-sm font-semibold text-slate-700">Resume Text</label>
         <textarea
           value={resumeText}
           onChange={(e) => setResumeText(e.target.value)}
           rows={5}
           placeholder="Or paste your full resume text here..."
-          className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[120px]"
+          className="w-full min-h-[160px] resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
         />
       </div>
 
       {/* Job Details */}
-      <div className="rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 shadow-sm">
-        <h3 className="mb-3 flex items-center gap-2 text-lg sm:text-xl font-semibold text-text">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary shrink-0">2</span>
+      <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <div className="mb-6 flex items-center gap-3">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 text-sm font-bold text-indigo-600">2</span>
+          <h3 className="font-display text-xl font-semibold text-slate-900">
           Target Job
-        </h3>
+          </h3>
+        </div>
 
         <div className="mb-3 sm:mb-4">
-          <label className="mb-1 block text-sm font-medium text-text">Job Title</label>
+          <label className="mb-2 block text-sm font-semibold text-slate-700">Job Title</label>
           <div className="relative">
-            <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+            <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               value={jobTitle}
               onChange={(e) => setJobTitle(e.target.value)}
               placeholder="e.g., Senior Frontend Developer"
-              className="w-full rounded-lg border border-gray-300 bg-background py-2 pl-9 pr-3 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[44px]"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-9 pr-4 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
             />
           </div>
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-text">
+          <label className="mb-2 block text-sm font-semibold text-slate-700">
             Job Description <span className="text-red-500">*</span>
           </label>
           <textarea
@@ -185,7 +190,7 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
             onChange={(e) => setJobDescription(e.target.value)}
             rows={6}
             placeholder="Paste the full job description here. The more detail, the better the tailoring..."
-            className="w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-base sm:text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[120px]"
+            className="w-full min-h-[160px] resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
           />
         </div>
       </div>
@@ -204,7 +209,7 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
       <button
         type="submit"
         disabled={loading || !resumeText.trim() || !jobDescription.trim()}
-        className="w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50"
+        className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-8 py-3.5 font-medium text-white shadow-md shadow-indigo-500/25 transition-all hover:from-indigo-700 hover:to-violet-700 disabled:opacity-50 sm:w-auto"
       >
         {loading ? (
           <>

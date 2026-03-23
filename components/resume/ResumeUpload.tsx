@@ -70,8 +70,8 @@ export function ResumeUpload({ onUploadComplete }: ResumeUploadProps) {
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        className={`rounded-xl border-2 border-dashed px-4 py-8 sm:px-5 sm:py-10 md:px-6 md:py-12 text-center transition-colors ${
-          dragging ? "border-primary bg-primary/5" : "border-gray-200 bg-card"
+        className={`group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-12 text-center shadow-sm transition-all ${
+          dragging ? "border-indigo-500 bg-indigo-50/50" : "border-slate-300 bg-white hover:border-indigo-500 hover:bg-indigo-50/50"
         }`}
       >
         <input
@@ -82,22 +82,23 @@ export function ResumeUpload({ onUploadComplete }: ResumeUploadProps) {
           id="resume-upload"
           disabled={loading}
         />
-        <label htmlFor="resume-upload" className="cursor-pointer block min-h-[44px] flex flex-col items-center justify-center gap-2">
-          {/* Upload icon */}
-          <svg
-            className="h-8 w-8 sm:h-10 sm:w-10 text-text-muted"
+        <label htmlFor="resume-upload" className="block min-h-[44px] cursor-pointer">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 transition-colors group-hover:bg-indigo-100">
+            <svg
+            className="h-8 w-8 text-slate-400 transition-colors group-hover:text-indigo-600"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
             strokeWidth={1.5}
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" />
-          </svg>
+            </svg>
+          </div>
           <div>
-            <p className="text-sm sm:text-base md:text-lg font-medium text-text">
+            <p className="mb-1 text-lg font-medium text-slate-900">
               {loading ? "Uploading..." : "Drag & drop your resume here"}
             </p>
-            <p className="mt-1 text-xs sm:text-sm text-text-muted">or tap to browse -- PDF or DOCX</p>
+            <p className="text-sm text-slate-500">or tap to browse -- PDF or DOCX</p>
           </div>
         </label>
       </div>

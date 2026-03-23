@@ -9,9 +9,9 @@ export function UsageCard({ resume, jobMatch, coverLetter, isPro }: UsageCardPro
   const formatLimit = (n: number) => (n === -1 ? "∞" : n);
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-card px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 shadow-sm">
-      <h3 className="text-sm sm:text-base md:text-lg font-medium text-text-muted">Usage this month</h3>
-      <ul className="mt-3 sm:mt-4 space-y-2 sm:space-y-3 text-sm sm:text-base text-text">
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h3 className="font-display text-base font-semibold text-slate-600">Usage this month</h3>
+      <ul className="mt-4 space-y-2 font-sans text-sm text-slate-800 sm:space-y-3 sm:text-base">
         <li className="flex items-center justify-between gap-2">
           <span className="truncate">Resume analyses</span>
           <span className="shrink-0 font-medium">{resume.used} / {formatLimit(resume.limit)}</span>
@@ -26,7 +26,7 @@ export function UsageCard({ resume, jobMatch, coverLetter, isPro }: UsageCardPro
         </li>
       </ul>
       {!isPro && (
-        <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-text-muted">Free plan limits apply.</p>
+        <p className="mt-4 font-sans text-xs text-slate-500 sm:text-sm">Free plan limits apply.</p>
       )}
     </div>
   );

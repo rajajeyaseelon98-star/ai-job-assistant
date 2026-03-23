@@ -103,12 +103,12 @@ export function AutoApplyResults({ runId, results, status, onComplete }: AutoApp
       </div>
 
       {!confirmed && (
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-gray-200 bg-card p-3 sm:p-4">
+        <div className="sticky bottom-6 z-20 mx-auto mt-8 flex flex-col items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-xl shadow-slate-200/50 backdrop-blur-md sm:flex-row">
           <div className="flex-1">
-            <p className="text-sm font-medium text-text">
+            <p className="text-sm font-medium text-slate-700">
               {selectedCount} job{selectedCount !== 1 ? "s" : ""} selected
             </p>
-            <p className="text-xs text-text-muted">
+            <p className="text-xs text-slate-500">
               Applications will be tracked in your Applications page
             </p>
           </div>
@@ -116,7 +116,7 @@ export function AutoApplyResults({ runId, results, status, onComplete }: AutoApp
             <button
               onClick={handleSaveSelections}
               disabled={saving}
-              className="flex flex-1 sm:flex-none items-center justify-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 min-h-[44px] text-xs font-medium text-text hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50 transition-colors"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition-all hover:bg-slate-50 disabled:opacity-50 sm:flex-none"
             >
               {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
               Save
@@ -124,7 +124,7 @@ export function AutoApplyResults({ runId, results, status, onComplete }: AutoApp
             <button
               onClick={handleConfirmApply}
               disabled={confirming || selectedCount === 0}
-              className="flex flex-1 sm:flex-none items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 min-h-[44px] text-xs font-medium text-white hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 transition-colors"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 text-sm font-medium text-white shadow-md shadow-indigo-500/25 transition-all hover:from-indigo-700 hover:to-violet-700 disabled:opacity-50 sm:flex-none"
             >
               {confirming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
               Apply to {selectedCount} Job{selectedCount !== 1 ? "s" : ""}

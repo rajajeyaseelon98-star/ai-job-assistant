@@ -54,20 +54,20 @@ export function AutoApplyForm({ onStart, loading }: AutoApplyFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5 space-y-4">
-      <h2 className="text-base sm:text-lg font-semibold text-text">Configure Auto-Apply</h2>
+    <form onSubmit={handleSubmit} className="mb-8 space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      <h2 className="font-display text-xl font-semibold text-slate-900">Configure Auto-Apply</h2>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-text">Resume *</label>
+        <label className="mb-2 block text-sm font-semibold text-slate-700">Resume *</label>
         {loadingResumes ? (
-          <p className="text-sm text-text-muted">Loading resumes...</p>
+          <p className="text-sm text-slate-500">Loading resumes...</p>
         ) : resumes.length === 0 ? (
           <p className="text-sm text-red-600">No resumes found. Upload one first.</p>
         ) : (
           <select
             value={resumeId}
             onChange={(e) => setResumeId(e.target.value)}
-            className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
+            className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
           >
             {resumes.map((r) => (
               <option key={r.id} value={r.id}>
@@ -80,45 +80,45 @@ export function AutoApplyForm({ onStart, loading }: AutoApplyFormProps) {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="mb-1 block text-sm font-medium text-text">Preferred Location</label>
+          <label className="mb-2 block text-sm font-semibold text-slate-700">Preferred Location</label>
           <input
             type="text"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="e.g., Remote, Chennai, New York"
-            className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
+            className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-text">Min. Salary (annual)</label>
+          <label className="mb-2 block text-sm font-semibold text-slate-700">Min. Salary (annual)</label>
           <input
             type="number"
             value={minSalary}
             onChange={(e) => setMinSalary(e.target.value)}
             placeholder="e.g., 50000"
-            className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
+            className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
           />
         </div>
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-text">Preferred Roles (comma-separated)</label>
+        <label className="mb-2 block text-sm font-semibold text-slate-700">Preferred Roles (comma-separated)</label>
         <input
           type="text"
           value={roles}
           onChange={(e) => setRoles(e.target.value)}
           placeholder="e.g., Software Engineer, Full Stack Developer"
-          className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
+          className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
         />
-        <p className="mt-1 text-xs text-text-muted">Leave blank to auto-detect from resume</p>
+        <p className="mt-2 text-xs text-slate-500">Leave blank to auto-detect from resume</p>
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-text">Max Jobs to Match</label>
+        <label className="mb-2 block text-sm font-semibold text-slate-700">Max Jobs to Match</label>
         <select
           value={maxResults}
           onChange={(e) => setMaxResults(e.target.value)}
-          className="w-full min-h-[44px] rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-text focus:border-primary focus:outline-none"
+          className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
         >
           <option value="5">5 jobs</option>
           <option value="10">10 jobs</option>
@@ -129,7 +129,7 @@ export function AutoApplyForm({ onStart, loading }: AutoApplyFormProps) {
       <button
         type="submit"
         disabled={loading || !resumeId}
-        className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 min-h-[44px] text-sm font-medium text-white hover:bg-primary/90 active:bg-primary/80 disabled:opacity-50 transition-colors"
+        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 font-medium text-white shadow-md shadow-indigo-600/20 transition-all hover:bg-indigo-700 disabled:opacity-50 sm:w-auto"
       >
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
         {loading ? "Starting..." : "Start Auto-Apply"}

@@ -85,10 +85,10 @@ export default function ApplicationsPage() {
       : null;
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="max-w-[1600px] mx-auto w-full py-8 px-4 sm:px-6 space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-foreground">Application Tracker</h1>
+          <h1 className="font-display text-3xl font-bold text-slate-900 tracking-tight">Application Tracker</h1>
           <p className="mt-1 text-sm sm:text-base text-text-muted">
             Kanban pipeline: Saved → Applied → Interview → Offer (or Rejected). Drag cards between columns on desktop &amp; mobile board view.
           </p>
@@ -106,21 +106,21 @@ export default function ApplicationsPage() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 sm:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
         {[
-          { label: "Total", value: stats.total, color: "text-foreground" },
-          { label: "Saved", value: stats.saved, color: "text-text-muted" },
-          { label: "Applied", value: stats.applied, color: "text-primary" },
-          { label: "Interview", value: stats.interviewing, color: "text-amber-700" },
-          { label: "Offers", value: stats.offers, color: "text-emerald-700" },
-          { label: "Rejected", value: stats.rejected, color: "text-red-700" },
+          { label: "Total", value: stats.total },
+          { label: "Saved", value: stats.saved },
+          { label: "Applied", value: stats.applied },
+          { label: "Interview", value: stats.interviewing },
+          { label: "Offers", value: stats.offers },
+          { label: "Rejected", value: stats.rejected },
         ].map((s) => (
           <div
             key={s.label}
-            className="rounded-xl border border-border bg-card px-4 py-3 shadow-card transition-shadow duration-200 hover:shadow-card-md sm:px-5 sm:py-4"
+            className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 text-center transition-all hover:shadow-md"
           >
-            <p className="text-xs sm:text-sm text-text-muted">{s.label}</p>
-            <p className={`text-xl sm:text-2xl font-bold ${s.color}`}>{s.value}</p>
+            <span className="block font-display text-2xl font-bold text-indigo-600">{s.value}</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">{s.label}</span>
           </div>
         ))}
       </div>
