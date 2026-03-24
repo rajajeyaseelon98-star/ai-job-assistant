@@ -46,16 +46,16 @@ export async function getSalaryIntelligence(
     query = query.ilike("location", `%${location}%`);
   }
 
-  const { data: salaryRows } = await query.limit(100);
+  const [{ data: salaryRows }, { data: jobPostings }] = await Promise.all([
+    query.limit(100),
+    supabase
+      .from("job_postings")
+      .select("title, salary_min, salary_max, location")
+      .ilike("title", `%${jobTitle}%`)
+      .not("salary_min", "is", null)
+      .limit(50),
+  ]);
   const rows = salaryRows || [];
-
-  // Also check job postings for salary data
-  const { data: jobPostings } = await supabase
-    .from("job_postings")
-    .select("title, salary_min, salary_max, location")
-    .ilike("title", `%${jobTitle}%`)
-    .not("salary_min", "is", null)
-    .limit(50);
 
   // Combine data sources
   const allSalaries: number[] = [];

@@ -3,36 +3,30 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Save, ArrowLeftRight } from "lucide-react";
+import { useRecruiterUser, useUpdateUser, useSwitchRole } from "@/hooks/queries/use-recruiter";
 
 export default function RecruiterSettingsPage() {
   const router = useRouter();
+  const { data: userData, isLoading: loading } = useRecruiterUser();
+  const updateMutation = useUpdateUser();
+  const switchMutation = useSwitchRole();
   const [name, setName] = useState("");
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
-    fetch("/api/user")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.name) setName(data.name);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    if (userData && (userData as Record<string, unknown>).name) {
+      setName((userData as Record<string, unknown>).name as string);
+    }
+  }, [userData]);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch("/api/user", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
-      });
-      if (res.ok) {
-        setSuccess("Settings saved!");
-        setTimeout(() => setSuccess(""), 3000);
-      }
+      await updateMutation.mutateAsync({ name });
+      setSuccess("Settings saved!");
+      setTimeout(() => setSuccess(""), 3000);
     } catch {
       // ignore
     } finally {
@@ -41,11 +35,7 @@ export default function RecruiterSettingsPage() {
   }
 
   async function switchToJobSeeker() {
-    await fetch("/api/user/role", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role: "job_seeker" }),
-    });
+    await switchMutation.mutateAsync("job_seeker");
     router.push("/dashboard");
     router.refresh();
   }

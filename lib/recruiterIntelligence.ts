@@ -38,20 +38,19 @@ export async function getRecruiterIntelligence(
 ): Promise<RecruiterIntelligence> {
   const supabase = await createClient();
 
-  // 1. Get all job applications for this recruiter
-  const { data: applications } = await supabase
-    .from("job_applications")
-    .select("id, job_id, stage, match_score, created_at, updated_at, job_postings!inner(id, title, recruiter_id)")
-    .eq("job_postings.recruiter_id", recruiterId);
+  const [{ data: applications }, { count: activeJobs }] = await Promise.all([
+    supabase
+      .from("job_applications")
+      .select("id, job_id, stage, match_score, created_at, updated_at, job_postings!inner(id, title, recruiter_id)")
+      .eq("job_postings.recruiter_id", recruiterId),
+    supabase
+      .from("job_postings")
+      .select("*", { count: "exact", head: true })
+      .eq("recruiter_id", recruiterId)
+      .eq("status", "active"),
+  ]);
 
   const allApps = applications || [];
-
-  // 2. Active jobs
-  const { count: activeJobs } = await supabase
-    .from("job_postings")
-    .select("*", { count: "exact", head: true })
-    .eq("recruiter_id", recruiterId)
-    .eq("status", "active");
 
   // 3. Calculate hiring metrics
   const hires = allApps.filter((a) => a.stage === "hired");

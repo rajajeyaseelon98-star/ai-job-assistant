@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
-import { aiGenerate } from "@/lib/ai";
+import { cachedAiGenerate } from "@/lib/ai";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { validateTextLength } from "@/lib/validation";
 
@@ -93,7 +93,7 @@ Location: ${sanitizedLocation}
 Work Type: ${workTypeVal}`;
 
   try {
-    const raw = await aiGenerate(SALARY_PROMPT, content, { jsonMode: true });
+    const raw = await cachedAiGenerate(SALARY_PROMPT, content, { jsonMode: true });
     let jsonStr = raw.trim();
     const jsonMatch = jsonStr.match(/^```(?:json)?\s*([\s\S]*?)```$/m);
     if (jsonMatch) jsonStr = jsonMatch[1].trim();

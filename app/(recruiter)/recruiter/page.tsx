@@ -1,67 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRecruiterJobs, useRecruiterApplications, useRecruiterMessages } from "@/hooks/queries/use-recruiter";
 import { Briefcase, Users, ClipboardList, MessageSquare, Plus, TrendingUp } from "lucide-react";
 
-interface DashboardStats {
-  activeJobs: number;
-  totalApplications: number;
-  newApplications: number;
-  unreadMessages: number;
-}
-
 export default function RecruiterDashboardPage() {
-  const [stats, setStats] = useState<DashboardStats>({
-    activeJobs: 0,
-    totalApplications: 0,
-    newApplications: 0,
-    unreadMessages: 0,
-  });
-  const [recentApps, setRecentApps] = useState<Record<string, unknown>[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: jobsData, isLoading: jobsLoading } = useRecruiterJobs();
+  const { data: appsData, isLoading: appsLoading } = useRecruiterApplications();
+  const { data: msgsData, isLoading: msgsLoading } = useRecruiterMessages({ unread: true });
+  const loading = jobsLoading || appsLoading || msgsLoading;
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [jobsRes, appsRes, msgsRes] = await Promise.all([
-          fetch("/api/recruiter/jobs"),
-          fetch("/api/recruiter/applications"),
-          fetch("/api/recruiter/messages?unread=true"),
-        ]);
+  const jobsArr = (Array.isArray(jobsData) ? jobsData : []) as Record<string, unknown>[];
+  const appsArr = (Array.isArray(appsData) ? appsData : []) as Record<string, unknown>[];
+  const msgsArr = (Array.isArray(msgsData) ? msgsData : []) as Record<string, unknown>[];
 
-        if (jobsRes.ok) {
-          const jobs = await jobsRes.json();
-          const active = Array.isArray(jobs) ? jobs.filter((j: Record<string, unknown>) => j.status === "active").length : 0;
-          setStats((s) => ({ ...s, activeJobs: active }));
-        }
-
-        if (appsRes.ok) {
-          const apps = await appsRes.json();
-          if (Array.isArray(apps)) {
-            setStats((s) => ({
-              ...s,
-              totalApplications: apps.length,
-              newApplications: apps.filter((a: Record<string, unknown>) => a.stage === "applied").length,
-            }));
-            setRecentApps(apps.slice(0, 5));
-          }
-        }
-
-        if (msgsRes.ok) {
-          const msgs = await msgsRes.json();
-          if (Array.isArray(msgs)) {
-            setStats((s) => ({ ...s, unreadMessages: msgs.length }));
-          }
-        }
-      } catch {
-        // ignore load errors
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
+  const stats = {
+    activeJobs: jobsArr.filter((j) => j.status === "active").length,
+    totalApplications: appsArr.length,
+    newApplications: appsArr.filter((a) => a.stage === "applied").length,
+    unreadMessages: msgsArr.length,
+  };
+  const recentApps = appsArr.slice(0, 5);
 
   return (
     <div className="max-w-[1600px] mx-auto w-full py-8 px-6 space-y-4 sm:space-y-6 md:space-y-8">

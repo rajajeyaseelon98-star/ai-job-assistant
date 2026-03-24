@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useInsights } from "@/hooks/queries/use-analytics";
 import {
   BarChart3,
   TrendingUp,
@@ -43,21 +43,9 @@ interface Funnel {
 }
 
 export default function AnalyticsPage() {
-  const [insights, setInsights] = useState<Insights | null>(null);
-  const [funnel, setFunnel] = useState<Funnel | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/insights")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data) {
-          setInsights(data.insights);
-          setFunnel(data.funnel);
-        }
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, isLoading: loading } = useInsights();
+  const insights = data?.insights ?? null;
+  const funnel = data?.funnel ?? null;
 
   if (loading) {
     return (

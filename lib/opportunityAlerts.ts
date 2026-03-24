@@ -179,14 +179,25 @@ export async function scanOpportunities(userId: string): Promise<number> {
   const supabase = await createClient();
   let alertsCreated = 0;
 
-  // 1. Check for high-match jobs from recent auto-apply runs
-  const { data: recentRuns } = await supabase
-    .from("auto_apply_runs")
-    .select("results")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(3);
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
+  // Fetch recent runs + old pushes in parallel (both only need userId)
+  const [{ data: recentRuns }, { count: oldPushes }] = await Promise.all([
+    supabase
+      .from("auto_apply_runs")
+      .select("results")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(3),
+    supabase
+      .from("recruiter_pushes")
+      .select("*", { count: "exact", head: true })
+      .eq("candidate_id", userId)
+      .eq("read", false)
+      .lt("created_at", yesterday),
+  ]);
+
+  const highMatchJobs: Array<{ title: string; company: string; match_score: number; url?: string; job_id?: string }> = [];
   for (const run of recentRuns || []) {
     const results = (run.results || []) as Array<{
       title: string;
@@ -196,21 +207,18 @@ export async function scanOpportunities(userId: string): Promise<number> {
       url?: string;
     }>;
     for (const r of results) {
-      if (r.match_score >= 85) {
-        await createHighMatchAlert(userId, r.title, r.company, r.match_score, r.url, r.job_id);
-        alertsCreated++;
-      }
+      if (r.match_score >= 85) highMatchJobs.push(r);
     }
   }
 
-  // 2. Check for unresponded recruiter pushes (>24h old)
-  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const { count: oldPushes } = await supabase
-    .from("recruiter_pushes")
-    .select("*", { count: "exact", head: true })
-    .eq("candidate_id", userId)
-    .eq("read", false)
-    .lt("created_at", yesterday);
+  if (highMatchJobs.length > 0) {
+    const alertResults = await Promise.allSettled(
+      highMatchJobs.map((r) =>
+        createHighMatchAlert(userId, r.title, r.company, r.match_score, r.url, r.job_id)
+      )
+    );
+    alertsCreated += alertResults.filter((r) => r.status === "fulfilled").length;
+  }
 
   if (oldPushes && oldPushes > 0) {
     const { count: existingAlert } = await supabase

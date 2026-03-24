@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Bell, Volume2 } from "lucide-react";
 import { createBrowserClient } from "@supabase/ssr";
+import { useNotifications, useMarkAllRead, useMarkRead, notificationKeys } from "@/hooks/queries/use-notifications";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Notification {
   id: string;
@@ -23,60 +25,38 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export function NotificationBell() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
+  const { data: notifications = [] } = useNotifications();
+  const markAllReadMutation = useMarkAllRead();
+  const markReadMutation = useMarkRead();
+  const queryClient = useQueryClient();
+
   const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const fetchNotifications = useCallback(() => {
-    fetch("/api/notifications")
-      .then((r) => (r.ok ? r.json() : []))
-      .then(setNotifications)
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
 
   useEffect(() => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    if (!supabaseUrl || !supabaseKey) {
-      const interval = setInterval(fetchNotifications, 30000);
-      return () => clearInterval(interval);
-    }
+    if (!supabaseUrl || !supabaseKey) return;
 
     const supabase = createBrowserClient(supabaseUrl, supabaseKey);
-
     const channel = supabase
       .channel("notifications-realtime")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-        },
-        (payload) => {
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, (payload) => {
           const newNotif = payload.new as Notification;
-          setNotifications((prev) => [newNotif, ...prev].slice(0, 30));
+          queryClient.setQueryData(notificationKeys.list(), (old: Notification[] | undefined) => 
+              [newNotif, ...(old ?? [])].slice(0, 30)
+          );
           setToast(newNotif.title);
           setTimeout(() => setToast(null), 4000);
-        }
-      )
+      })
       .subscribe();
 
-    const interval = setInterval(fetchNotifications, 60000);
-
-    return () => {
-      supabase.removeChannel(channel);
-      clearInterval(interval);
-    };
-  }, [fetchNotifications]);
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -87,23 +67,11 @@ export function NotificationBell() {
   }, []);
 
   async function markAllRead() {
-    await fetch("/api/notifications", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mark_all_read: true }),
-    });
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    await markAllReadMutation.mutateAsync();
   }
 
   async function markRead(id: string) {
-    await fetch("/api/notifications", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+    await markReadMutation.mutateAsync(id);
   }
 
   return (

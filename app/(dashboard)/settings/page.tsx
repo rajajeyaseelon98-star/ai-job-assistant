@@ -1,23 +1,20 @@
-import { getUser } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import { useUser } from "@/hooks/queries/use-user";
 import { SettingsForm } from "./SettingsForm";
+import { PageLoading } from "@/components/ui/PageLoading";
 
-export default async function SettingsPage() {
-  const user = await getUser();
-  if (!user) redirect("/login");
+export default function SettingsPage() {
+  const { data: user, isLoading, error } = useUser();
 
-  const supabase = await createClient();
-  const { data: profile } = await supabase
-    .from("users")
-    .select("id, email, name, plan_type")
-    .eq("id", user.id)
-    .single();
-  const { data: prefs } = await supabase
-    .from("user_preferences")
-    .select("experience_level, preferred_role, preferred_location, salary_expectation")
-    .eq("user_id", user.id)
-    .single();
+  if (isLoading) return <PageLoading titleWidth="w-32" />;
+  if (error || !user) {
+    return (
+      <div className="max-w-4xl mx-auto w-full py-8">
+        <p className="text-sm text-red-600">Failed to load settings. Please refresh the page.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto w-full py-8 space-y-4 sm:space-y-5 md:space-y-6">
@@ -25,13 +22,13 @@ export default async function SettingsPage() {
       <p className="text-slate-500 text-base mt-2">Manage your profile, preferences, and account settings.</p>
 
       <SettingsForm
-        name={profile?.name ?? ""}
-        email={profile?.email ?? user.email ?? ""}
-        planType={profile?.plan_type ?? "free"}
-        experienceLevel={prefs?.experience_level ?? ""}
-        preferredRole={prefs?.preferred_role ?? ""}
-        preferredLocation={prefs?.preferred_location ?? ""}
-        salaryExpectation={prefs?.salary_expectation ?? ""}
+        name={user.name ?? ""}
+        email={user.email ?? ""}
+        planType={user.plan_type ?? "free"}
+        experienceLevel={user.preferences?.experience_level ?? ""}
+        preferredRole={user.preferences?.preferred_role ?? ""}
+        preferredLocation={user.preferences?.preferred_location ?? ""}
+        salaryExpectation={user.preferences?.salary_expectation ?? ""}
       />
     </div>
   );

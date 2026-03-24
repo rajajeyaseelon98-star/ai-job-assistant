@@ -6,16 +6,18 @@ export async function GET() {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const supabase = await createClient();
-  const { data: profile } = await supabase
-    .from("users")
-    .select("id, email, name, plan_type")
-    .eq("id", user.id)
-    .single();
-  const { data: prefs } = await supabase
-    .from("user_preferences")
-    .select("experience_level, preferred_role, preferred_location, salary_expectation")
-    .eq("user_id", user.id)
-    .single();
+  const [{ data: profile }, { data: prefs }] = await Promise.all([
+    supabase
+      .from("users")
+      .select("id, email, name, plan_type")
+      .eq("id", user.id)
+      .single(),
+    supabase
+      .from("user_preferences")
+      .select("experience_level, preferred_role, preferred_location, salary_expectation")
+      .eq("user_id", user.id)
+      .single(),
+  ]);
   return NextResponse.json({
     ...profile,
     preferences: prefs ?? {
@@ -40,16 +42,15 @@ export async function PATCH(request: Request) {
 
   const supabase = await createClient();
 
-  // Validate and sanitize name
   if (body.name !== undefined) {
     if (typeof body.name !== "string" && body.name !== null) {
       return NextResponse.json({ error: "name must be a string" }, { status: 400 });
     }
-    const name = typeof body.name === "string" ? body.name.trim().slice(0, 100) : null;
-    await supabase.from("users").update({ name }).eq("id", user.id);
   }
+  const name = body.name !== undefined
+    ? (typeof body.name === "string" ? body.name.trim().slice(0, 100) : null)
+    : undefined;
 
-  // Validate and sanitize preferences
   const rawExpLevel = body.experience_level ?? body.experienceLevel;
   const rawRole = body.preferred_role ?? body.preferredRole;
   const rawLocation = body.preferred_location ?? body.preferredLocation;
@@ -62,15 +63,23 @@ export async function PATCH(request: Request) {
     salary_expectation: typeof rawSalary === "string" ? rawSalary.trim().slice(0, 100) : null,
   };
   const hasPrefs = Object.values(prefs).some((v) => v != null && v !== "");
-  if (hasPrefs) {
+
+  if (name !== undefined && hasPrefs) {
+    await Promise.all([
+      supabase.from("users").update({ name }).eq("id", user.id),
+      supabase.from("user_preferences").upsert(
+        { user_id: user.id, ...prefs, updated_at: new Date().toISOString() },
+        { onConflict: "user_id" }
+      ),
+    ]);
+  } else if (name !== undefined) {
+    await supabase.from("users").update({ name }).eq("id", user.id);
+  } else if (hasPrefs) {
     await supabase.from("user_preferences").upsert(
-      {
-        user_id: user.id,
-        ...prefs,
-        updated_at: new Date().toISOString(),
-      },
+      { user_id: user.id, ...prefs, updated_at: new Date().toISOString() },
       { onConflict: "user_id" }
     );
   }
+
   return NextResponse.json({ ok: true });
 }

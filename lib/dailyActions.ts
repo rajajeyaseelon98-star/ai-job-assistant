@@ -88,67 +88,67 @@ async function gatherUserContext(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string
 ): Promise<UserContext> {
-  // Resume info
+  // Step 1: Get resume IDs (needed for analysis query)
   const { data: resumes } = await supabase
     .from("resumes")
     .select("id")
     .eq("user_id", userId)
     .limit(1);
 
-  // resume_analysis has no user_id — filter via user's resume IDs
   const resumeIds = (resumes || []).map((r) => r.id);
-  const { data: analysis } = resumeIds.length > 0
-    ? await supabase
-        .from("resume_analysis")
-        .select("score")
-        .in("resume_id", resumeIds)
-        .order("created_at", { ascending: false })
-        .limit(1)
-    : { data: null };
 
-  // Applications
-  const { count: appCount } = await supabase
-    .from("applications")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId);
+  // Step 2: Run ALL remaining queries in parallel
+  const [
+    analysisResult,
+    { count: appCount },
+    { count: interviewCount },
+    { data: lastRun },
+    { count: matchCount },
+    { count: pushCount },
+    { data: streak },
+  ] = await Promise.all([
+    resumeIds.length > 0
+      ? supabase
+          .from("resume_analysis")
+          .select("score")
+          .in("resume_id", resumeIds)
+          .order("created_at", { ascending: false })
+          .limit(1)
+      : Promise.resolve({ data: null }),
+    supabase
+      .from("applications")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId),
+    supabase
+      .from("applications")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("status", "interviewing"),
+    supabase
+      .from("auto_apply_runs")
+      .select("created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1),
+    supabase
+      .from("job_matches")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .gte("match_score", 70),
+    supabase
+      .from("recruiter_pushes")
+      .select("*", { count: "exact", head: true })
+      .eq("candidate_id", userId)
+      .eq("read", false),
+    supabase
+      .from("user_streaks")
+      .select("current_streak, last_active_date")
+      .eq("user_id", userId)
+      .single(),
+  ]);
 
-  // Pending interviews
-  const { count: interviewCount } = await supabase
-    .from("applications")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("status", "interviewing");
+  const analysis = analysisResult.data;
 
-  // Last auto-apply
-  const { data: lastRun } = await supabase
-    .from("auto_apply_runs")
-    .select("created_at")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(1);
-
-  // Available matches
-  const { count: matchCount } = await supabase
-    .from("job_matches")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .gte("match_score", 70);
-
-  // Unread recruiter pushes
-  const { count: pushCount } = await supabase
-    .from("recruiter_pushes")
-    .select("*", { count: "exact", head: true })
-    .eq("candidate_id", userId)
-    .eq("read", false);
-
-  // Activity streak
-  const { data: streak } = await supabase
-    .from("user_streaks")
-    .select("current_streak, last_active_date")
-    .eq("user_id", userId)
-    .single();
-
-  // Days since last activity
   let daysSince = 0;
   if (streak?.last_active_date) {
     const last = new Date(streak.last_active_date);

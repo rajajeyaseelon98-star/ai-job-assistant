@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { aiGenerate } from "@/lib/ai";
+import { cachedAiGenerate } from "@/lib/ai";
 import { isValidUUID } from "@/lib/validation";
 import { checkRateLimit } from "@/lib/rateLimit";
 
@@ -75,7 +75,7 @@ Work Type: ${job.work_type || "Not specified"}
 Employment Type: ${job.employment_type || "Not specified"}`;
 
   try {
-    const raw = await aiGenerate(OPTIMIZE_PROMPT, content, { jsonMode: true });
+    const raw = await cachedAiGenerate(OPTIMIZE_PROMPT, content, { jsonMode: true });
     let jsonStr = raw.trim();
     const jsonMatch = jsonStr.match(/^```(?:json)?\s*([\s\S]*?)```$/m);
     if (jsonMatch) jsonStr = jsonMatch[1].trim();

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useResumePerformance, useShareBenchmark } from "@/hooks/queries/use-resume-performance";
 import {
   FileText,
   TrendingUp,
@@ -50,43 +51,25 @@ interface ApplySuccessIntelligence {
 }
 
 export default function ResumePerformancePage() {
-  const [data, setData] = useState<{
-    performance: ApplySuccessIntelligence;
-    benchmark: HiringBenchmark;
-  } | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading: loading } = useResumePerformance();
+  const shareMutation = useShareBenchmark();
   const [sharing, setSharing] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/resume-performance")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => setData(d))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
 
   async function shareBenchmark() {
     if (!data) return;
     setSharing(true);
     try {
-      const res = await fetch("/api/share-result", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "hiring_benchmark",
-          data: {
-            percentile: data.benchmark.percentile,
-            your_score: data.benchmark.your_score,
-            top_factor: data.benchmark.top_factor,
-          },
-        }),
+      const result = await shareMutation.mutateAsync({
+        type: "hiring_benchmark",
+        data: {
+          percentile: data.benchmark.percentile,
+          your_score: data.benchmark.your_score,
+          top_factor: data.benchmark.top_factor,
+        },
       });
-      if (res.ok) {
-        const { url } = await res.json();
-        const fullUrl = `${window.location.origin}${url}`;
-        await navigator.clipboard.writeText(fullUrl);
-        alert("Share link copied to clipboard!");
-      }
+      const fullUrl = `${window.location.origin}${result.url}`;
+      await navigator.clipboard.writeText(fullUrl);
+      alert("Share link copied to clipboard!");
     } catch {
       alert("Failed to create share link");
     }

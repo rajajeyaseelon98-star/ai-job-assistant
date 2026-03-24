@@ -1,27 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Zap, Loader2, Clock, TrendingUp, Settings2 } from "lucide-react";
+import { useSmartApplyRules, useResumes, useUsage, useSaveSmartApplyRule, useToggleSmartApplyRule } from "@/hooks/queries/use-smart-apply";
 import type { SmartApplyRule } from "@/types/autoApply";
 import { humanizeSmartApplyError, humanizeNetworkError } from "@/lib/friendlyApiError";
 
-interface Resume {
-  id: string;
-  file_name: string;
-  created_at: string;
-}
-
 export default function SmartApplyPage() {
-  const [rules, setRules] = useState<SmartApplyRule[]>([]);
-  const [resumes, setResumes] = useState<Resume[]>([]);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [usage, setUsage] = useState<{
-    smart_apply: { used: number; limit: number };
-  } | null>(null);
 
   // Form state
   const [resumeId, setResumeId] = useState("");
@@ -34,78 +23,58 @@ export default function SmartApplyPage() {
   const [maxPerDay, setMaxPerDay] = useState(5);
   const [maxPerWeek, setMaxPerWeek] = useState(20);
 
+  const { data: rulesData = [], isLoading: rulesLoading } = useSmartApplyRules();
+  const { data: resumesData = [] } = useResumes();
+  const { data: usageData } = useUsage();
+  const saveMutation = useSaveSmartApplyRule();
+  const toggleMutation = useToggleSmartApplyRule();
+
+  const rules = rulesData;
+  const resumes = resumesData;
+  const loading = rulesLoading;
+  const usage = usageData ?? null;
+
+  const initialized = useRef(false);
   useEffect(() => {
-    Promise.all([
-      fetch("/api/smart-apply").then((r) => (r.ok ? r.json() : [])),
-      fetch("/api/upload-resume").then((r) => (r.ok ? r.json() : [])),
-      fetch("/api/usage").then((r) => (r.ok ? r.json() : null)),
-    ]).then(([rulesData, resumesData, usageData]) => {
-      setRules(rulesData);
-      setResumes(resumesData);
-      if (resumesData.length > 0) setResumeId(resumesData[0].id);
+    if (initialized.current || rules.length === 0) return;
+    initialized.current = true;
+    const r = rules[0];
+    setResumeId(r.resume_id);
+    setMinMatchScore(r.rules.min_match_score || 75);
+    setMinSalary(r.rules.min_salary?.toString() || "");
+    setMaxSalary(r.rules.max_salary?.toString() || "");
+    setRoles(r.rules.preferred_roles?.join(", ") || "");
+    setLocations(r.rules.preferred_locations?.join(", ") || "");
+    setIncludeRemote(r.rules.include_remote !== false);
+    setMaxPerDay(r.rules.max_applications_per_day || 5);
+    setMaxPerWeek(r.rules.max_applications_per_week || 20);
+  }, [rules]);
 
-      // Pre-fill form from existing rule
-      if (usageData?.smart_apply) {
-        setUsage({ smart_apply: usageData.smart_apply });
-      }
-
-      if (rulesData.length > 0) {
-        const r = rulesData[0];
-        setResumeId(r.resume_id);
-        setMinMatchScore(r.rules.min_match_score || 75);
-        setMinSalary(r.rules.min_salary?.toString() || "");
-        setMaxSalary(r.rules.max_salary?.toString() || "");
-        setRoles(r.rules.preferred_roles?.join(", ") || "");
-        setLocations(r.rules.preferred_locations?.join(", ") || "");
-        setIncludeRemote(r.rules.include_remote !== false);
-        setMaxPerDay(r.rules.max_applications_per_day || 5);
-        setMaxPerWeek(r.rules.max_applications_per_week || 20);
-      }
-    }).finally(() => setLoading(false));
-  }, []);
+  useEffect(() => {
+    if (resumes.length > 0 && !resumeId) setResumeId(resumes[0].id);
+  }, [resumes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError("");
     setSuccess("");
-
     try {
-      const res = await fetch("/api/smart-apply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          resume_id: resumeId,
-          enabled: true,
-          min_match_score: minMatchScore,
-          min_salary: minSalary ? Number(minSalary) : undefined,
-          max_salary: maxSalary ? Number(maxSalary) : undefined,
-          preferred_roles: roles.split(",").map((r) => r.trim()).filter(Boolean),
-          preferred_locations: locations.split(",").map((l) => l.trim()).filter(Boolean),
-          include_remote: includeRemote,
-          max_applications_per_day: maxPerDay,
-          max_applications_per_week: maxPerWeek,
-        }),
+      await saveMutation.mutateAsync({
+        resume_id: resumeId,
+        enabled: true,
+        min_match_score: minMatchScore,
+        min_salary: minSalary ? Number(minSalary) : undefined,
+        max_salary: maxSalary ? Number(maxSalary) : undefined,
+        preferred_roles: roles.split(",").map((r) => r.trim()).filter(Boolean),
+        preferred_locations: locations.split(",").map((l) => l.trim()).filter(Boolean),
+        include_remote: includeRemote,
+        max_applications_per_day: maxPerDay,
+        max_applications_per_week: maxPerWeek,
       });
-
-      if (res.ok) {
-        const data = await res.json();
-        setRules((prev) => {
-          const idx = prev.findIndex((r) => r.resume_id === resumeId);
-          if (idx >= 0) {
-            const updated = [...prev];
-            updated[idx] = data;
-            return updated;
-          }
-          return [data, ...prev];
-        });
-        setSuccess("Smart Auto-Apply rules saved and activated!");
-      } else {
-        const data = await res.json().catch(() => ({}));
-        setError(humanizeSmartApplyError(typeof data.error === "string" ? data.error : undefined));
-      }
-    } catch {
-      setError(humanizeNetworkError());
+      setSuccess("Smart Auto-Apply rules saved and activated!");
+    } catch (err) {
+      setError(err instanceof Error ? humanizeSmartApplyError(err.message) : humanizeNetworkError());
     } finally {
       setSaving(false);
     }
@@ -113,16 +82,7 @@ export default function SmartApplyPage() {
 
   async function handleToggle(ruleId: string, enabled: boolean) {
     try {
-      const res = await fetch("/api/smart-apply", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: ruleId, enabled }),
-      });
-      if (res.ok) {
-        setRules((prev) =>
-          prev.map((r) => (r.id === ruleId ? { ...r, enabled } : r))
-        );
-      }
+      await toggleMutation.mutateAsync({ id: ruleId, enabled });
     } catch { /* ignore */ }
   }
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Loader2, Building2, Save } from "lucide-react";
+import { useRecruiterCompany, useSaveCompany } from "@/hooks/queries/use-recruiter";
 
 interface CompanyData {
   id?: string;
@@ -16,67 +17,44 @@ interface CompanyData {
 }
 
 export default function CompanyProfilePage() {
+  const { data: companyData, isLoading: loading } = useRecruiterCompany();
+  const saveMutation = useSaveCompany();
   const [company, setCompany] = useState<CompanyData>({
     name: "", description: "", website: "", industry: "",
     size: "", location: "", culture: "", benefits: "",
   });
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
-    fetch("/api/recruiter/company")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data && !data.error) {
-          setCompany({
-            id: data.id,
-            name: data.name || "",
-            description: data.description || "",
-            website: data.website || "",
-            industry: data.industry || "",
-            size: data.size || "",
-            location: data.location || "",
-            culture: data.culture || "",
-            benefits: data.benefits || "",
-          });
-        }
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    if (companyData && !(companyData as any).error) {
+      const d = companyData as Record<string, unknown>;
+      setCompany({
+        id: d.id as string | undefined,
+        name: (d.name as string) || "",
+        description: (d.description as string) || "",
+        website: (d.website as string) || "",
+        industry: (d.industry as string) || "",
+        size: (d.size as string) || "",
+        location: (d.location as string) || "",
+        culture: (d.culture as string) || "",
+        benefits: (d.benefits as string) || "",
+      });
+    }
+  }, [companyData]);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    if (!company.name.trim()) {
-      setError("Company name is required");
-      return;
-    }
-
+    if (!company.name.trim()) { setError("Company name is required"); return; }
     setSaving(true);
     setError("");
     setSuccess("");
-
     try {
-      const isUpdate = !!company.id;
-      const url = isUpdate ? `/api/recruiter/company/${company.id}` : "/api/recruiter/company";
-      const method = isUpdate ? "PATCH" : "POST";
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(company),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setCompany((prev) => ({ ...prev, id: data.id }));
-        setSuccess("Company profile saved!");
-        setTimeout(() => setSuccess(""), 3000);
-      } else {
-        const data = await res.json();
-        setError(data.error || "Save failed");
-      }
+      const result = await saveMutation.mutateAsync({ ...company });
+      setCompany((prev) => ({ ...prev, id: (result as any).id }));
+      setSuccess("Company profile saved!");
+      setTimeout(() => setSuccess(""), 3000);
     } catch {
       setError("Something went wrong");
     } finally {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { checkAndLogUsage } from "@/lib/usage";
-import { aiGenerate } from "@/lib/ai";
+import { cachedAiGenerate } from "@/lib/ai";
 import { checkRateLimit } from "@/lib/rateLimit";
 import type { InterviewPrepResponse } from "@/types/analysis";
 
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
 
   const userContent = `Job role: ${role.slice(0, 200)}${experienceLevel ? `\nExperience level: ${String(experienceLevel).slice(0, 50)}` : ""}`;
   try {
-    const raw = await aiGenerate(SYSTEM_PROMPT, userContent, { jsonMode: true });
+    const raw = await cachedAiGenerate(SYSTEM_PROMPT, userContent, { jsonMode: true });
     let jsonStr = raw.trim();
     const jsonMatch = jsonStr.match(/^```(?:json)?\s*([\s\S]*?)```$/m);
     if (jsonMatch) jsonStr = jsonMatch[1].trim();

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   FileText,
@@ -88,6 +88,7 @@ const navGroups: NavGroup[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
 
   // Close sidebar on route change (mobile)
@@ -178,6 +179,9 @@ export function Sidebar() {
                     <Link
                       key={item.href}
                       href={item.href}
+                      prefetch={false}
+                      onMouseEnter={() => router.prefetch(item.href)}
+                      onTouchStart={() => router.prefetch(item.href)}
                       className={`flex items-center gap-3 rounded-lg border-l-2 py-2 pl-2.5 pr-3 text-sm transition-colors duration-200 ease-in-out ${
                         isActive
                           ? "border-indigo-600 bg-indigo-50 font-medium text-indigo-700"

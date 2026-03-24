@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
   Loader2,
@@ -12,6 +12,7 @@ import {
   CheckCircle,
   Clock,
 } from "lucide-react";
+import { useRecruiterJobs, useInstantShortlist, usePushCandidate } from "@/hooks/queries/use-recruiter";
 
 interface ShortlistCandidate {
   user_id: string;
@@ -35,24 +36,17 @@ interface JobPosting {
 }
 
 export default function InstantShortlistPage() {
-  const [jobs, setJobs] = useState<JobPosting[]>([]);
+  const { data: jobsRaw, isLoading: jobsLoading } = useRecruiterJobs();
+  const jobs = ((jobsRaw ?? []) as JobPosting[]).filter((j) => j.skills_required?.length);
+  const shortlistMutation = useInstantShortlist();
+  const pushMutation = usePushCandidate();
   const [selectedJob, setSelectedJob] = useState<string>("");
   const [candidates, setCandidates] = useState<ShortlistCandidate[]>([]);
   const [loading, setLoading] = useState(false);
-  const [jobsLoading, setJobsLoading] = useState(true);
   const [searchTime, setSearchTime] = useState<number | null>(null);
   const [totalSearched, setTotalSearched] = useState(0);
   const [sentPushes, setSentPushes] = useState<Set<string>>(new Set());
   const [pushLoading, setPushLoading] = useState<string | null>(null);
-
-  // Load recruiter's jobs
-  useEffect(() => {
-    fetch("/api/recruiter/jobs")
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data) => setJobs(data.filter((j: JobPosting) => j.skills_required?.length)))
-      .catch(() => {})
-      .finally(() => setJobsLoading(false));
-  }, []);
 
   async function findCandidates() {
     const job = jobs.find((j) => j.id === selectedJob);
@@ -61,24 +55,17 @@ export default function InstantShortlistPage() {
     setLoading(true);
     setCandidates([]);
     try {
-      const res = await fetch("/api/recruiter/instant-shortlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          job_title: job.title,
-          skills_required: job.skills_required,
-          experience_min: job.experience_min,
-          experience_max: job.experience_max,
-          location: job.location,
-          limit: 10,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setCandidates(data.candidates || []);
-        setSearchTime(data.search_time_ms || 0);
-        setTotalSearched(data.total_searched || 0);
-      }
+      const data = await shortlistMutation.mutateAsync({
+        job_title: job.title,
+        skills_required: job.skills_required,
+        experience_min: job.experience_min,
+        experience_max: job.experience_max,
+        location: job.location,
+        limit: 10,
+      }) as Record<string, unknown>;
+      setCandidates((data.candidates as ShortlistCandidate[]) || []);
+      setSearchTime((data.search_time_ms as number) || 0);
+      setTotalSearched((data.total_searched as number) || 0);
     } catch {
       // handle error silently
     } finally {
@@ -92,20 +79,14 @@ export default function InstantShortlistPage() {
 
     setPushLoading(candidateId);
     try {
-      const res = await fetch("/api/recruiter/push", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          candidate_id: candidateId,
-          push_type: "shortlisted",
-          title: `Shortlisted for ${job.title}`,
-          message: `You've been shortlisted for ${job.title}! We'd love to connect with you.`,
-          job_id: job.id,
-        }),
+      await pushMutation.mutateAsync({
+        candidate_id: candidateId,
+        push_type: "shortlisted",
+        title: `Shortlisted for ${job.title}`,
+        message: `You've been shortlisted for ${job.title}! We'd love to connect with you.`,
+        job_id: job.id,
       });
-      if (res.ok) {
-        setSentPushes((prev) => new Set([...prev, candidateId]));
-      }
+      setSentPushes((prev) => new Set([...prev, candidateId]));
     } catch {
       // handle silently
     } finally {

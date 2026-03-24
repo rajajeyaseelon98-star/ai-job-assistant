@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { aiGenerate } from "@/lib/ai";
+import { cachedAiGenerate } from "@/lib/ai";
 import { isValidUUID, validateTextLength } from "@/lib/validation";
 import { checkRateLimit } from "@/lib/rateLimit";
 
@@ -130,7 +130,7 @@ Candidate Resume:
 ${resumeText.slice(0, 6000)}`;
 
   try {
-    const raw = await aiGenerate(SKILL_GAP_PROMPT, content, { jsonMode: true });
+    const raw = await cachedAiGenerate(SKILL_GAP_PROMPT, content, { jsonMode: true });
     let jsonStr = raw.trim();
     const jsonMatch = jsonStr.match(/^```(?:json)?\s*([\s\S]*?)```$/m);
     if (jsonMatch) jsonStr = jsonMatch[1].trim();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useSkillDemand } from "@/hooks/queries/use-skill-demand";
 import {
   TrendingUp,
   TrendingDown,
@@ -58,16 +58,7 @@ function SkillCard({ skill }: { skill: SkillDemandInfo }) {
 }
 
 export default function SkillDemandPage() {
-  const [data, setData] = useState<SkillDemandDashboard | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/skill-demand")
-      .then((r) => r.ok ? r.json() : null)
-      .then((d) => setData(d))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, isLoading: loading } = useSkillDemand();
 
   if (loading) {
     return (

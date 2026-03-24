@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
-import { aiGenerate } from "@/lib/ai";
+import { cachedAiGenerate } from "@/lib/ai";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { validateTextLength } from "@/lib/validation";
 import type { ImprovedResumeContent } from "@/types/analysis";
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
   const safeProfileText = textVal.text;
   let content: ImprovedResumeContent;
   try {
-    const raw = await aiGenerate(LINKEDIN_PARSE_PROMPT, safeProfileText.slice(0, 12000), {
+    const raw = await cachedAiGenerate(LINKEDIN_PARSE_PROMPT, safeProfileText.slice(0, 12000), {
       jsonMode: true,
     });
     let jsonStr = raw.trim();

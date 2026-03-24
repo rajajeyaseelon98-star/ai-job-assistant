@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { aiGenerate } from "@/lib/ai";
+import { cachedAiGenerate } from "@/lib/ai";
 import { isValidUUID } from "@/lib/validation";
 import { checkRateLimit } from "@/lib/rateLimit";
 
@@ -114,7 +114,7 @@ ${((app.resume_text as string) || "").slice(0, 3000)}`;
 ${candidatesList}`;
 
     try {
-      const raw = await aiGenerate(SHORTLIST_PROMPT, content, { jsonMode: true });
+      const raw = await cachedAiGenerate(SHORTLIST_PROMPT, content, { jsonMode: true });
       let jsonStr = raw.trim();
       const jsonMatch = jsonStr.match(/^```(?:json)?\s*([\s\S]*?)```$/m);
       if (jsonMatch) jsonStr = jsonMatch[1].trim();

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Loader2, Plus, Trash2, Bell } from "lucide-react";
+import { useRecruiterAlerts, useCreateAlert, useDeleteAlert } from "@/hooks/queries/use-recruiter";
 
 interface SavedAlert {
   id: string;
@@ -11,8 +12,10 @@ interface SavedAlert {
 }
 
 export default function RecruiterAlertsPage() {
-  const [alerts, setAlerts] = useState<SavedAlert[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: alertsRaw, isLoading: loading } = useRecruiterAlerts();
+  const alerts = (alertsRaw ?? []) as SavedAlert[];
+  const createMutation = useCreateAlert();
+  const deleteMutation = useDeleteAlert();
   const [creating, setCreating] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
@@ -20,46 +23,26 @@ export default function RecruiterAlertsPage() {
   const [experience, setExperience] = useState("");
   const [location, setLocation] = useState("");
 
-  useEffect(() => {
-    fetch("/api/recruiter/alerts")
-      .then((r) => (r.ok ? r.json() : []))
-      .then(setAlerts)
-      .finally(() => setLoading(false));
-  }, []);
-
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
     setCreating(true);
     try {
-      const res = await fetch("/api/recruiter/alerts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          filters: {
-            skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
-            experience: experience || undefined,
-            location: location || undefined,
-          },
-        }),
+      await createMutation.mutateAsync({
+        name: name.trim(),
+        filters: {
+          skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
+          experience: experience || undefined,
+          location: location || undefined,
+        },
       });
-      if (res.ok) {
-        const alert = await res.json();
-        setAlerts((prev) => [alert, ...prev]);
-        setName("");
-        setSkills("");
-        setExperience("");
-        setLocation("");
-        setShowForm(false);
-      }
+      setName(""); setSkills(""); setExperience(""); setLocation(""); setShowForm(false);
     } catch { /* ignore */ }
     finally { setCreating(false); }
   }
 
   async function handleDelete(id: string) {
-    const res = await fetch(`/api/recruiter/alerts/${id}`, { method: "DELETE" });
-    if (res.ok) setAlerts((prev) => prev.filter((a) => a.id !== id));
+    await deleteMutation.mutateAsync(id);
   }
 
   return (

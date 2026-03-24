@@ -30,6 +30,7 @@ const DOT_COLORS: Record<ApplicationStatus, string> = {
   interviewing: "bg-amber-500",
   offer: "bg-emerald-500",
   rejected: "bg-rose-500",
+  withdrawn: "bg-gray-400",
 };
 
 function ApplicationCard({

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
@@ -18,22 +17,7 @@ import {
   Users,
   ArrowRight,
 } from "lucide-react";
-
-interface DailyAction {
-  id: string;
-  action_type: string;
-  title: string;
-  description: string | null;
-  priority: number;
-  completed: boolean;
-  action_url?: string;
-}
-
-interface DailyProgress {
-  total: number;
-  completed: number;
-  percentage: number;
-}
+import { useDailyActions, useCompleteDailyAction } from "@/hooks/queries/use-daily-actions";
 
 const ACTION_ICONS: Record<string, React.ElementType> = {
   apply_jobs: Rocket,
@@ -61,46 +45,13 @@ const PRIORITY_LABELS: Record<number, { text: string; color: string }> = {
 };
 
 export function DailyActions() {
-  const [actions, setActions] = useState<DailyAction[]>([]);
-  const [progress, setProgress] = useState<DailyProgress>({ total: 0, completed: 0, percentage: 0 });
-  const [loading, setLoading] = useState(true);
-  const [completing, setCompleting] = useState<string | null>(null);
+  const { data, isLoading } = useDailyActions();
+  const completeMutation = useCompleteDailyAction();
 
-  useEffect(() => {
-    fetch("/api/daily-actions")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (d) {
-          setActions(d.actions || []);
-          setProgress(d.progress || { total: 0, completed: 0, percentage: 0 });
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const actions = data?.actions ?? [];
+  const progress = data?.progress ?? { total: 0, completed: 0, percentage: 0 };
 
-  async function handleComplete(actionId: string) {
-    setCompleting(actionId);
-    try {
-      const res = await fetch("/api/daily-actions", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action_id: actionId }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setActions((prev) =>
-          prev.map((a) => (a.id === actionId ? { ...a, completed: true } : a))
-        );
-        if (data.progress) setProgress(data.progress);
-      }
-    } catch {
-      // ignore
-    }
-    setCompleting(null);
-  }
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="animate-pulse rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="h-32" />
@@ -112,7 +63,6 @@ export function DailyActions() {
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      {/* Header with progress */}
       <div className="flex flex-col gap-2 border-b border-slate-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-5 md:px-6 sm:py-4">
         <div>
           <h3 className="font-display text-sm font-semibold text-slate-900 sm:text-base md:text-lg">Today&apos;s Action Plan</h3>
@@ -131,12 +81,11 @@ export function DailyActions() {
         </div>
       </div>
 
-      {/* Action items */}
       <div className="divide-y divide-gray-50">
         {actions.map((action) => {
           const Icon = ACTION_ICONS[action.action_type] || Target;
           const priorityLabel = PRIORITY_LABELS[action.priority];
-          const isCompleting = completing === action.id;
+          const isCompleting = completeMutation.isPending && completeMutation.variables === action.id;
 
           return (
             <div
@@ -145,9 +94,8 @@ export function DailyActions() {
                 action.completed ? "opacity-60" : ""
               } ${PRIORITY_STYLES[action.priority] || PRIORITY_STYLES[0]}`}
             >
-              {/* Checkbox */}
               <button
-                onClick={() => !action.completed && handleComplete(action.id)}
+                onClick={() => !action.completed && completeMutation.mutate(action.id)}
                 disabled={action.completed || isCompleting}
                 className="mt-0.5 shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center active:opacity-70 active:bg-gray-100 rounded-md transition-colors"
               >
@@ -160,12 +108,10 @@ export function DailyActions() {
                 )}
               </button>
 
-              {/* Icon - hidden on smallest screens */}
               <div className="hidden sm:flex h-8 w-8 md:h-9 md:w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                 <Icon className="h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5 text-primary" />
               </div>
 
-              {/* Content */}
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-1 sm:gap-2">
                   <p className={`text-sm sm:text-base font-medium truncate ${action.completed ? "line-through text-text-muted" : "text-text"}`}>
@@ -182,7 +128,6 @@ export function DailyActions() {
                 )}
               </div>
 
-              {/* Action link */}
               {!action.completed && action.action_url && (
                 <Link
                   href={action.action_url}
@@ -196,7 +141,6 @@ export function DailyActions() {
         })}
       </div>
 
-      {/* Completion message */}
       {progress.percentage === 100 && (
         <div className="rounded-b-xl border-t border-slate-100 bg-emerald-50 px-4 py-3 text-center sm:px-5 md:px-6 sm:py-4">
           <p className="text-sm font-medium text-emerald-800 sm:text-base">

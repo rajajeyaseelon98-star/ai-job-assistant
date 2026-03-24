@@ -5,11 +5,16 @@ import { useRouter } from "next/navigation";
 import { use } from "react";
 import { Loader2, Wand2, ArrowLeft, Trash2 } from "lucide-react";
 import type { WorkType, EmploymentType, JobStatus } from "@/types/recruiter";
+import { useRecruiterJob, useDeleteJob, recruiterKeys } from "@/hooks/queries/use-recruiter";
+import { useQueryClient } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api-fetcher";
 
 export default function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+  const { data: jobData, isLoading: loading, error: loadError } = useRecruiterJob(id);
+  const deleteMut = useDeleteJob();
+  const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [error, setError] = useState("");
@@ -30,28 +35,24 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   const [applicationCount, setApplicationCount] = useState(0);
 
   useEffect(() => {
-    fetch(`/api/recruiter/jobs/${id}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((job) => {
-        if (!job) { setError("Job not found"); return; }
-        setTitle(job.title || "");
-        setDescription(job.description || "");
-        setRequirements(job.requirements || "");
-        setSkills(Array.isArray(job.skills_required) ? job.skills_required.join(", ") : "");
-        setExperienceMin(String(job.experience_min ?? 0));
-        setExperienceMax(job.experience_max != null ? String(job.experience_max) : "");
-        setSalaryMin(job.salary_min != null ? String(job.salary_min) : "");
-        setSalaryMax(job.salary_max != null ? String(job.salary_max) : "");
-        setSalaryCurrency(job.salary_currency || "INR");
-        setLocation(job.location || "");
-        setWorkType(job.work_type || "onsite");
-        setEmploymentType(job.employment_type || "full_time");
-        setStatus(job.status || "draft");
-        setApplicationCount(job.application_count || 0);
-      })
-      .catch(() => setError("Failed to load job"))
-      .finally(() => setLoading(false));
-  }, [id]);
+    if (loadError) { setError("Failed to load job"); return; }
+    if (!jobData) return;
+    const job = jobData as Record<string, unknown>;
+    setTitle((job.title as string) || "");
+    setDescription((job.description as string) || "");
+    setRequirements((job.requirements as string) || "");
+    setSkills(Array.isArray(job.skills_required) ? (job.skills_required as string[]).join(", ") : "");
+    setExperienceMin(String(job.experience_min ?? 0));
+    setExperienceMax(job.experience_max != null ? String(job.experience_max) : "");
+    setSalaryMin(job.salary_min != null ? String(job.salary_min) : "");
+    setSalaryMax(job.salary_max != null ? String(job.salary_max) : "");
+    setSalaryCurrency((job.salary_currency as string) || "INR");
+    setLocation((job.location as string) || "");
+    setWorkType((job.work_type as WorkType) || "onsite");
+    setEmploymentType((job.employment_type as EmploymentType) || "full_time");
+    setStatus((job.status as JobStatus) || "draft");
+    setApplicationCount((job.application_count as number) || 0);
+  }, [jobData]);
 
   async function generateDescription() {
     if (!title.trim()) { setError("Enter a job title first"); return; }
@@ -83,7 +84,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
     setSaving(true);
     setError("");
     try {
-      const res = await fetch(`/api/recruiter/jobs/${id}`, {
+      await apiFetch(`/api/recruiter/jobs/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -97,23 +98,21 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
           location, work_type: workType, employment_type: employmentType, status,
         }),
       });
-      if (res.ok) {
-        setSuccess("Job updated!");
-        setTimeout(() => setSuccess(""), 3000);
-      } else {
-        const data = await res.json();
-        setError(data.error || "Failed to update");
-      }
-    } catch { setError("Something went wrong"); }
-    finally { setSaving(false); }
+      queryClient.invalidateQueries({ queryKey: recruiterKeys.jobs() });
+      setSuccess("Job updated!");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch {
+      setError("Something went wrong");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleDelete() {
     if (!confirm("Are you sure you want to delete this job posting?")) return;
     try {
-      const res = await fetch(`/api/recruiter/jobs/${id}`, { method: "DELETE" });
-      if (res.ok) router.push("/recruiter/jobs");
-      else setError("Failed to delete job");
+      await deleteMut.mutateAsync(id);
+      router.push("/recruiter/jobs");
     } catch { setError("Something went wrong"); }
   }
 

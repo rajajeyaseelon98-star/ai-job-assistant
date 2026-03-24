@@ -1,37 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Flame, Trophy, Zap, Shield } from "lucide-react";
-
-interface StreakData {
-  current_streak: number;
-  longest_streak: number;
-  total_active_days: number;
-  streak_multiplier: number;
-  streak_level: string;
-  next_reward_at: number;
-  xp_points: number;
-  streak_freeze_count: number;
-}
+import { useStreak, useRecordStreakLogin } from "@/hooks/queries/use-streak";
 
 export function StreakWidget() {
-  const [streak, setStreak] = useState<StreakData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: streak, isLoading } = useStreak();
+  const recordLogin = useRecordStreakLogin();
 
   useEffect(() => {
-    // Record daily login + fetch streak
-    fetch("/api/streak", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action_type: "daily_login" }) })
-      .then((r) => (r.ok ? r.json() : null))
-      .catch(() => null);
-
-    fetch("/api/streak")
-      .then((r) => (r.ok ? r.json() : null))
-      .then(setStreak)
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    recordLogin.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (loading || !streak) {
+  if (isLoading || !streak) {
     return (
       <div className="animate-pulse rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="h-16" />
@@ -75,7 +57,6 @@ export function StreakWidget() {
         </div>
       </div>
 
-      {/* Progress bar to next reward */}
       <div className="mt-4">
         <div className="flex items-center justify-between text-[10px] text-slate-500 sm:text-xs">
           <span className="truncate">Next reward at {streak.next_reward_at} days</span>
@@ -89,7 +70,6 @@ export function StreakWidget() {
         </div>
       </div>
 
-      {/* Stats row */}
       <div className="mt-4 grid grid-cols-3 gap-2 text-center text-[10px] sm:gap-3 sm:text-xs">
         <div className="rounded-lg border border-slate-100 bg-slate-50 px-2 py-2 sm:py-3">
           <div className="text-sm font-bold text-amber-700 sm:text-base">{streak.longest_streak}</div>

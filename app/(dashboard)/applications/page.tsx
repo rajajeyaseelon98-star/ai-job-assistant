@@ -1,67 +1,49 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, lazy, Suspense } from "react";
 import Link from "next/link";
 import { Plus, LayoutGrid, List } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/Button";
-import { ApplicationForm } from "@/components/applications/ApplicationForm";
-import { ApplicationBoard } from "@/components/applications/ApplicationBoard";
+import { useApplications, useDeleteApplication, useUpdateApplicationStatus, applicationKeys } from "@/hooks/queries/use-applications";
 import type { Application, ApplicationStatus } from "@/types/application";
 import { STATUS_LABELS } from "@/types/application";
+import { ListSkeleton, SectionSkeleton } from "@/components/ui/SectionSkeleton";
+
+const ApplicationForm = lazy(() =>
+  import("@/components/applications/ApplicationForm").then((m) => ({ default: m.ApplicationForm }))
+);
+const ApplicationBoard = lazy(() =>
+  import("@/components/applications/ApplicationBoard").then((m) => ({ default: m.ApplicationBoard }))
+);
 
 export default function ApplicationsPage() {
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Application | null>(null);
   const [view, setView] = useState<"board" | "list">("board");
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
-  const load = useCallback(async () => {
-    try {
-      const res = await fetch("/api/applications");
-      if (res.ok) {
-        const data = await res.json();
-        setApplications(data);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const queryClient = useQueryClient();
+  const { data: applications = [], isLoading: loading } = useApplications();
+  const deleteMutation = useDeleteApplication();
+  const updateStatusMutation = useUpdateApplicationStatus();
 
   function handleSave(app: Application) {
-    if (editing) {
-      setApplications((prev) => prev.map((a) => (a.id === app.id ? app : a)));
-    } else {
-      setApplications((prev) => [app, ...prev]);
-    }
+    queryClient.invalidateQueries({ queryKey: applicationKeys.all });
     setShowForm(false);
     setEditing(null);
   }
 
   async function handleDelete(id: string) {
-    const res = await fetch(`/api/applications/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      setApplications((prev) => prev.filter((a) => a.id !== id));
-    }
+    try {
+      await deleteMutation.mutateAsync(id);
+    } catch { /* mutation error handled by React Query */ }
   }
 
   async function handleStatusChange(id: string, status: ApplicationStatus) {
-    const res = await fetch(`/api/applications/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
-    if (res.ok) {
-      const updated = await res.json();
-      setApplications((prev) => prev.map((a) => (a.id === id ? updated : a)));
-    }
+    try {
+      await updateStatusMutation.mutateAsync({ id, status });
+    } catch { /* mutation error handled by React Query */ }
   }
 
   const filtered =
@@ -131,16 +113,18 @@ export default function ApplicationsPage() {
         </p>
       )}
 
-      {/* Form */}
+      {/* Form — lazy loaded */}
       {(showForm || editing) && (
-        <ApplicationForm
-          initial={editing || undefined}
-          onSave={handleSave}
-          onCancel={() => {
-            setShowForm(false);
-            setEditing(null);
-          }}
-        />
+        <Suspense fallback={<SectionSkeleton height="h-48" />}>
+          <ApplicationForm
+            initial={editing || undefined}
+            onSave={handleSave}
+            onCancel={() => {
+              setShowForm(false);
+              setEditing(null);
+            }}
+          />
+        </Suspense>
       )}
 
       {/* Controls */}
@@ -175,20 +159,22 @@ export default function ApplicationsPage() {
         </div>
       </div>
 
-      {/* Board/List */}
+      {/* Board/List — lazy loaded */}
       {loading ? (
-        <p className="text-sm text-text-muted">Loading applications...</p>
+        <ListSkeleton rows={4} />
       ) : (
-        <ApplicationBoard
-          applications={filtered}
-          view={view}
-          onEdit={(app) => {
-            setEditing(app);
-            setShowForm(false);
-          }}
-          onDelete={handleDelete}
-          onStatusChange={handleStatusChange}
-        />
+        <Suspense fallback={<ListSkeleton rows={4} />}>
+          <ApplicationBoard
+            applications={filtered}
+            view={view}
+            onEdit={(app) => {
+              setEditing(app);
+              setShowForm(false);
+            }}
+            onDelete={handleDelete}
+            onStatusChange={handleStatusChange}
+          />
+        </Suspense>
       )}
     </div>
   );

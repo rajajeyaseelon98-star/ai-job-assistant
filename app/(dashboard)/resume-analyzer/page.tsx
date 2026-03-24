@@ -1,18 +1,28 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api-fetcher";
 import Link from "next/link";
-import { ResumeUpload } from "@/components/resume/ResumeUpload";
-import { ResumeAnalysisResult } from "@/components/resume/ResumeAnalysisResult";
-import { ImprovedResumeView, improvedToPlainText } from "@/components/resume/ImprovedResumeView";
 import { dispatchUsageUpdated } from "@/components/layout/Topbar";
 import { AIProgressIndicator } from "@/components/ui/AIProgressIndicator";
 import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
+import { SectionSkeleton } from "@/components/ui/SectionSkeleton";
 import { Info } from "lucide-react";
 import type { ATSAnalysisResult } from "@/types/resume";
 import type { ImprovedResumeContent } from "@/types/analysis";
 import { humanizeImproveResumeError, humanizeNetworkError } from "@/lib/friendlyApiError";
+
+const ResumeUpload = lazy(() =>
+  import("@/components/resume/ResumeUpload").then((m) => ({ default: m.ResumeUpload }))
+);
+const ResumeAnalysisResult = lazy(() =>
+  import("@/components/resume/ResumeAnalysisResult").then((m) => ({ default: m.ResumeAnalysisResult }))
+);
+const ImprovedResumeView = lazy(() =>
+  import("@/components/resume/ImprovedResumeView").then((m) => ({ default: m.ImprovedResumeView }))
+);
 
 function ResumeAnalyzerContent() {
   const searchParams = useSearchParams();
@@ -27,8 +37,7 @@ function ResumeAnalyzerContent() {
   const [improvedContent, setImprovedContent] = useState<ImprovedResumeContent | null>(null);
   const [improvedResumeId, setImprovedResumeId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [pastAnalysisLoading, setPastAnalysisLoading] = useState(!!analysisId);
-  const [improvedLoading, setImprovedLoading] = useState(!!improvedId);
+  
   const [improveJobTitle, setImproveJobTitle] = useState("");
   const [improveJobDescription, setImproveJobDescription] = useState("");
   const [recheckLoading, setRecheckLoading] = useState(false);
@@ -64,32 +73,32 @@ function ResumeAnalyzerContent() {
     }
   }, [analysisId, improvedId]);
 
-  useEffect(() => {
-    if (!analysisId) return;
-    setPastAnalysisLoading(true);
-    fetch(`/api/resume-analysis/${analysisId}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.analysis_json) setAnalysis(data.analysis_json as ATSAnalysisResult);
-        if (data?.resume_text != null) setResumeText(data.resume_text);
-        if (data?.resume_id) setResumeId(data.resume_id);
-      })
-      .catch(() => {})
-      .finally(() => setPastAnalysisLoading(false));
-  }, [analysisId]);
+  const { data: pastAnalysis, isLoading: pastAnalysisLoading } = useQuery({
+    queryKey: ["resume-analysis", analysisId],
+    queryFn: () => apiFetch<Record<string, unknown>>(`/api/resume-analysis/${analysisId}`),
+    enabled: !!analysisId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: improvedData, isLoading: improvedLoading } = useQuery({
+    queryKey: ["improved-resume", improvedId],
+    queryFn: () => apiFetch<Record<string, unknown>>(`/api/improved-resumes/${improvedId}`),
+    enabled: !!improvedId,
+    staleTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
-    if (!improvedId) return;
-    setImprovedLoading(true);
+    if (!pastAnalysis) return;
+    if (pastAnalysis.analysis_json) setAnalysis(pastAnalysis.analysis_json as ATSAnalysisResult);
+    if (pastAnalysis.resume_text != null) setResumeText(pastAnalysis.resume_text as string);
+    if (pastAnalysis.resume_id) setResumeId(pastAnalysis.resume_id as string);
+  }, [pastAnalysis]);
+
+  useEffect(() => {
+    if (!improvedData) return;
     setImprovedResumeId(improvedId);
-    fetch(`/api/improved-resumes/${improvedId}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.improved_content) setImprovedContent(data.improved_content as ImprovedResumeContent);
-      })
-      .catch(() => {})
-      .finally(() => setImprovedLoading(false));
-  }, [improvedId]);
+    if (improvedData.improved_content) setImprovedContent(improvedData.improved_content as ImprovedResumeContent);
+  }, [improvedData, improvedId]);
 
   function handleUploadComplete(data: { id: string; parsed_text: string | null }) {
     setResumeId(data.id);
@@ -155,6 +164,7 @@ function ResumeAnalyzerContent() {
     setError(null);
     setRecheckLoading(true);
     try {
+      const { improvedToPlainText } = await import("@/components/resume/ImprovedResumeView");
       const improvedText = improvedToPlainText(improvedContent);
       const res = await fetch("/api/analyze-resume", {
         method: "POST",
@@ -278,7 +288,9 @@ function ResumeAnalyzerContent() {
           </button>
         </div>
         {resumeInputMode === "upload" ? (
-          <ResumeUpload onUploadComplete={handleUploadComplete} />
+          <Suspense fallback={<SectionSkeleton height="h-32" />}>
+            <ResumeUpload onUploadComplete={handleUploadComplete} />
+          </Suspense>
         ) : (
           <div className="space-y-2">
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20">
@@ -335,7 +347,9 @@ function ResumeAnalyzerContent() {
       {analysis && (
         <section>
           <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-text">Resume analysis</h2>
-          <ResumeAnalysisResult data={analysis} />
+          <Suspense fallback={<SectionSkeleton height="h-64" />}>
+            <ResumeAnalysisResult data={analysis} />
+          </Suspense>
           <div className="relative mt-10 overflow-hidden rounded-3xl bg-indigo-900 p-8 text-center shadow-xl">
             <div
               className="pointer-events-none absolute left-1/2 top-0 h-48 w-48 -translate-x-1/2 rounded-full bg-indigo-500/30 blur-3xl"
@@ -433,7 +447,9 @@ function ResumeAnalyzerContent() {
               </div>
             </div>
           )}
-          <ImprovedResumeView content={improvedContent} improvedResumeId={improvedResumeId ?? undefined} />
+          <Suspense fallback={<SectionSkeleton height="h-64" />}>
+            <ImprovedResumeView content={improvedContent} improvedResumeId={improvedResumeId ?? undefined} />
+          </Suspense>
         </section>
       )}
     </div>

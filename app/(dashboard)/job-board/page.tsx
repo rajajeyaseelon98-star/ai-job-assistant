@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Search,
   MapPin,
@@ -14,7 +14,13 @@ import {
   FileText,
   CheckCircle2,
 } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import dynamic from "next/dynamic";
+
+const ReactMarkdown = dynamic(() => import("react-markdown"), {
+  loading: () => <div className="h-20 animate-pulse rounded bg-slate-100" />,
+  ssr: false,
+});
+import { useJobs, useAppliedJobIds, useJobBoardResumes, useApplyToJob } from "@/hooks/queries/use-job-board";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -94,12 +100,6 @@ const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
 /* ------------------------------------------------------------------ */
 
 export default function JobBoardPage() {
-  // Data
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [loading, setLoading] = useState(true);
-
   // Filters
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("");
@@ -110,113 +110,52 @@ export default function JobBoardPage() {
   // Detail / apply state
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showApplyForm, setShowApplyForm] = useState(false);
-  const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
 
   // Apply form state
-  const [resumes, setResumes] = useState<Resume[]>([]);
   const [selectedResume, setSelectedResume] = useState("");
   const [coverLetter, setCoverLetter] = useState("");
   const [applying, setApplying] = useState(false);
   const [applyError, setApplyError] = useState("");
 
-  /* Fetch jobs */
-  const fetchJobs = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (search) params.set("search", search);
-      if (location) params.set("location", location);
-      if (workType) params.set("work_type", workType);
-      if (employmentType) params.set("employment_type", employmentType);
-      params.set("page", String(page));
-      params.set("limit", "20");
+  // TanStack Query hooks
+  const filters = { search, location, workType, employmentType, page };
+  const { data: jobsData, isLoading: loading } = useJobs(filters);
+  const { data: appliedIds = [] } = useAppliedJobIds();
+  const { data: resumes = [] } = useJobBoardResumes(showApplyForm);
+  const applyMutation = useApplyToJob();
 
-      const res = await fetch(`/api/jobs?${params.toString()}`);
-      if (res.ok) {
-        const data = await res.json();
-        setJobs(data.jobs);
-        setTotal(data.total);
-        setTotalPages(data.totalPages);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (resumes.length > 0 && !selectedResume) {
+      setSelectedResume(resumes[0].id);
     }
-  }, [search, location, workType, employmentType, page]);
+  }, [resumes, selectedResume]);
 
-  useEffect(() => {
-    fetchJobs();
-  }, [fetchJobs]);
+  const jobs = jobsData?.jobs ?? [];
+  const total = jobsData?.total ?? 0;
+  const totalPages = jobsData?.totalPages ?? 0;
+  const appliedJobIds = useMemo(() => new Set(appliedIds), [appliedIds]);
 
-  /* Fetch user's existing applications to show "Applied" badges */
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch("/api/jobs/applied");
-        if (res.ok) {
-          const ids: string[] = await res.json();
-          setAppliedJobIds(new Set(ids));
-        }
-      } catch {
-        // ignore -- user may not be logged in for public browsing
-      }
-    })();
-  }, []);
-
-  /* Fetch resumes when apply form opens */
-  useEffect(() => {
-    if (!showApplyForm) return;
-    (async () => {
-      try {
-        const res = await fetch("/api/upload-resume");
-        if (res.ok) {
-          const data = await res.json();
-          // Normalise: API may return array directly or { resumes: [...] }
-          const list = Array.isArray(data) ? data : data.resumes || [];
-          setResumes(list);
-          if (list.length > 0) setSelectedResume(list[0].id);
-        }
-      } catch {
-        // ignore
-      }
-    })();
-  }, [showApplyForm]);
-
-  /* Search on Enter or debounce */
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
     setPage(1);
-    fetchJobs();
   }
 
-  /* Apply to a job */
   async function handleApply() {
     if (!selectedJob) return;
     setApplying(true);
     setApplyError("");
 
     try {
-      const res = await fetch(`/api/jobs/${selectedJob.id}/apply`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          resume_id: selectedResume || undefined,
-          cover_letter: coverLetter || undefined,
-        }),
+      await applyMutation.mutateAsync({
+        jobId: selectedJob.id,
+        resumeId: selectedResume || undefined,
+        coverLetter: coverLetter || undefined,
       });
-
-      if (res.ok) {
-        setAppliedJobIds((prev) => new Set(prev).add(selectedJob.id));
-        setShowApplyForm(false);
-        setCoverLetter("");
-        setSelectedResume("");
-      } else {
-        const err = await res.json();
-        setApplyError(err.error || "Failed to apply");
-      }
-    } catch {
-      setApplyError("Network error. Please try again.");
+      setShowApplyForm(false);
+      setCoverLetter("");
+      setSelectedResume("");
+    } catch (err) {
+      setApplyError(err instanceof Error ? err.message : "Network error. Please try again.");
     } finally {
       setApplying(false);
     }

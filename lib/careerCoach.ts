@@ -45,22 +45,26 @@ export interface ScoreExplanation {
  */
 export async function getCareerDiagnosis(userId: string): Promise<CareerDiagnosis> {
   const supabase = await createClient();
-  const insights = await getApplicationInsights(userId);
-  const funnel = await getConversionFunnel(userId);
 
-  // Gather additional data
-  const { data: recentApps } = await supabase
-    .from("applications")
-    .select("role, company, status, applied_date, notes, created_at")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(100);
+  // Run all independent data fetches in parallel
+  const [insights, funnel, { data: recentApps }, { data: userResumes }, { data: userProfile }] =
+    await Promise.all([
+      getApplicationInsights(userId),
+      getConversionFunnel(userId),
+      supabase
+        .from("applications")
+        .select("role, company, status, applied_date, notes, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(100),
+      supabase.from("resumes").select("id").eq("user_id", userId),
+      supabase
+        .from("users")
+        .select("profile_strength, candidate_rank_score, is_boosted, boost_multiplier")
+        .eq("id", userId)
+        .single(),
+    ]);
 
-  // resume_analysis has no user_id — join via resumes
-  const { data: userResumes } = await supabase
-    .from("resumes")
-    .select("id")
-    .eq("user_id", userId);
   const userResumeIds = (userResumes || []).map((r) => r.id);
   const { data: analyses } = userResumeIds.length > 0
     ? await supabase
@@ -70,12 +74,6 @@ export async function getCareerDiagnosis(userId: string): Promise<CareerDiagnosi
         .order("created_at", { ascending: false })
         .limit(5)
     : { data: null };
-
-  const { data: userProfile } = await supabase
-    .from("users")
-    .select("profile_strength, candidate_rank_score, is_boosted, boost_multiplier")
-    .eq("id", userId)
-    .single();
 
   const apps = recentApps || [];
   const latestAts = analyses?.[0]?.score || null;
@@ -249,20 +247,19 @@ async function generateSkillROI(
   apps: Array<{ role: string; status: string; notes: string | null }>,
   insights: Awaited<ReturnType<typeof getApplicationInsights>>
 ): Promise<CareerDiagnosis["skill_roi"]> {
-  // Get user's current skills
-  const { data: userSkills } = await supabase
-    .from("candidate_skills")
-    .select("skill_normalized")
-    .eq("user_id", userId);
-
-  // Get trending skills from skill_demand
   const currentMonth = new Date().toISOString().slice(0, 7);
-  const { data: demandData } = await supabase
-    .from("skill_demand")
-    .select("skill_name, demand_count, supply_count, avg_salary, demand_trend")
-    .eq("month", currentMonth)
-    .order("demand_count", { ascending: false })
-    .limit(20);
+  const [{ data: userSkills }, { data: demandData }] = await Promise.all([
+    supabase
+      .from("candidate_skills")
+      .select("skill_normalized")
+      .eq("user_id", userId),
+    supabase
+      .from("skill_demand")
+      .select("skill_name, demand_count, supply_count, avg_salary, demand_trend")
+      .eq("month", currentMonth)
+      .order("demand_count", { ascending: false })
+      .limit(20),
+  ]);
 
   const userSkillSet = new Set((userSkills || []).map((s) => s.skill_normalized.toLowerCase()));
   const roi: CareerDiagnosis["skill_roi"] = [];

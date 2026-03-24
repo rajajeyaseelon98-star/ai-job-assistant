@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useActivityFeed, usePlatformStats } from "@/hooks/queries/use-activity";
 import {
   Activity,
   Send,
@@ -71,30 +72,14 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function ActivityFeedPage() {
-  const [activities, setActivities] = useState<ActivityItem[]>([]);
-  const [stats, setStats] = useState<PlatformStats | null>(null);
-  const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"my" | "public">("my");
 
-  useEffect(() => {
-    fetchData();
-  }, [tab]);
+  const { data: feedData, isLoading: feedLoading } = useActivityFeed(tab === "public");
+  const { data: statsData } = usePlatformStats();
 
-  async function fetchData() {
-    setLoading(true);
-    try {
-      const [feedRes, statsRes] = await Promise.all([
-        fetch(`/api/activity-feed${tab === "public" ? "?public=true" : ""}`),
-        fetch("/api/platform-stats"),
-      ]);
-
-      if (feedRes.ok) setActivities(await feedRes.json());
-      if (statsRes.ok) setStats(await statsRes.json());
-    } catch {
-      // Ignore
-    }
-    setLoading(false);
-  }
+  const activities: ActivityItem[] = Array.isArray(feedData) ? feedData : (feedData as any)?.items ?? [];
+  const stats = statsData ?? null;
+  const loading = feedLoading;
 
   return (
     <div className="max-w-5xl mx-auto w-full py-8 space-y-4 sm:space-y-6">

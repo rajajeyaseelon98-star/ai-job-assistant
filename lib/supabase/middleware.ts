@@ -3,6 +3,10 @@ import { NextResponse, type NextRequest } from "next/server";
 
 type CookieTuple = { name: string; value: string; options?: Record<string, unknown> };
 
+/**
+ * Refresh the Supabase session and return the authenticated user (if any).
+ * Callers can reuse the returned user to avoid a second auth round-trip.
+ */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -23,6 +27,6 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getUser();
-  return supabaseResponse;
+  const { data: { user } } = await supabase.auth.getUser();
+  return { response: supabaseResponse, user };
 }

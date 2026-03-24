@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Loader2, Plus, Trash2, Edit3, FileText, X } from "lucide-react";
+import { useRecruiterTemplates, useSaveTemplate, useDeleteTemplate } from "@/hooks/queries/use-recruiter";
 
 interface Template {
   id: string;
@@ -29,8 +30,6 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export default function RecruiterTemplatesPage() {
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -39,12 +38,10 @@ export default function RecruiterTemplatesPage() {
   const [content, setContent] = useState("");
   const [templateType, setTemplateType] = useState("general");
 
-  useEffect(() => {
-    fetch("/api/recruiter/templates")
-      .then((r) => (r.ok ? r.json() : []))
-      .then(setTemplates)
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: templatesRaw, isLoading: loading } = useRecruiterTemplates();
+  const templates = (templatesRaw ?? []) as Template[];
+  const saveMutation = useSaveTemplate();
+  const deleteMut = useDeleteTemplate();
 
   function resetForm() {
     setName("");
@@ -69,38 +66,21 @@ export default function RecruiterTemplatesPage() {
     if (!name.trim() || !content.trim()) return;
     setSaving(true);
     try {
-      const body = { name: name.trim(), subject: subject.trim() || null, content: content.trim(), template_type: templateType };
-      if (editId) {
-        const res = await fetch(`/api/recruiter/templates/${editId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        if (res.ok) {
-          const updated = await res.json();
-          setTemplates((prev) => prev.map((t) => (t.id === editId ? updated : t)));
-          resetForm();
-        }
-      } else {
-        const res = await fetch("/api/recruiter/templates", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        if (res.ok) {
-          const created = await res.json();
-          setTemplates((prev) => [created, ...prev]);
-          resetForm();
-        }
-      }
+      await saveMutation.mutateAsync({
+        id: editId ?? undefined,
+        name: name.trim(),
+        subject: subject.trim() || null,
+        content: content.trim(),
+        template_type: templateType,
+      });
+      resetForm();
     } catch { /* ignore */ }
     finally { setSaving(false); }
   }
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this template?")) return;
-    const res = await fetch(`/api/recruiter/templates/${id}`, { method: "DELETE" });
-    if (res.ok) setTemplates((prev) => prev.filter((t) => t.id !== id));
+    await deleteMut.mutateAsync(id);
   }
 
   return (

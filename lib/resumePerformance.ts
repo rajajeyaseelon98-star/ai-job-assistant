@@ -32,29 +32,27 @@ export interface ApplySuccessIntelligence {
 export async function getResumePerformance(userId: string): Promise<ApplySuccessIntelligence> {
   const supabase = await createClient();
 
-  // Get all resumes with applications
-  const { data: resumes } = await supabase
-    .from("resumes")
-    .select("id, version_label, target_role")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
+  // Run all three independent queries in parallel
+  const [{ data: resumes }, { data: allApps }, { data: runs }] = await Promise.all([
+    supabase
+      .from("resumes")
+      .select("id, version_label, target_role")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("applications")
+      .select("id, role, status, notes, applied_date")
+      .eq("user_id", userId),
+    supabase
+      .from("auto_apply_runs")
+      .select("id, resume_id, results, status")
+      .eq("user_id", userId)
+      .eq("status", "completed"),
+  ]);
 
   if (!resumes || resumes.length === 0) {
     return emptyResult();
   }
-
-  // Get all applications for this user
-  const { data: allApps } = await supabase
-    .from("applications")
-    .select("id, role, status, notes, applied_date")
-    .eq("user_id", userId);
-
-  // Get auto-apply runs to link resume_id to applications
-  const { data: runs } = await supabase
-    .from("auto_apply_runs")
-    .select("id, resume_id, results, status")
-    .eq("user_id", userId)
-    .eq("status", "completed");
 
   // Build resume → applications mapping
   const resumeApps = new Map<string, typeof allApps>();
@@ -268,21 +266,27 @@ export async function getHiringBenchmark(userId: string): Promise<{
 }> {
   const supabase = await createClient();
 
-  // Get user's rank score
-  const { data: user } = await supabase
-    .from("users")
-    .select("candidate_rank_score, profile_strength")
-    .eq("id", userId)
-    .single();
+  // Wave 1: user score + total count + avg sample (all independent)
+  const [{ data: user }, { count: totalCandidates }, { data: avgData }] = await Promise.all([
+    supabase
+      .from("users")
+      .select("candidate_rank_score, profile_strength")
+      .eq("id", userId)
+      .single(),
+    supabase
+      .from("users")
+      .select("*", { count: "exact", head: true })
+      .gt("candidate_rank_score", 0),
+    supabase
+      .from("users")
+      .select("candidate_rank_score")
+      .gt("candidate_rank_score", 0)
+      .limit(500),
+  ]);
 
   const yourScore = user?.candidate_rank_score || user?.profile_strength || 0;
 
-  // Count candidates with lower scores
-  const { count: totalCandidates } = await supabase
-    .from("users")
-    .select("*", { count: "exact", head: true })
-    .gt("candidate_rank_score", 0);
-
+  // Wave 2: lowerCount depends on yourScore
   const { count: lowerCount } = await supabase
     .from("users")
     .select("*", { count: "exact", head: true })
@@ -291,13 +295,6 @@ export async function getHiringBenchmark(userId: string): Promise<{
 
   const total = totalCandidates || 1;
   const percentile = Math.round(((lowerCount || 0) / total) * 100);
-
-  // Get average score
-  const { data: avgData } = await supabase
-    .from("users")
-    .select("candidate_rank_score")
-    .gt("candidate_rank_score", 0)
-    .limit(500);
 
   let avgScore = 0;
   if (avgData && avgData.length > 0) {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { validateTextLength } from "@/lib/validation";
-import { aiGenerate } from "@/lib/ai";
+import { cachedAiGenerate } from "@/lib/ai";
 
 const SYSTEM_PROMPT = `You are an expert job description writer. Create an optimized, professional job description that attracts qualified candidates. The description should be well-structured with clear sections including: Role Overview, Key Responsibilities, Required Qualifications, Preferred Qualifications, and What We Offer. Use inclusive language and focus on impact and growth opportunities. Keep the tone professional yet engaging.
 
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
     .join("\n");
 
   try {
-    const description = await aiGenerate(SYSTEM_PROMPT, userPrompt);
+    const description = await cachedAiGenerate(SYSTEM_PROMPT, userPrompt);
     return NextResponse.json({ description: description.trim() });
   } catch (err) {
     console.error("AI job description generation error:", err);

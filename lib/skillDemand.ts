@@ -97,12 +97,26 @@ export async function refreshSkillDemand(): Promise<{ processed: number }> {
   const supabase = await createClient();
   const currentMonth = new Date().toISOString().slice(0, 7);
 
-  // Count skills from active job postings (demand side)
-  const { data: activeJobs } = await supabase
-    .from("job_postings")
-    .select("title, description, skills_required, salary_min, salary_max")
-    .eq("status", "active")
-    .limit(1000);
+  const prevDate = new Date();
+  prevDate.setMonth(prevDate.getMonth() - 1);
+  const prevMonth = prevDate.toISOString().slice(0, 7);
+
+  // All three reads are independent — run in parallel
+  const [{ data: activeJobs }, { data: candidateSkills }, { data: prevData }] = await Promise.all([
+    supabase
+      .from("job_postings")
+      .select("title, description, skills_required, salary_min, salary_max")
+      .eq("status", "active")
+      .limit(1000),
+    supabase
+      .from("candidate_skills")
+      .select("skill_normalized")
+      .limit(5000),
+    supabase
+      .from("skill_demand")
+      .select("normalized_skill, demand_count")
+      .eq("month", prevMonth),
+  ]);
 
   const skillCounts = new Map<string, {
     demand: number;
@@ -131,36 +145,19 @@ export async function refreshSkillDemand(): Promise<{ processed: number }> {
     }
   }
 
-  // Count supply from candidate_skills
-  const { data: candidateSkills } = await supabase
-    .from("candidate_skills")
-    .select("skill_normalized")
-    .limit(5000);
-
   const supplyCounts = new Map<string, number>();
   for (const cs of candidateSkills || []) {
     const normalized = (cs.skill_normalized || "").toLowerCase().trim();
     supplyCounts.set(normalized, (supplyCounts.get(normalized) || 0) + 1);
   }
 
-  // Get previous month data for trend calculation
-  const prevDate = new Date();
-  prevDate.setMonth(prevDate.getMonth() - 1);
-  const prevMonth = prevDate.toISOString().slice(0, 7);
-
-  const { data: prevData } = await supabase
-    .from("skill_demand")
-    .select("normalized_skill, demand_count")
-    .eq("month", prevMonth);
-
   const prevCounts = new Map<string, number>();
   for (const p of prevData || []) {
     prevCounts.set(p.normalized_skill, p.demand_count);
   }
 
-  // Upsert current month data
-  let processed = 0;
-  for (const [skill, data] of skillCounts) {
+  // Batch upsert all skills at once instead of one-at-a-time
+  const upsertRows = Array.from(skillCounts).map(([skill, data]) => {
     const prevCount = prevCounts.get(skill) || 0;
     const trend = prevCount > 0
       ? Math.round(((data.demand - prevCount) / prevCount) * 100)
@@ -170,22 +167,24 @@ export async function refreshSkillDemand(): Promise<{ processed: number }> {
       ? Math.round(data.salaries.reduce((a, b) => a + b, 0) / data.salaries.length)
       : null;
 
-    await supabase.from("skill_demand").upsert(
-      {
-        skill_name: skill,
-        normalized_skill: skill,
-        demand_count: data.demand,
-        supply_count: supplyCounts.get(skill) || 0,
-        demand_trend: trend,
-        avg_salary: avgSalary,
-        top_roles: Array.from(data.roles).slice(0, 5),
-        month: currentMonth,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "normalized_skill,month" }
-    );
-    processed++;
+    return {
+      skill_name: skill,
+      normalized_skill: skill,
+      demand_count: data.demand,
+      supply_count: supplyCounts.get(skill) || 0,
+      demand_trend: trend,
+      avg_salary: avgSalary,
+      top_roles: Array.from(data.roles).slice(0, 5),
+      month: currentMonth,
+      updated_at: new Date().toISOString(),
+    };
+  });
+
+  if (upsertRows.length > 0) {
+    await supabase
+      .from("skill_demand")
+      .upsert(upsertRows, { onConflict: "normalized_skill,month" });
   }
 
-  return { processed };
+  return { processed: upsertRows.length };
 }

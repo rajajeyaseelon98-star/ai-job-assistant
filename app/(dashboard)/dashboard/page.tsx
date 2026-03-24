@@ -1,7 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
-import { getUser } from "@/lib/auth";
-import { getUsageSummary } from "@/lib/usage";
-import { redirect } from "next/navigation";
+"use client";
+
+import { Suspense, useMemo, lazy } from "react";
+import { useDashboardStats } from "@/hooks/queries/use-dashboard";
 import { ScoreCard } from "@/components/dashboard/ScoreCard";
 import { JobMatchAvgCard } from "@/components/dashboard/JobMatchAvgCard";
 import { UsageCard } from "@/components/dashboard/UsageCard";
@@ -10,122 +10,134 @@ import { StartHereChecklist } from "@/components/dashboard/StartHereChecklist";
 import { StartHereActions } from "@/components/dashboard/StartHereActions";
 import { ExploreMoreActions } from "@/components/dashboard/ExploreMoreActions";
 import { ActivityList } from "@/components/dashboard/ActivityList";
-import { StreakWidget } from "@/components/dashboard/StreakWidget";
-import { DailyActions } from "@/components/dashboard/DailyActions";
-import { OpportunityAlerts } from "@/components/dashboard/OpportunityAlerts";
+import { CardRowSkeleton, SectionSkeleton, ListSkeleton } from "@/components/ui/SectionSkeleton";
 
-export const dynamic = "force-dynamic";
+const StreakWidget = lazy(() =>
+  import("@/components/dashboard/StreakWidget").then((m) => ({ default: m.StreakWidget }))
+);
+const DailyActions = lazy(() =>
+  import("@/components/dashboard/DailyActions").then((m) => ({ default: m.DailyActions }))
+);
+const OpportunityAlerts = lazy(() =>
+  import("@/components/dashboard/OpportunityAlerts").then((m) => ({ default: m.OpportunityAlerts }))
+);
 
-export default async function DashboardPage() {
-  const user = await getUser();
-  if (!user) redirect("/login");
+function DashboardHeader({ userName }: { userName: string | null }) {
+  const greeting = userName ? `, ${userName}` : "";
+  return (
+    <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900 lg:text-3xl">
+      Welcome back{greeting} <span aria-hidden>👋</span>
+    </h1>
+  );
+}
 
-  const planType = user.profile?.plan_type ?? "free";
-  const usage = await getUsageSummary(user.id, planType);
+function DashboardStats() {
+  const { data, isLoading } = useDashboardStats();
 
-  const supabase = await createClient();
-  const { data: analyses } = await supabase
-    .from("resume_analysis")
-    .select("id, score, created_at")
-    .order("created_at", { ascending: false })
-    .limit(5);
+  if (isLoading || !data) return <CardRowSkeleton />;
 
-  const { data: matches } = await supabase
-    .from("job_matches")
-    .select("id, match_score, job_title, created_at")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(5);
+  const latestScore = data.analyses?.[0]?.score ?? null;
+  const planType = (data.planType ?? "free") as "free" | "pro" | "premium";
+  const usage = data.usage as Record<string, { used: number; limit: number }>;
 
-  const { data: coverLetters } = await supabase
-    .from("cover_letters")
-    .select("id, company_name, created_at")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(5);
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+      <Suspense fallback={<div className="h-28 animate-pulse rounded-xl border border-slate-200 bg-slate-100/60" />}>
+        <StreakWidget />
+      </Suspense>
+      <ScoreCard score={latestScore} />
+      <JobMatchAvgCard avgScore={data.avgMatchScore} />
+      <UsageCard
+        resume={usage?.resume_analysis ?? { used: 0, limit: 2 }}
+        jobMatch={usage?.job_match ?? { used: 0, limit: 1 }}
+        coverLetter={usage?.cover_letter ?? { used: 0, limit: 1 }}
+        isPro={planType === "pro" || planType === "premium"}
+      />
+    </div>
+  );
+}
 
-  const { count: applicationCount } = await supabase
-    .from("applications")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id);
+function DashboardChecklist() {
+  const { data } = useDashboardStats();
+  if (!data) return null;
 
-  const { data: avgRow } = await supabase
-    .from("job_matches")
-    .select("match_score")
-    .eq("user_id", user.id)
-    .limit(1000);
-  const matchScores = (avgRow ?? []).map((r) => r.match_score).filter((n) => typeof n === "number");
-  const avgMatchScore = matchScores.length > 0
-    ? matchScores.reduce((a, b) => a + b, 0) / matchScores.length
-    : null;
+  const latestScore = data.analyses?.[0]?.score ?? null;
+  const hasMatch = (data.matches?.length ?? 0) > 0;
+  const hasTrackedApplication = (data.applicationCount ?? 0) > 0;
 
-  const latestScore = analyses?.[0]?.score ?? null;
-  const hasMatch = (matches?.length ?? 0) > 0;
-  const hasTrackedApplication = (applicationCount ?? 0) > 0;
-  const activityItems = [
-    ...(analyses?.map((a) => ({
-      id: a.id,
-      type: "resume_analysis" as const,
-      title: "Resume analyzed",
-      subtitle: `Score ${a.score}%`,
-      date: new Date(a.created_at).toLocaleDateString(),
-      _sortDate: a.created_at,
-    })) ?? []),
-    ...(matches?.map((m) => ({
-      id: m.id,
-      type: "job_match" as const,
-      title: "Job match",
-      subtitle: m.job_title ? `${m.job_title} ${m.match_score}%` : `Match ${m.match_score}%`,
-      date: new Date(m.created_at).toLocaleDateString(),
-      _sortDate: m.created_at,
-    })) ?? []),
-    ...(coverLetters?.map((c) => ({
-      id: c.id,
-      type: "cover_letter" as const,
-      title: "Cover letter generated",
-      subtitle: c.company_name || "Cover letter",
-      date: new Date(c.created_at).toLocaleDateString(),
-      _sortDate: c.created_at,
-    })) ?? []),
-  ]
-    .sort((a, b) => new Date(b._sortDate).getTime() - new Date(a._sortDate).getTime())
-    .slice(0, 8);
+  return (
+    <StartHereChecklist
+      hasAtsScore={latestScore !== null}
+      hasJobMatch={hasMatch}
+      hasTrackedApplication={hasTrackedApplication}
+    />
+  );
+}
+
+function RecentActivity() {
+  const { data } = useDashboardStats();
+
+  const activityItems = useMemo(() => {
+    if (!data) return [];
+    return [
+      ...(data.analyses?.map((a) => ({
+        id: a.id,
+        type: "resume_analysis" as const,
+        title: "Resume analyzed",
+        subtitle: `Score ${a.score}%`,
+        date: new Date(a.created_at).toLocaleDateString(),
+        _sortDate: a.created_at,
+      })) ?? []),
+      ...(data.matches?.map((m) => ({
+        id: m.id,
+        type: "job_match" as const,
+        title: "Job match",
+        subtitle: m.job_title ? `${m.job_title} ${m.match_score}%` : `Match ${m.match_score}%`,
+        date: new Date(m.created_at).toLocaleDateString(),
+        _sortDate: m.created_at,
+      })) ?? []),
+      ...(data.coverLetters?.map((c) => ({
+        id: c.id,
+        type: "cover_letter" as const,
+        title: "Cover letter generated",
+        subtitle: c.company_name || "Cover letter",
+        date: new Date(c.created_at).toLocaleDateString(),
+        _sortDate: c.created_at,
+      })) ?? []),
+    ]
+      .sort((a, b) => new Date(b._sortDate).getTime() - new Date(a._sortDate).getTime())
+      .slice(0, 8);
+  }, [data]);
+
+  if (!data) return <ListSkeleton rows={3} />;
+
+  return <ActivityList items={activityItems} />;
+}
+
+export default function DashboardPage() {
+  const { data } = useDashboardStats();
 
   return (
     <div className="space-y-5 sm:space-y-6 md:space-y-8">
-      <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900 lg:text-3xl">
-        Welcome back{user?.profile?.name ? `, ${user.profile.name}` : user?.profile?.email ? `, ${user.profile.email.split("@")[0]}` : ""}{" "}
-        <span aria-hidden>👋</span>
-      </h1>
+      <DashboardHeader userName={data?.userName ?? null} />
 
       <div className="mb-8">
         <ProductNarrativeBanner />
       </div>
 
-      <StartHereChecklist
-        hasAtsScore={latestScore !== null}
-        hasJobMatch={hasMatch}
-        hasTrackedApplication={hasTrackedApplication}
-      />
+      <DashboardChecklist />
 
-      {/* Streak + Score Cards Row */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
-        <StreakWidget />
-        <ScoreCard score={latestScore} />
-        <JobMatchAvgCard avgScore={avgMatchScore} />
-        <UsageCard
-          resume={usage.resume_analysis}
-          jobMatch={usage.job_match}
-          coverLetter={usage.cover_letter}
-          isPro={planType === "pro" || planType === "premium"}
-        />
-      </div>
+      {/* Stats row — each card can load independently */}
+      <DashboardStats />
 
-      {/* Opportunity Alerts */}
-      <OpportunityAlerts />
+      {/* These sections fetch their own data independently — stream in via Suspense */}
+      <Suspense fallback={<SectionSkeleton height="h-32" />}>
+        <OpportunityAlerts />
+      </Suspense>
 
-      {/* Daily Action Plan */}
-      <DailyActions />
+      <Suspense fallback={<SectionSkeleton height="h-48" />}>
+        <DailyActions />
+      </Suspense>
 
       <div>
         <h2 className="font-display mb-2 text-lg font-semibold text-slate-900 sm:text-xl">Start here</h2>
@@ -145,7 +157,7 @@ export default async function DashboardPage() {
 
       <div>
         <h2 className="font-display mb-4 text-lg font-semibold text-slate-900 sm:text-xl">Recent Activity</h2>
-        <ActivityList items={activityItems} />
+        <RecentActivity />
       </div>
     </div>
   );

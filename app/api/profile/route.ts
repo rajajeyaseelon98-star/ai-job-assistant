@@ -21,27 +21,25 @@ export async function GET() {
     return NextResponse.json({ error: "Profile not found" }, { status: 404 });
   }
 
-  // Get skill badges
-  const { data: badges } = await supabase
-    .from("skill_badges")
-    .select("skill_name, level, years_experience, verified")
-    .eq("user_id", user.id)
-    .order("years_experience", { ascending: false })
-    .limit(20);
-
-  // Get resume count and best ATS score
-  const { count: resumeCount } = await supabase
-    .from("resumes")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id);
-
-  const { data: bestAnalysis } = await supabase
-    .from("resume_analysis")
-    .select("score, resumes!inner(user_id)")
-    .eq("resumes.user_id", user.id)
-    .order("score", { ascending: false })
-    .limit(1)
-    .single();
+  const [{ data: badges }, { count: resumeCount }, { data: bestAnalysis }] = await Promise.all([
+    supabase
+      .from("skill_badges")
+      .select("skill_name, level, years_experience, verified")
+      .eq("user_id", user.id)
+      .order("years_experience", { ascending: false })
+      .limit(20),
+    supabase
+      .from("resumes")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id),
+    supabase
+      .from("resume_analysis")
+      .select("score, resumes!inner(user_id)")
+      .eq("resumes.user_id", user.id)
+      .order("score", { ascending: false })
+      .limit(1)
+      .single(),
+  ]);
 
   return NextResponse.json({
     ...profile,
@@ -79,24 +77,23 @@ export async function PATCH(request: Request) {
     await ensurePublicSlug(user.id, name);
   }
 
-  // Calculate profile strength
-  const { data: skillBadges } = await supabase
-    .from("skill_badges")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id);
-
-  const { count: resumeCount } = await supabase
-    .from("resumes")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id);
-
-  const { data: bestScore } = await supabase
-    .from("resume_analysis")
-    .select("score, resumes!inner(user_id)")
-    .eq("resumes.user_id", user.id)
-    .order("score", { ascending: false })
-    .limit(1)
-    .single();
+  const [{ data: skillBadges }, { count: resumeCount }, { data: bestScore }] = await Promise.all([
+    supabase
+      .from("skill_badges")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id),
+    supabase
+      .from("resumes")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id),
+    supabase
+      .from("resume_analysis")
+      .select("score, resumes!inner(user_id)")
+      .eq("resumes.user_id", user.id)
+      .order("score", { ascending: false })
+      .limit(1)
+      .single(),
+  ]);
 
   updates.profile_strength = calculateProfileStrength({
     name: user.profile?.name,

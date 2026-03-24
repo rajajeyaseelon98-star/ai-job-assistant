@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Send, Loader2, MessageSquare } from "lucide-react";
 import type { Message } from "@/types/recruiter";
+import { useRecruiterMessages, useSendMessage } from "@/hooks/queries/use-recruiter";
 
 export default function MessagesPage() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(true);
   const [receiverId, setReceiverId] = useState("");
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
@@ -14,12 +13,9 @@ export default function MessagesPage() {
   const [error, setError] = useState("");
   const [showCompose, setShowCompose] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/recruiter/messages")
-      .then((r) => (r.ok ? r.json() : []))
-      .then(setMessages)
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: messagesRaw, isLoading: loading } = useRecruiterMessages();
+  const messages = (messagesRaw ?? []) as Message[];
+  const sendMutation = useSendMessage();
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -30,28 +26,14 @@ export default function MessagesPage() {
     setSending(true);
     setError("");
     try {
-      const res = await fetch("/api/recruiter/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          receiver_id: receiverId.trim(),
-          subject: subject.trim() || null,
-          content: content.trim(),
-        }),
+      await sendMutation.mutateAsync({
+        receiver_id: receiverId.trim(),
+        subject: subject.trim() || null,
+        content: content.trim(),
       });
-      if (res.ok) {
-        const msg = await res.json();
-        setMessages((prev) => [msg, ...prev]);
-        setReceiverId("");
-        setSubject("");
-        setContent("");
-        setShowCompose(false);
-      } else {
-        const data = await res.json();
-        setError(data.error || "Send failed");
-      }
-    } catch {
-      setError("Failed to send");
+      setReceiverId(""); setSubject(""); setContent(""); setShowCompose(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send");
     } finally {
       setSending(false);
     }

@@ -1,29 +1,40 @@
-import { redirect } from "next/navigation";
-import { getUser } from "@/lib/auth";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { RecruiterSidebar } from "./RecruiterSidebar";
 import { RecruiterTopbar } from "./RecruiterTopbar";
+import { useRecruiterUser } from "@/hooks/queries/use-recruiter";
+import { PageLoading } from "@/components/ui/PageLoading";
 
-export default async function RecruiterLayout({
+export default function RecruiterLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getUser();
-  if (!user) {
-    redirect("/login?next=" + encodeURIComponent("/recruiter"));
-  }
+  const router = useRouter();
+  const { data: userData, isLoading } = useRecruiterUser();
+  const user = userData as Record<string, unknown> | undefined;
+  const role = user?.role as string | undefined;
+  const userName = (user?.name as string) || (user?.email as string) || "";
 
-  // If user hasn't set role to recruiter, redirect to role selection
-  if (user.profile?.role !== "recruiter") {
-    redirect("/select-role?next=/recruiter");
-  }
+  useEffect(() => {
+    if (!isLoading && (!user || role !== "recruiter")) {
+      router.replace("/select-role?next=/recruiter");
+    }
+  }, [isLoading, user, role, router]);
+
+  if (isLoading) return <PageLoading titleWidth="w-48" />;
+  if (!user || role !== "recruiter") return <PageLoading titleWidth="w-48" />;
 
   return (
     <div className="min-h-screen bg-background">
       <RecruiterSidebar />
       <div className="lg:pl-[240px]">
-        <RecruiterTopbar userName={user.profile?.name || user.email} />
-        <main className="px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 lg:px-8">{children}</main>
+        <RecruiterTopbar userName={userName} />
+        <main className="px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 lg:px-8">
+          {children}
+        </main>
       </div>
     </div>
   );

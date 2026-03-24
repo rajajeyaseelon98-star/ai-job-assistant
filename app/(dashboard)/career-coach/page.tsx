@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useCareerCoach } from "@/hooks/queries/use-career-coach";
 import {
   Brain,
   Loader2,
@@ -58,16 +58,7 @@ const SEVERITY_STYLES: Record<string, string> = {
 };
 
 export default function CareerCoachPage() {
-  const [data, setData] = useState<CareerDiagnosis | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/career-coach")
-      .then((r) => (r.ok ? r.json() : null))
-      .then(setData)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, isLoading: loading } = useCareerCoach();
 
   if (loading) {
     return (

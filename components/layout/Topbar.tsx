@@ -3,8 +3,11 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { ChevronDown, User, CreditCard, LogOut } from "lucide-react";
+import { useUsage } from "@/hooks/queries/use-smart-apply";
+import { useUser } from "@/hooks/queries/use-user";
 
 const USAGE_UPDATED_EVENT = "usage-updated";
 
@@ -22,35 +25,27 @@ interface UsageSummary {
 }
 
 interface TopbarProps {
-  planType: "free" | "pro" | "premium";
-  usage?: UsageSummary;
+  planType?: "free" | "pro" | "premium";
 }
 
-export function Topbar({ planType, usage: initialUsage }: TopbarProps) {
+export function Topbar({ planType: propPlanType }: TopbarProps) {
   const [open, setOpen] = useState(false);
-  const [usage, setUsage] = useState<UsageSummary | null>(initialUsage ?? null);
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { data: userData } = useUser();
+  const { data: queryUsage } = useUsage();
+
+  const planType = userData?.plan_type ?? propPlanType ?? "free";
+  const usage = (queryUsage as unknown as UsageSummary) ?? null;
 
   useEffect(() => {
-    if (initialUsage) setUsage(initialUsage);
-  }, [initialUsage]);
-
-  useEffect(() => {
-    function fetchUsage() {
-      fetch("/api/usage")
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => {
-          if (data) setUsage(data);
-        })
-        .catch(() => {});
-    }
     function onUsageUpdated() {
-      fetchUsage();
+      queryClient.invalidateQueries({ queryKey: ["shared", "usage"] });
     }
     window.addEventListener(USAGE_UPDATED_EVENT, onUsageUpdated);
     return () => window.removeEventListener(USAGE_UPDATED_EVENT, onUsageUpdated);
-  }, []);
+  }, [queryClient]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -74,9 +69,7 @@ export function Topbar({ planType, usage: initialUsage }: TopbarProps) {
 
   return (
     <header className="sticky top-0 z-20 flex min-h-14 items-center gap-2 border-b border-slate-200 bg-white/80 px-4 shadow-sm backdrop-blur-md sm:px-6">
-      {/* Left side: spacer for hamburger on mobile + usage info */}
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-        {/* Spacer for hamburger button on mobile */}
         <div className="w-8 shrink-0 lg:hidden" />
         <div className="flex items-center gap-2 md:hidden">
           <span className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 text-slate-600 text-[11px] font-medium tracking-wide px-3 py-1 rounded-full">
@@ -106,7 +99,6 @@ export function Topbar({ planType, usage: initialUsage }: TopbarProps) {
       <p className="hidden max-w-md flex-[2] truncate text-center font-sans text-[11px] leading-snug text-slate-500 lg:block xl:max-w-lg xl:text-xs">
         Up to <span className="font-semibold text-slate-800">3× more interviews</span> — we help you apply, not only advise.
       </p>
-      {/* Right side: user dropdown */}
       <div className="relative flex min-w-0 flex-1 justify-end" ref={ref}>
         <button
           type="button"

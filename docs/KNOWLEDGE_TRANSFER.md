@@ -2,7 +2,7 @@
 
 **Purpose:** Single source of truth for how the app works. Update this doc whenever you change routes, APIs, components, lib, or database.
 
-**Last updated:** 2026-03-07 (Dashboard **Start here** vs **Explore more**, 3-step checklist, product narrative banner + topbar hook, sidebar **Explore more** group, shared `PageLoading`, improved-resume normalization + fixed UI sections, Smart Auto-Apply plan/limit copy, friendly API errors, job finder Phase 2+ roadmap note).
+**Last updated:** 2026-03-24 (Migrated `/applications`, `/smart-apply`, `/auto-apply` pages from raw fetch+useEffect to TanStack Query hooks. Added client data layer description to §1.)
 
 **Product strategy & UX priorities** (positioning, focus, page-level UX backlog): see **`docs/PRODUCT_STRATEGY_UX.md`**. This KT doc describes *implementation*; that doc describes *what to lead with* and *what to simplify*.
 
@@ -10,7 +10,8 @@
 
 ## 1. Project overview
 
-- **Stack:** Next.js 15 (App Router), React 18, TypeScript, Supabase (Auth + Postgres), Tailwind CSS.
+- **Stack:** Next.js 15 (App Router), React 18, TypeScript, Supabase (Auth + Postgres), Tailwind CSS, TanStack Query (React Query) for client data fetching/mutations.
+- **Client data layer:** `lib/query-provider.tsx` wraps the app with `QueryClientProvider`. Reusable hooks in `hooks/queries/` (`use-applications`, `use-smart-apply`, `use-auto-apply`, `use-streak`, `use-daily-actions`, `use-opportunity-alerts`, etc.) encapsulate `useQuery`/`useMutation` with `apiFetch` (`lib/api-fetcher.ts`). Pages consume these hooks instead of raw `fetch`+`useEffect`+`useState`.
 - **AI:** Gemini (primary) and OpenAI (fallback on 429/quota). See `lib/ai.ts`. Cached wrappers (`cachedAiGenerate`, `cachedAiGenerateContent`) in `lib/ai.ts` check `ai_cache` table before calling AI, reducing costs 30-50%.
 - **Main flows:** Resume upload & ATS analysis, **Quick Resume Builder** (`/resume-builder` → draft into Resume Analyzer via `sessionStorage`), resume improve (Pro), job match, cover letter, interview prep, **auto job finder**, **AI auto-apply** (killer feature), **smart auto-apply** (set & forget), **resume tailoring**, **application tracker**, **LinkedIn import**. Usage is tracked per feature; free plan has limits.
 - **Improved resume JSON:** `/api/improve-resume` and LinkedIn import responses are passed through **`normalizeImprovedResumeContent`** (`lib/normalizeImprovedResume.ts`); **`ImprovedResumeView`** always renders five sections (Summary, Skills, Experience, Projects, Education) with recovery copy when empty.
@@ -177,7 +178,7 @@ When the browser shows **`GET .../auth/v1/authorize?provider=google ... 400 (Bad
 
 ## 5. API routes (behavior and data flow)
 
-All protected APIs use `getUser()`; 401 if no user. Many use `checkRateLimit(user.id)` and return 429 when not allowed. Feature-gated routes use `canUseFeature` and `logUsage`.
+All protected APIs use `getUser()`; 401 if no user. Many use `checkRateLimit(user.id)` and return 429 when not allowed. Feature-gated routes use `canUseFeature` and `logUsage`. **AI caching:** `/api/interview-prep`, `/api/import-linkedin`, `/api/auto-jobs`, `/api/recruiter/salary-estimate`, `/api/recruiter/jobs/generate-description`, `/api/recruiter/applications/[id]/screen`, `/api/recruiter/skill-gap`, `/api/recruiter/jobs/[id]/optimize`, and `/api/recruiter/jobs/[id]/auto-shortlist` use `cachedAiGenerate` (same arguments/JSON as uncached; cache hits read `ai_cache`).
 
 | Route | Method | Purpose |
 |-------|--------|--------|
@@ -275,10 +276,11 @@ All protected APIs use `getUser()`; 401 if no user. Many use `checkRateLimit(use
 | Interview Prep | `/interview-prep` | Form (role, level, resume); InterviewQuestions. |
 | History | `/history` | Server: lists resume_analysis, job_matches, improved_resumes, cover_letters (each by user_id; resume_analysis has no user_id column – RLS only). HistoryImprovedResumeSection receives loadError from query; shows error or empty hint. |
 | Auto Job Finder | `/job-finder` | Client: upload/paste resume + optional location; calls /api/auto-jobs; shows SkillsOverview (extracted skills) + JobResults (job cards with apply links, source filter). |
+| AI Auto-Apply | `/auto-apply` | Client: Uses `usePastRuns`, `useStartAutoApply` hooks for list/start. Polling for run status updates still uses raw fetch (transient state). AutoApplyForm → AutoApplyProgress → AutoApplyResults flow. Past runs list. |
 | Resume Tailoring | `/tailor-resume` | Client: upload/paste resume + paste job description; calls existing /api/improve-resume with jobTitle + jobDescription; renders ImprovedResumeView with download options. |
 | LinkedIn Import | `/import-linkedin` | Client: upload LinkedIn PDF or paste profile text; calls /api/import-linkedin; renders ImprovedResumeView. |
-| Smart Auto-Apply | `/smart-apply` | Client: Pro feature. Configure rules (match score slider, salary range, roles, locations, remote toggle, daily/weekly limits). View active rules with stats (total applied, total runs). Toggle enable/disable. How-it-works section. |
-| Applications | `/applications` | Client: CRUD application tracker with board (Kanban) and list views; stats row; status filter; inline status change. |
+| Smart Auto-Apply | `/smart-apply` | Client: Pro feature. Uses `useSmartApplyRules`, `useResumes`, `useUsage`, `useSaveSmartApplyRule`, `useToggleSmartApplyRule` hooks. Configure rules (match score slider, salary range, roles, locations, remote toggle, daily/weekly limits). View active rules with stats (total applied, total runs). Toggle enable/disable. How-it-works section. |
+| Applications | `/applications` | Client: Uses `useApplications`, `useDeleteApplication`, `useUpdateApplicationStatus` hooks. CRUD application tracker with board (Kanban) and list views; stats row; status filter; inline status change. |
 | Career Analytics | `/analytics` | Client: AI-powered insights dashboard. Key metrics (applications, interviews, offers, avg response time). Conversion funnel (Saved→Applied→Interview→Offer). AI recommendations. Skills that get interviews vs roles to reconsider. Learning system status with dynamic weights. |
 | Activity Feed | `/activity` | Client: Tabs for "My Activity" (personal) and "Community" (public milestones). Platform stats social proof banner (6 metrics). Activity timeline with typed icons and colors. |
 | Salary Insights | `/salary-insights` | Client: Search by job title + location + experience. Shows salary range (min/avg/max), percentile distribution bar, trend (rising/stable/declining), comparable roles. |

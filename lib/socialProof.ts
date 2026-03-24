@@ -41,39 +41,32 @@ export async function getPlatformStats(): Promise<PlatformStats> {
 export async function refreshPlatformStats(): Promise<PlatformStats> {
   const supabase = await createClient();
 
-  // Count users
-  const { count: totalUsers } = await supabase
-    .from("users")
-    .select("*", { count: "exact", head: true });
-
-  // Count applications
-  const { count: totalApps } = await supabase
-    .from("job_applications")
-    .select("*", { count: "exact", head: true });
-
-  // Count interviews (stage = interviewed or later)
-  const { count: totalInterviews } = await supabase
-    .from("job_applications")
-    .select("*", { count: "exact", head: true })
-    .in("stage", ["interviewed", "offer_sent", "hired"]);
-
-  // Count hires
-  const { count: totalHires } = await supabase
-    .from("job_applications")
-    .select("*", { count: "exact", head: true })
-    .eq("stage", "hired");
-
-  // Count improved resumes
-  const { count: totalImproved } = await supabase
-    .from("improved_resumes")
-    .select("*", { count: "exact", head: true });
-
-  // Average match score
-  const { data: scoreData } = await supabase
-    .from("job_applications")
-    .select("match_score")
-    .not("match_score", "is", null)
-    .limit(1000);
+  // Run all 6 independent aggregate queries in parallel
+  const [
+    { count: totalUsers },
+    { count: totalApps },
+    { count: totalInterviews },
+    { count: totalHires },
+    { count: totalImproved },
+    { data: scoreData },
+  ] = await Promise.all([
+    supabase.from("users").select("*", { count: "exact", head: true }),
+    supabase.from("job_applications").select("*", { count: "exact", head: true }),
+    supabase
+      .from("job_applications")
+      .select("*", { count: "exact", head: true })
+      .in("stage", ["interviewed", "offer_sent", "hired"]),
+    supabase
+      .from("job_applications")
+      .select("*", { count: "exact", head: true })
+      .eq("stage", "hired"),
+    supabase.from("improved_resumes").select("*", { count: "exact", head: true }),
+    supabase
+      .from("job_applications")
+      .select("match_score")
+      .not("match_score", "is", null)
+      .limit(1000),
+  ]);
 
   let avgScore = 0;
   if (scoreData && scoreData.length > 0) {
