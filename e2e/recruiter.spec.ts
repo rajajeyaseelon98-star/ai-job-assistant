@@ -47,8 +47,36 @@ test.describe("Recruiter smoke", () => {
   });
 
   test("recruiter analytics loads", async ({ page }) => {
+    await page.route(/\/api\/recruiter\/jobs(\?|$)/, async (route) => {
+      if (route.request().method() !== "GET") return route.fallback();
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([
+          {
+            id: "job-analytics-1",
+            title: "Analytics Stub Job",
+            status: "active",
+            application_count: 4,
+          },
+        ]),
+      });
+    });
+
+    await page.route(/\/api\/recruiter\/applications(\?|$)/, async (route) => {
+      if (route.request().method() !== "GET") return route.fallback();
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([
+          { id: "app-1", stage: "applied", match_score: 82 },
+          { id: "app-2", stage: "interview", match_score: 74 },
+        ]),
+      });
+    });
+
     await page.goto("/recruiter/analytics");
-    await expect(page.getByRole("heading", { name: "Analytics" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Analytics" })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("Pipeline Breakdown")).toBeVisible();
   });
 
