@@ -3,6 +3,9 @@ import { defineConfig, devices } from "@playwright/test";
 /** Default 3010 avoids clashing with a developer’s unrelated process on 3000 (wrong server → 404 on /api/*). */
 const port = process.env.PLAYWRIGHT_PORT ?? "3010";
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://127.0.0.1:${port}`;
+const webServerEnv = Object.fromEntries(
+  Object.entries(process.env).filter(([, value]) => value !== undefined)
+) as Record<string, string>;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -26,6 +29,6 @@ export default defineConfig({
         // Must be false so we do not attach to an old `next dev` missing E2E_MOCK_AUTH / secret.
         reuseExistingServer: false,
         timeout: 180_000,
-        env: { ...process.env },
+        env: webServerEnv,
       },
 });
