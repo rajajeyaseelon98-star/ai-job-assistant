@@ -2,6 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["pdf-parse", "mammoth"],
+  // Job board company logos come from many third-party origins; tighten hostname patterns in production if you can enumerate CDNs.
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "**" },
+      { protocol: "http", hostname: "**" },
+    ],
+  },
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion"],
   },

@@ -1,15 +1,19 @@
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
+import { getE2eMockUserApiResponse, isE2eMockUserId } from "@/lib/e2e-auth";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET() {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (isE2eMockUserId(user.id) && user.profile?.role) {
+    return NextResponse.json(getE2eMockUserApiResponse(user.profile.role));
+  }
   const supabase = await createClient();
   const [{ data: profile }, { data: prefs }] = await Promise.all([
     supabase
       .from("users")
-      .select("id, email, name, plan_type")
+      .select("id, email, name, plan_type, role")
       .eq("id", user.id)
       .single(),
     supabase
@@ -32,6 +36,9 @@ export async function GET() {
 export async function PATCH(request: Request) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (isE2eMockUserId(user.id)) {
+    return NextResponse.json({ ok: true });
+  }
 
   let body: Record<string, unknown>;
   try {

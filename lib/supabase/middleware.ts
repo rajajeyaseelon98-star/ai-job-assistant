@@ -1,5 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  buildSupabaseUserFromE2eRole,
+  readE2eMockRoleFromCookies,
+} from "@/lib/e2e-auth";
 
 type CookieTuple = { name: string; value: string; options?: Record<string, unknown> };
 
@@ -27,6 +31,10 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+  const e2eRole = readE2eMockRoleFromCookies(request.cookies);
+  const user = authUser ?? (e2eRole ? buildSupabaseUserFromE2eRole(e2eRole) : null);
   return { response: supabaseResponse, user };
 }

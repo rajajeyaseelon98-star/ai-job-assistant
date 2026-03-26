@@ -1,4 +1,6 @@
+import { buildGetUserResultFromE2eRole, readE2eMockRoleFromCookies } from "./e2e-auth";
 import { createClient } from "./supabase/server";
+import { cookies } from "next/headers";
 
 export type PlanType = "free" | "pro" | "premium";
 export type UserRole = "job_seeker" | "recruiter";
@@ -18,6 +20,13 @@ export async function getUser(): Promise<{
   email: string;
   profile: UserProfile | null;
 } | null> {
+  const cookieStore = await cookies();
+  const e2eRole = readE2eMockRoleFromCookies(cookieStore);
+  if (e2eRole) {
+    const u = buildGetUserResultFromE2eRole(e2eRole);
+    return { ...u, profile: u.profile as UserProfile };
+  }
+
   const supabase = await createClient();
   const {
     data: { user },

@@ -19,11 +19,10 @@ export default function AnalyticsPage() {
   const { data: appsRaw, isLoading: appsLoading, error: appsError } = useRecruiterApplications();
   const loading = jobsLoading || appsLoading;
 
-  const jobsArr = Array.isArray(jobsRaw) ? jobsRaw as Record<string, unknown>[] : [];
-  const appsArr = Array.isArray(appsRaw) ? appsRaw as Record<string, unknown>[] : [];
-
   const data = useMemo(() => {
     if (loading) return null;
+    const jobsArr = Array.isArray(jobsRaw) ? (jobsRaw as Record<string, unknown>[]) : [];
+    const appsArr = Array.isArray(appsRaw) ? (appsRaw as Record<string, unknown>[]) : [];
     const stageBreakdown: Record<string, number> = {};
     let totalScore = 0;
     let scoreCount = 0;
@@ -50,7 +49,7 @@ export default function AnalyticsPage() {
       topJobs,
       hiringRate,
     };
-  }, [jobsArr, appsArr, loading]);
+  }, [jobsRaw, appsRaw, loading]);
 
   if (loading) return <p className="text-sm text-slate-500">Loading analytics...</p>;
   if (jobsError || appsError || !data) return <p className="text-sm text-red-500">Failed to load analytics.</p>;

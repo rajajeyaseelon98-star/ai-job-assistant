@@ -2,7 +2,7 @@
 
 **Purpose:** Single source of truth for how the app works. Update this doc whenever you change routes, APIs, components, lib, or database.
 
-**Last updated:** 2026-03-24 (Migrated `/applications`, `/smart-apply`, `/auto-apply` pages from raw fetch+useEffect to TanStack Query hooks. Added client data layer description to §1.)
+**Last updated:** 2026-03-26 (GitHub Actions runs E2E with cached Playwright browsers. Playwright E2E uses **cookie mock auth** in `lib/e2e-auth.ts` in **non-production** when mock cookies + fixed secret `E2E_MOCK_DEFAULT_SECRET` match; `updateSession` and `getUser()` treat valid mock cookies as a signed-in user; `GET`/`PATCH` `/api/user` short-circuit DB for mock IDs. Playwright uses `serviceWorkers: "block"` and precise API stubs — see `docs/TEST_PLAN_E2E.md`.)
 
 **Product strategy & UX priorities** (positioning, focus, page-level UX backlog): see **`docs/PRODUCT_STRATEGY_UX.md`**. This KT doc describes *implementation*; that doc describes *what to lead with* and *what to simplify*.
 
@@ -10,7 +10,7 @@
 
 ## 1. Project overview
 
-- **Stack:** Next.js 15 (App Router), React 18, TypeScript, Supabase (Auth + Postgres), Tailwind CSS, TanStack Query (React Query) for client data fetching/mutations.
+- **Stack:** Next.js 15 (App Router), React 18, TypeScript, Supabase (Auth + Postgres), Tailwind CSS, TanStack Query (React Query) for client data fetching/mutations. **Lint:** ESLint 9 flat config (`eslint.config.mjs`, extends `next/core-web-vitals`); `next build` runs lint + typecheck. **E2E:** Playwright (`playwright.config.ts`, `e2e/`); route matrix and env vars in `docs/TEST_PLAN_E2E.md`; `npm run test:e2e`. **CI:** `.github/workflows/ci.yml` runs lint, typecheck, build, and E2E (Chromium + cached Playwright browsers).
 - **Client data layer:** `lib/query-provider.tsx` wraps the app with `QueryClientProvider`. Reusable hooks in `hooks/queries/` (`use-applications`, `use-smart-apply`, `use-auto-apply`, `use-streak`, `use-daily-actions`, `use-opportunity-alerts`, etc.) encapsulate `useQuery`/`useMutation` with `apiFetch` (`lib/api-fetcher.ts`). Pages consume these hooks instead of raw `fetch`+`useEffect`+`useState`.
 - **AI:** Gemini (primary) and OpenAI (fallback on 429/quota). See `lib/ai.ts`. Cached wrappers (`cachedAiGenerate`, `cachedAiGenerateContent`) in `lib/ai.ts` check `ai_cache` table before calling AI, reducing costs 30-50%.
 - **Main flows:** Resume upload & ATS analysis, **Quick Resume Builder** (`/resume-builder` → draft into Resume Analyzer via `sessionStorage`), resume improve (Pro), job match, cover letter, interview prep, **auto job finder**, **AI auto-apply** (killer feature), **smart auto-apply** (set & forget), **resume tailoring**, **application tracker**, **LinkedIn import**. Usage is tracked per feature; free plan has limits.
@@ -49,7 +49,7 @@
 
 ### 2.1 Middleware (`middleware.ts`)
 
-- Runs on every request (except static assets). Calls `updateSession()` from `lib/supabase/middleware.ts` to refresh Supabase session cookies.
+- Runs on every request (except static assets). Calls `updateSession()` from `lib/supabase/middleware.ts` to refresh Supabase session cookies. **E2E mock auth:** in non-production, cookies `e2e-mock-role` + `e2e-mock-secret` matching `E2E_MOCK_DEFAULT_SECRET` supply a synthetic Supabase `User` if real `getUser()` is null (Playwright does not need real Supabase passwords).
 - **Protected paths:** `/dashboard`, `/resume-builder`, `/resume-analyzer`, `/job-match`, `/job-board`, `/job-finder`, `/auto-apply`, `/smart-apply`, `/tailor-resume`, `/cover-letter`, `/interview-prep`, `/import-linkedin`, `/applications`, `/analytics`, `/activity`, `/salary-insights`, `/skill-demand`, `/resume-performance`, `/career-coach`, `/streak-rewards`, `/select-role`, `/recruiter`, `/history`, `/pricing`, `/settings`, and all `/api/*` except `/api/auth`. **Public paths:** `/share/[token]` (shareable score card), `/u/[slug]` (public profile), `/results/[token]` (shareable results), `/jobs` and `/jobs/[slug]` (SEO job pages), `/salary/[slug]` and `/salary` (SEO salary pages), `/skills` (SEO skills page), `/api/platform-stats` (social proof).
 - **Behavior:** If unauthenticated on a protected path: API → 401 JSON; page → redirect to `/login?next=<path>`. If authenticated but email not confirmed (`!user.email_confirmed_at`) on a page → redirect to `/login?error=verify`.
 
@@ -60,7 +60,7 @@
 
 ### 2.3 Auth lib (`lib/auth.ts`)
 
-- **getUser():** Gets Supabase auth user; loads profile from `public.users` (id, email, name, created_at, plan_type, role). If no profile, calls `ensureUserRow` then re-selects.
+- **getUser():** If E2E mock cookies are valid (`lib/e2e-auth.ts`), returns fixed mock id/email/profile for `recruiter` or `job_seeker` without hitting Supabase Auth. Otherwise: gets Supabase auth user; loads profile from `public.users` (id, email, name, created_at, plan_type, role). If no profile, calls `ensureUserRow` then re-selects.
 - **ensureUserRow(userId, email):** Upserts into `public.users` with `plan_type: "free"`, `role: "job_seeker"`, `onConflict: "id", ignoreDuplicates: true` so existing rows are not overwritten.
 - **UserRole:** `"job_seeker" | "recruiter"` type. User profile includes `role` field.
 

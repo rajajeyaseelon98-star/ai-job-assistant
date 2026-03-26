@@ -23,7 +23,20 @@ export async function GET(request: Request) {
           .eq("id", data.user.id);
       }
 
-      return NextResponse.redirect(`${origin}${next}`);
+      // Role-aware redirect: if landing on default /dashboard, check actual role
+      let redirectPath = next;
+      if (next === "/dashboard" && !role) {
+        const { data: userRow } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", data.user.id)
+          .single();
+        if (userRow?.role === "recruiter") {
+          redirectPath = "/recruiter";
+        }
+      }
+
+      return NextResponse.redirect(`${origin}${redirectPath}`);
     }
   }
 

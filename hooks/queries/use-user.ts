@@ -7,6 +7,7 @@ export interface UserData {
   id: string;
   email: string;
   name: string | null;
+  role: "job_seeker" | "recruiter";
   plan_type: "free" | "pro" | "premium";
   preferences: {
     experience_level: string | null;

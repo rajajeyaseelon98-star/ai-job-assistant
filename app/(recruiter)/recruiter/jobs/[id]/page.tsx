@@ -52,7 +52,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
     setEmploymentType((job.employment_type as EmploymentType) || "full_time");
     setStatus((job.status as JobStatus) || "draft");
     setApplicationCount((job.application_count as number) || 0);
-  }, [jobData]);
+  }, [jobData, loadError]);
 
   async function generateDescription() {
     if (!title.trim()) { setError("Enter a job title first"); return; }

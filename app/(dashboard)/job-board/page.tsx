@@ -15,6 +15,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 
 const ReactMarkdown = dynamic(() => import("react-markdown"), {
   loading: () => <div className="h-20 animate-pulse rounded bg-slate-100" />,
@@ -309,9 +310,12 @@ export default function JobBoardPage() {
               {job.companies && (
                 <div className="mb-2 flex items-center gap-2">
                   {job.companies.logo_url ? (
-                    <img
+                    <Image
                       src={job.companies.logo_url}
                       alt=""
+                      width={24}
+                      height={24}
+                      unoptimized
                       className="h-6 w-6 rounded object-cover"
                     />
                   ) : (
@@ -431,9 +435,12 @@ export default function JobBoardPage() {
                 {selectedJob.companies && (
                   <div className="mb-3 flex items-center gap-2">
                 {selectedJob.companies.logo_url ? (
-                  <img
+                  <Image
                     src={selectedJob.companies.logo_url}
                     alt=""
+                    width={32}
+                    height={32}
+                    unoptimized
                     className="h-8 w-8 rounded object-cover"
                   />
                 ) : (

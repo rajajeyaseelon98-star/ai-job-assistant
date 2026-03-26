@@ -4,11 +4,13 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Briefcase, User, Loader2 } from "lucide-react";
 import { Suspense } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 function SelectRoleContent() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const next = searchParams.get("next") || "/dashboard";
 
   async function selectRole(role: "job_seeker" | "recruiter") {
@@ -20,6 +22,8 @@ function SelectRoleContent() {
         body: JSON.stringify({ role }),
       });
       if (res.ok) {
+        await queryClient.invalidateQueries({ queryKey: ["user"] });
+        await queryClient.invalidateQueries({ queryKey: ["recruiter", "user"] });
         router.push(role === "recruiter" ? "/recruiter" : next);
         router.refresh();
       }

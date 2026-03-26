@@ -68,7 +68,7 @@ function LoginForm() {
     setLoading(true);
     setMessage(null);
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
       setMessage({ type: "error", text: error.message });
@@ -76,7 +76,20 @@ function LoginForm() {
     }
     const next = searchParams.get("next") || "/dashboard";
     const safePath = next.startsWith("/") && !next.startsWith("//") && !next.includes("://") ? next : "/dashboard";
-    router.push(safePath);
+
+    // Role-aware redirect: if landing on default /dashboard, check actual role
+    let redirectPath = safePath;
+    if (safePath === "/dashboard" && authData.user) {
+      try {
+        const res = await fetch("/api/user");
+        if (res.ok) {
+          const userData = await res.json();
+          if (userData.role === "recruiter") redirectPath = "/recruiter";
+        }
+      } catch { /* fallback to /dashboard */ }
+    }
+
+    router.push(redirectPath);
     router.refresh();
   }
 

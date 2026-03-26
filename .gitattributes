@@ -1,0 +1,2 @@
+# E2E specs: normalize line endings so paths stay a single `e2e/` tree across OSes
+e2e/** text eol=lf
