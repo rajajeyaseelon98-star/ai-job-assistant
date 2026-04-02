@@ -4,11 +4,18 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Wand2 } from "lucide-react";
 import type { WorkType, EmploymentType } from "@/types/recruiter";
+import {
+  useCreateRecruiterJob,
+  useGenerateJobDescription,
+} from "@/hooks/queries/use-recruiter";
+import { formatApiFetchThrownError } from "@/lib/api-error";
 
 export default function NewJobPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
+  const createMut = useCreateRecruiterJob();
+  const generateMut = useGenerateJobDescription();
+  const loading = createMut.isPending;
+  const aiLoading = generateMut.isPending;
   const [error, setError] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -28,31 +35,24 @@ export default function NewJobPage() {
       setError("Enter a job title first");
       return;
     }
-    setAiLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/recruiter/jobs/generate-description", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
-          experience_level: `${experienceMin}-${experienceMax || "any"} years`,
-          work_type: workType,
-        }),
+      const data = await generateMut.mutateAsync({
+        title,
+        skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
+        work_type: workType,
+        experience_min: experienceMin,
+        experience_max: experienceMax || null,
       });
-      if (res.ok) {
-        const data = await res.json();
-        setDescription(data.description || "");
-        if (data.requirements) setRequirements(data.requirements);
-      } else {
-        const data = await res.json();
-        setError(data.error || "AI generation failed");
+      setDescription(data.description || "");
+      if (typeof data.requirements === "string" && data.requirements.trim()) {
+        setRequirements(data.requirements);
       }
-    } catch {
-      setError("Failed to generate description");
-    } finally {
-      setAiLoading(false);
+      if (Array.isArray(data.skills_required) && data.skills_required.length > 0) {
+        setSkills(data.skills_required.join(", "));
+      }
+    } catch (e) {
+      setError(formatApiFetchThrownError(e) || "Failed to generate description");
     }
   }
 
@@ -63,39 +63,26 @@ export default function NewJobPage() {
       return;
     }
 
-    setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/recruiter/jobs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          description,
-          requirements,
-          skills_required: skills.split(",").map((s) => s.trim()).filter(Boolean),
-          experience_min: parseInt(experienceMin) || 0,
-          experience_max: experienceMax ? parseInt(experienceMax) : null,
-          salary_min: salaryMin ? parseInt(salaryMin) : null,
-          salary_max: salaryMax ? parseInt(salaryMax) : null,
-          salary_currency: salaryCurrency,
-          location,
-          work_type: workType,
-          employment_type: employmentType,
-          status,
-        }),
+      await createMut.mutateAsync({
+        title,
+        description,
+        requirements,
+        skills_required: skills.split(",").map((s) => s.trim()).filter(Boolean),
+        experience_min: parseInt(experienceMin) || 0,
+        experience_max: experienceMax ? parseInt(experienceMax) : null,
+        salary_min: salaryMin ? parseInt(salaryMin) : null,
+        salary_max: salaryMax ? parseInt(salaryMax) : null,
+        salary_currency: salaryCurrency,
+        location,
+        work_type: workType,
+        employment_type: employmentType,
+        status,
       });
-
-      if (res.ok) {
-        router.push("/recruiter/jobs");
-      } else {
-        const data = await res.json();
-        setError(data.error || "Failed to create job");
-      }
-    } catch {
-      setError("Something went wrong");
-    } finally {
-      setLoading(false);
+      router.push("/recruiter/jobs");
+    } catch (e) {
+      setError(formatApiFetchThrownError(e) || "Failed to create job");
     }
   }
 

@@ -13,18 +13,20 @@ export default function RecruiterLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { data: userData, isLoading } = useRecruiterUser();
+  const { data: userData, isLoading, isFetching } = useRecruiterUser();
   const user = userData as Record<string, unknown> | undefined;
   const role = user?.role as string | undefined;
   const userName = (user?.name as string) || (user?.email as string) || "";
 
   useEffect(() => {
-    if (!isLoading && (!user || role !== "recruiter")) {
+    if (isLoading || isFetching) return;
+    if (!user || role !== "recruiter") {
       router.replace("/select-role?next=/recruiter");
     }
-  }, [isLoading, user, role, router]);
+  }, [isLoading, isFetching, user, role, router]);
 
   if (isLoading) return <PageLoading titleWidth="w-48" />;
+  // Effect waits for !isFetching before redirect so a stale cached role can refresh after switching.
   if (!user || role !== "recruiter") return <PageLoading titleWidth="w-48" />;
 
   return (

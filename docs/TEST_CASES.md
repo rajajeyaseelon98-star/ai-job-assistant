@@ -2,7 +2,7 @@
 
 **Purpose:** In-depth test cases for every feature flow. Covers happy paths, edge cases, error handling, and integration scenarios.
 
-**Last updated:** 2026-03-18
+**Last updated:** 2026-04-02 (role switch `PATCH /api/user/role`; cron trigger includes DB cleanups; new cases for `/api/dashboard`, `/api/history`, `/api/jobs/applied`, public extract/fresher routes. **Component ↔ API mapping** for manual QA: `docs/KNOWLEDGE_TRANSFER.md` §6.1–§6.3.)
 
 ---
 
@@ -46,6 +46,7 @@
 36. [Cross-Feature Integration Tests](#36-cross-feature-integration-tests)
 37. [Security & Authorization](#37-security--authorization)
 38. [Database Integrity](#38-database-integrity)
+49. [Dashboard, history, jobs applied, and public APIs](#49-dashboard-history-jobs-applied-and-public-apis)
 
 ---
 
@@ -89,7 +90,7 @@
 - **Steps:**
   1. Navigate to `/select-role`
   2. Click "Recruiter"
-- **Expected:** `PUT /api/user/role` updates `users.role = "recruiter"`. Redirect to `/recruiter`.
+- **Expected:** `PATCH /api/user/role` updates `users.role = "recruiter"`. Redirect to `/recruiter`.
 
 ### TC-1.7: Role switch from recruiter to job seeker
 - **Steps:**
@@ -1276,7 +1277,7 @@
 ### TC-35.1: Full cron trigger
 - **Steps:**
   1. POST /api/smart-apply/trigger with valid CRON_SECRET
-- **Expected:** All 6 tasks execute: smart rules, daily reports, platform stats, skill demand, auto-push, opportunity scan.
+- **Expected:** All 8 steps execute: smart rules, daily reports, platform stats, skill demand, auto-push, opportunity scan, stale `rate_limit` usage_logs cleanup, expired `ai_cache` cleanup. JSON response includes `cleanup.rate_limit_cleaned` and `cleanup.cache_cleaned`.
 
 ### TC-35.2: Invalid CRON_SECRET (production)
 - **Precondition:** NODE_ENV=production
@@ -1653,7 +1654,7 @@
 ## 45. Notification Copy Improvements (Phase 9)
 
 ### TC-45.1: Auto-Apply Notifications
-- [ ] After auto-apply confirm: title shows "X new applications sent!"
+- [ ] After auto-apply confirm: notification title includes count (e.g. "N new application(s) sent!")
 - [ ] Message includes "Your next interview could be around the corner!"
 
 ### TC-45.2: Smart Apply Notifications
@@ -1737,3 +1738,39 @@
 - [ ] On devices with `navigator.share`, uses native share dialog
 - [ ] On devices without `navigator.share`, shows "Copy to clipboard" option
 - [ ] No TypeScript or runtime errors on SSR (typeof navigator check)
+
+---
+
+## 49. Dashboard, history, jobs applied, and public APIs
+
+### TC-49.1: GET /api/dashboard
+- **Precondition:** Authenticated job seeker
+- **Steps:** Call `GET /api/dashboard`
+- **Expected:** 200 JSON with `analyses`, `matches`, `coverLetters`, `applicationCount`, `avgMatchScore`, `usage`, `userName`, `planType`. Matches TanStack `useDashboardStats` shape.
+
+### TC-49.2: GET /api/history
+- **Steps:** Call `GET /api/history`
+- **Expected:** 200 with `analyses`, `matches`, `coverLetters`, `improvedResumes` arrays (max 50 each).
+
+### TC-49.3: GET /api/upload-resume (list)
+- **Steps:** Call `GET /api/upload-resume` with session
+- **Expected:** 200 with array of `{ id, file_name, file_url, created_at }` for owned resumes.
+
+### TC-49.4: GET /api/jobs/applied
+- **Precondition:** User has applied to at least one recruiter job
+- **Steps:** Call `GET /api/jobs/applied`
+- **Expected:** 200 JSON array of `job_id` strings. No auth returns `[]` with 200 (fail-open for anonymous).
+
+### TC-49.5: POST /api/public/extract-resume
+- **Precondition:** No authentication
+- **Steps:** Multipart POST with valid PDF under 4MB
+- **Expected:** 200 with extracted `text` field. No session cookie required.
+
+### TC-49.6: POST /api/public/fresher-resume
+- **Precondition:** No authentication; valid JSON body (desired role, education, skills, projects within limits)
+- **Expected:** 200 with `resumeText` and `atsScore` (0–100). Uses AI cache where applicable.
+
+### TC-49.7: POST /api/opportunity-alerts/scan
+- **Precondition:** Authenticated user (uses `supabase.auth.getUser()` in route)
+- **Steps:** POST `/api/opportunity-alerts/scan`
+- **Expected:** 200 JSON `{ scanned: true, alertsCreated: <number> }`. 401 without session.

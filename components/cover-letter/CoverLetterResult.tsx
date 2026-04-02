@@ -2,6 +2,8 @@
 
 import { useState, useRef } from "react";
 import { FeedbackButtons } from "@/components/ui/FeedbackButtons";
+import { usePatchCoverLetter } from "@/hooks/mutations/use-cover-letter-crud";
+import { formatApiFetchThrownError } from "@/lib/api-error";
 
 interface CoverLetterResultProps {
   id: string | null;
@@ -10,11 +12,13 @@ interface CoverLetterResultProps {
 }
 
 export function CoverLetterResult({ id, text, onSaved }: CoverLetterResultProps) {
+  const patchMut = usePatchCoverLetter();
   const [copied, setCopied] = useState(false);
   const [editing, setEditing] = useState(false);
   const [content, setContent] = useState(text);
-  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const printRef = useRef<HTMLDivElement>(null);
+  const saving = patchMut.isPending;
 
   const displayText = editing ? content : text;
 
@@ -52,24 +56,22 @@ export function CoverLetterResult({ id, text, onSaved }: CoverLetterResultProps)
 
   async function saveEdit() {
     if (!id) return;
-    setSaving(true);
+    setSaveError("");
     try {
-      const res = await fetch(`/api/cover-letters/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
-      });
-      if (!res.ok) throw new Error("Failed to save");
+      await patchMut.mutateAsync({ id, content });
       setEditing(false);
       onSaved?.(content);
-    } finally {
-      setSaving(false);
+    } catch (e) {
+      setSaveError(formatApiFetchThrownError(e) || "Failed to save");
     }
   }
 
   return (
     <div>
       <h3 className="font-display text-2xl font-bold text-slate-900 mb-6">Your Cover Letter</h3>
+      {saveError ? (
+        <p className="mb-3 text-sm text-red-600">{saveError}</p>
+      ) : null}
       <div className="flex flex-wrap items-center gap-2 mb-6 bg-slate-100/50 p-1.5 rounded-xl border border-slate-200/60 inline-flex">
         <button
           type="button"
@@ -105,7 +107,11 @@ export function CoverLetterResult({ id, text, onSaved }: CoverLetterResultProps)
               </button>
               <button
                 type="button"
-                onClick={() => { setEditing(false); setContent(text); }}
+                onClick={() => {
+                  setEditing(false);
+                  setContent(text);
+                  setSaveError("");
+                }}
                 className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 shadow-sm rounded-lg px-4 py-2 text-sm font-medium transition-all flex items-center gap-2"
               >
                 Cancel

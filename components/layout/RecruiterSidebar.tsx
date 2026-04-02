@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useUser } from "@/hooks/queries/use-user";
 import {
   LayoutDashboard,
   Briefcase,
@@ -46,6 +47,9 @@ export function RecruiterSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const { data: user } = useUser();
+  // Always allow switching back to job seeker while in recruiter shell (recruiter-only users may have no company row yet).
+  const canSwitchToJobSeeker = user?.role === "recruiter";
 
   useEffect(() => {
     setOpen(false);
@@ -139,13 +143,15 @@ export function RecruiterSidebar() {
         </nav>
 
         <div className="shrink-0 border-t border-slate-200 px-3 py-3 safe-bottom">
-          <Link
-            href="/select-role?next=/dashboard"
-            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all duration-200 hover:border-indigo-200 hover:bg-slate-50 hover:text-indigo-600"
-          >
-            <ArrowLeftRight className="h-4 w-4 shrink-0" />
-            <span className="truncate">Switch to Job Seeker</span>
-          </Link>
+          {canSwitchToJobSeeker ? (
+            <Link
+              href="/select-role?next=/dashboard"
+              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all duration-200 hover:border-indigo-200 hover:bg-slate-50 hover:text-indigo-600"
+            >
+              <ArrowLeftRight className="h-4 w-4 shrink-0" />
+              <span className="truncate">Switch to Job Seeker</span>
+            </Link>
+          ) : null}
         </div>
       </aside>
     </>

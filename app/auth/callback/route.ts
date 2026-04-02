@@ -19,19 +19,20 @@ export async function GET(request: Request) {
       if (role === "recruiter" || role === "job_seeker") {
         await supabase
           .from("users")
-          .update({ role })
+          .update({ role, last_active_role: role })
           .eq("id", data.user.id);
       }
 
-      // Role-aware redirect: if landing on default /dashboard, check actual role
+      // Role-aware redirect: default /dashboard → last active mode
       let redirectPath = next;
       if (next === "/dashboard" && !role) {
         const { data: userRow } = await supabase
           .from("users")
-          .select("role")
+          .select("role, last_active_role")
           .eq("id", data.user.id)
           .single();
-        if (userRow?.role === "recruiter") {
+        const mode = userRow?.last_active_role ?? userRow?.role;
+        if (mode === "recruiter") {
           redirectPath = "/recruiter";
         }
       }

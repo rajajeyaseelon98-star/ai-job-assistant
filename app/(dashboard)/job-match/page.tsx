@@ -2,8 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { apiFetch } from "@/lib/api-fetcher";
+import { useJobMatchById } from "@/hooks/queries/use-jobseeker-persisted";
 import { JobMatchForm } from "@/components/job/JobMatchForm";
 import { MatchResult } from "@/components/job/MatchResult";
 
@@ -29,12 +28,7 @@ function JobMatchContent() {
     resumeText: string;
   }>({ jobTitle: "", jobDescription: "", resumeText: "" });
 
-  const { data: pastMatch, isLoading: pastLoading } = useQuery({
-    queryKey: ["job-match", matchId],
-    queryFn: () => apiFetch<Record<string, unknown>>(`/api/job-matches/${matchId}`),
-    enabled: !!matchId,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: pastMatch, isLoading: pastLoading } = useJobMatchById(matchId);
 
   useEffect(() => {
     if (!pastMatch) return;

@@ -5,30 +5,36 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Briefcase, User, Loader2 } from "lucide-react";
 import { Suspense } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { userKeys } from "@/hooks/queries/use-user";
+import { recruiterKeys, useSwitchRole } from "@/hooks/queries/use-recruiter";
+import { formatApiFetchThrownError } from "@/lib/api-error";
 
 function SelectRoleContent() {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  const switchRoleMut = useSwitchRole();
   const next = searchParams.get("next") || "/dashboard";
 
   async function selectRole(role: "job_seeker" | "recruiter") {
     setLoading(true);
+    setError(null);
     try {
-      const res = await fetch("/api/user/role", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role }),
-      });
-      if (res.ok) {
-        await queryClient.invalidateQueries({ queryKey: ["user"] });
-        await queryClient.invalidateQueries({ queryKey: ["recruiter", "user"] });
-        router.push(role === "recruiter" ? "/recruiter" : next);
-        router.refresh();
-      }
-    } catch {
-      // ignore
+      await switchRoleMut.mutateAsync(role);
+      // Wait for fresh role in cache before navigating — otherwise RecruiterLayout sees stale job_seeker and redirects back.
+      await queryClient.invalidateQueries({ queryKey: userKeys.all });
+      await queryClient.invalidateQueries({ queryKey: recruiterKeys.all });
+      await queryClient.refetchQueries({ queryKey: userKeys.me(), type: "all" });
+      await queryClient.refetchQueries({ queryKey: recruiterKeys.user(), type: "all" });
+      router.push(role === "recruiter" ? "/recruiter" : next);
+      router.refresh();
+    } catch (e) {
+      setError(
+        formatApiFetchThrownError(e) ||
+          "Something went wrong. Check your connection and try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -40,9 +46,15 @@ function SelectRoleContent() {
         <div className="text-center">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-text">Choose Your Role</h1>
           <p className="mt-2 text-sm sm:text-base text-text-muted">
-            You can switch between roles anytime from the sidebar.
+            One account — pick how you want to use the app right now. Job seeker and hiring tools stay on the same login; you can change mode later from the sidebar when you&apos;re set up for both.
           </p>
         </div>
+
+        {error && (
+          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-center text-sm text-red-800" role="alert">
+            {error}
+          </p>
+        )}
 
         {loading && (
           <div className="flex justify-center">

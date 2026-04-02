@@ -10,10 +10,10 @@ export async function GET() {
     return NextResponse.json(getE2eMockUserApiResponse(user.profile.role));
   }
   const supabase = await createClient();
-  const [{ data: profile }, { data: prefs }] = await Promise.all([
+  const [{ data: profile }, { data: prefs }, { data: companies, error: companyErr }] = await Promise.all([
     supabase
       .from("users")
-      .select("id, email, name, plan_type, role")
+      .select("id, email, name, plan_type, role, last_active_role")
       .eq("id", user.id)
       .single(),
     supabase
@@ -21,9 +21,15 @@ export async function GET() {
       .select("experience_level, preferred_role, preferred_location, salary_expectation")
       .eq("user_id", user.id)
       .single(),
+    supabase.from("companies").select("id").eq("recruiter_id", user.id).limit(1),
   ]);
+  if (companyErr) {
+    return NextResponse.json({ error: "Failed to load user profile" }, { status: 500 });
+  }
+  const recruiter_onboarding_complete = (companies?.length ?? 0) > 0;
   return NextResponse.json({
     ...profile,
+    recruiter_onboarding_complete,
     preferences: prefs ?? {
       experience_level: null,
       preferred_role: null,

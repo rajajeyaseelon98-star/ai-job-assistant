@@ -4,6 +4,8 @@ import { useState } from "react";
 import { use } from "react";
 import { Loader2, Wand2, ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useOptimizeRecruiterJob, usePatchRecruiterJob } from "@/hooks/queries/use-recruiter";
+import { formatApiFetchThrownError } from "@/lib/api-error";
 
 interface OptimizeResult {
   suggestions: string[];
@@ -15,44 +17,36 @@ interface OptimizeResult {
 export default function OptimizeJobPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const optimizeMut = useOptimizeRecruiterJob();
+  const patchMut = usePatchRecruiterJob();
+  const loading = optimizeMut.isPending;
+  const applying = patchMut.isPending;
   const [result, setResult] = useState<OptimizeResult | null>(null);
   const [error, setError] = useState("");
-  const [applying, setApplying] = useState(false);
 
   async function handleOptimize() {
-    setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/recruiter/jobs/${id}/optimize`, { method: "POST" });
-      if (res.ok) {
-        setResult(await res.json());
-      } else {
-        const data = await res.json();
-        setError(data.error || "Optimization failed");
-      }
-    } catch { setError("Something went wrong"); }
-    finally { setLoading(false); }
+      const data = await optimizeMut.mutateAsync(id);
+      setResult(data);
+    } catch (e) {
+      setError(formatApiFetchThrownError(e) || "Something went wrong");
+    }
   }
 
   async function applyOptimizations() {
     if (!result) return;
-    setApplying(true);
+    setError("");
     try {
       const updates: Record<string, string> = {};
       if (result.optimized_title) updates.title = result.optimized_title;
       if (result.optimized_description) updates.description = result.optimized_description;
 
-      const res = await fetch(`/api/recruiter/jobs/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates),
-      });
-      if (res.ok) {
-        router.push(`/recruiter/jobs/${id}`);
-      }
-    } catch { setError("Failed to apply changes"); }
-    finally { setApplying(false); }
+      await patchMut.mutateAsync({ id, body: updates });
+      router.push(`/recruiter/jobs/${id}`);
+    } catch (e) {
+      setError(formatApiFetchThrownError(e) || "Failed to apply changes");
+    }
   }
 
   return (

@@ -1,9 +1,35 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { getDefaultAppPath, redirectWithSessionCookies } from "@/lib/auth-landing-path";
+import { readE2eMockRoleFromCookies } from "@/lib/e2e-auth";
 import { updateSession } from "@/lib/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
-  const { response, user } = await updateSession(request);
+  const { response, user, supabase } = await updateSession(request);
   const { pathname } = request.nextUrl;
+
+  // Authenticated users: skip marketing landing and auth entry (standard SaaS behavior).
+  if (user) {
+    const isMarketingOrAuthEntry =
+      pathname === "/" ||
+      pathname === "/login" ||
+      pathname.startsWith("/login/") ||
+      pathname === "/signup" ||
+      pathname.startsWith("/signup/");
+    if (isMarketingOrAuthEntry) {
+      if (!user.email_confirmed_at) {
+        if (pathname.startsWith("/login")) {
+          return response;
+        }
+        return redirectWithSessionCookies(
+          response,
+          new URL("/login?error=verify", request.url)
+        );
+      }
+      const e2e = readE2eMockRoleFromCookies(request.cookies);
+      const dest = await getDefaultAppPath(supabase, user.id, e2e);
+      return redirectWithSessionCookies(response, new URL(dest, request.url));
+    }
+  }
 
   const isProtected =
     pathname.startsWith("/dashboard") ||
@@ -53,6 +79,29 @@ export async function middleware(request: NextRequest) {
       const verifyUrl = new URL("/login", request.url);
       verifyUrl.searchParams.set("error", "verify");
       return NextResponse.redirect(verifyUrl);
+    }
+
+    // Recruiter routes: require current profile role (defense in depth; layouts also guard).
+    if (!pathname.startsWith("/api/") && pathname.startsWith("/recruiter")) {
+      const e2e = readE2eMockRoleFromCookies(request.cookies);
+      if (e2e) {
+        if (e2e !== "recruiter") {
+          const u = new URL("/select-role", request.url);
+          u.searchParams.set("next", pathname);
+          return NextResponse.redirect(u);
+        }
+      } else {
+        const { data: row } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (row?.role !== "recruiter") {
+          const u = new URL("/select-role", request.url);
+          u.searchParams.set("next", pathname);
+          return NextResponse.redirect(u);
+        }
+      }
     }
   }
 

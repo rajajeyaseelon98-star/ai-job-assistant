@@ -95,6 +95,8 @@ export function getE2eMockUserApiResponse(role: "recruiter" | "job_seeker") {
     name: u.profile.name,
     plan_type: u.profile.plan_type,
     role: u.profile.role,
+    last_active_role: u.profile.role,
+    recruiter_onboarding_complete: role === "recruiter",
     preferences: {
       experience_level: null as string | null,
       preferred_role: null as string | null,

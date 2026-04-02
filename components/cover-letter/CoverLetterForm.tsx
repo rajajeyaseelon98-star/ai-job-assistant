@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { dispatchUsageUpdated } from "@/components/layout/Topbar";
 import { AIProgressIndicator } from "@/components/ui/AIProgressIndicator";
 import { Loader2 } from "lucide-react";
+import { useGenerateCoverLetter } from "@/hooks/mutations/use-generate-cover-letter";
 
 export interface CoverLetterGenerated {
   id: string;
@@ -34,8 +34,8 @@ export function CoverLetterForm({
   const [role, setRole] = useState(defaultRole);
   const [jobDescription, setJobDescription] = useState(defaultJobDescription);
   const [resumeText, setResumeText] = useState(defaultResumeText);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const generateMut = useGenerateCoverLetter();
 
   useEffect(() => {
     if (defaultCompanyName !== undefined) setCompanyName(defaultCompanyName);
@@ -51,20 +51,13 @@ export function CoverLetterForm({
       return;
     }
     setError(null);
-    setLoading(true);
     try {
-      const res = await fetch("/api/generate-cover-letter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          resumeText: resumeText.trim(),
-          jobDescription: jobDescription.trim(),
-          companyName: companyName.trim() || undefined,
-          role: role.trim() || undefined,
-        }),
+      const data = await generateMut.mutateAsync({
+        resumeText: resumeText.trim(),
+        jobDescription: jobDescription.trim(),
+        companyName: companyName.trim() || undefined,
+        role: role.trim() || undefined,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Generation failed");
       onGenerated({
         id: data.id,
         coverLetter: data.coverLetter ?? "",
@@ -72,13 +65,12 @@ export function CoverLetterForm({
         jobTitle: data.jobTitle ?? null,
         createdAt: data.createdAt ?? new Date().toISOString(),
       });
-      dispatchUsageUpdated();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Generation failed");
-    } finally {
-      setLoading(false);
     }
   }
+
+  const loading = generateMut.isPending;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-0">

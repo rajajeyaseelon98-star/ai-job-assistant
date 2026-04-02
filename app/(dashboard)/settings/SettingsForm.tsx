@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useUpdateUser } from "@/hooks/queries/use-recruiter";
+import { useDeleteAccount } from "@/hooks/queries/use-user";
 import { DevPlanSwitcher } from "./DevPlanSwitcher";
 
 interface SettingsFormProps {
@@ -27,45 +29,39 @@ export function SettingsForm({
   salaryExpectation: initialSalary,
 }: SettingsFormProps) {
   const router = useRouter();
+  const updateUserMut = useUpdateUser();
+  const deleteAccountMut = useDeleteAccount();
   const [name, setName] = useState(initialName);
   const [experienceLevel, setExperienceLevel] = useState(initialExp);
   const [preferredRole, setPreferredRole] = useState(initialRole);
   const [preferredLocation, setPreferredLocation] = useState(initialLoc);
   const [salaryExpectation, setSalaryExpectation] = useState(initialSalary);
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const saving = updateUserMut.isPending;
+  const deleting = deleteAccountMut.isPending;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
     try {
-      await fetch("/api/user", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim() || null,
-          experience_level: experienceLevel || null,
-          preferred_role: preferredRole.trim() || null,
-          preferred_location: preferredLocation.trim() || null,
-          salary_expectation: salaryExpectation.trim() || null,
-        }),
+      await updateUserMut.mutateAsync({
+        name: name.trim() || null,
+        experience_level: experienceLevel || null,
+        preferred_role: preferredRole.trim() || null,
+        preferred_location: preferredLocation.trim() || null,
+        salary_expectation: salaryExpectation.trim() || null,
       });
       router.refresh();
-    } finally {
-      setSaving(false);
+    } catch {
+      /* no toast in original */
     }
   }
 
   async function handleDeleteAccount() {
     if (!confirm("Delete your account and all data? This cannot be undone.")) return;
-    setDeleting(true);
     try {
-      const res = await fetch("/api/user/delete-account", { method: "POST" });
-      if (res.ok) {
-        window.location.href = "/";
-      }
-    } finally {
-      setDeleting(false);
+      await deleteAccountMut.mutateAsync();
+      window.location.href = "/";
+    } catch {
+      /* ignore */
     }
   }
 

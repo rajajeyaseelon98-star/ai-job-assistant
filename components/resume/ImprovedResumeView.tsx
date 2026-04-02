@@ -3,6 +3,7 @@
 import { useRef, useState, useMemo } from "react";
 import type { ImprovedResumeContent } from "@/types/analysis";
 import { normalizeImprovedResumeContent } from "@/lib/normalizeImprovedResume";
+import { apiFetchBlob } from "@/lib/api-fetcher";
 
 interface ImprovedResumeViewProps {
   content: ImprovedResumeContent;
@@ -163,16 +164,11 @@ export function ImprovedResumeView({ content, improvedResumeId }: ImprovedResume
     }
     setDocxLoading(true);
     try {
-      const res = await fetch("/api/improved-resumes/export-docx", {
+      const blob = await apiFetchBlob("/api/improved-resumes/export-docx", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: normalized }),
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Download failed");
-      }
-      const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

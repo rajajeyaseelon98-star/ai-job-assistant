@@ -2,18 +2,16 @@
 
 import { useState } from "react";
 import { Loader2, BarChart3, CheckCircle, XCircle, ArrowRight } from "lucide-react";
-
-interface SkillGapResult {
-  matching_skills: string[];
-  missing_skills: string[];
-  transferable_skills: string[];
-  recommendations: string[];
-  gap_score: number;
-}
+import {
+  useRecruiterSkillGap,
+  type RecruiterSkillGapResult,
+} from "@/hooks/queries/use-recruiter";
+import { formatApiFetchThrownError } from "@/lib/api-error";
 
 export default function SkillGapPage() {
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<SkillGapResult | null>(null);
+  const skillGapMut = useRecruiterSkillGap();
+  const loading = skillGapMut.isPending;
+  const [result, setResult] = useState<RecruiterSkillGapResult | null>(null);
   const [error, setError] = useState("");
   const [resumeText, setResumeText] = useState("");
   const [jobId, setJobId] = useState("");
@@ -22,29 +20,27 @@ export default function SkillGapPage() {
 
   async function handleAnalyze(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     setError("");
-    try {
-      const body = mode === "application"
+    const body =
+      mode === "application"
         ? { application_id: applicationId.trim() }
         : { resume_text: resumeText.trim(), job_id: jobId.trim() };
 
-      if (mode === "application" && !applicationId.trim()) { setError("Application ID required"); setLoading(false); return; }
-      if (mode === "manual" && (!resumeText.trim() || !jobId.trim())) { setError("Both resume text and job ID required"); setLoading(false); return; }
+    if (mode === "application" && !applicationId.trim()) {
+      setError("Application ID required");
+      return;
+    }
+    if (mode === "manual" && (!resumeText.trim() || !jobId.trim())) {
+      setError("Both resume text and job ID required");
+      return;
+    }
 
-      const res = await fetch("/api/recruiter/skill-gap", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (res.ok) {
-        setResult(await res.json());
-      } else {
-        const data = await res.json();
-        setError(data.error || "Analysis failed");
-      }
-    } catch { setError("Something went wrong"); }
-    finally { setLoading(false); }
+    try {
+      const data = await skillGapMut.mutateAsync(body);
+      setResult(data);
+    } catch (e) {
+      setError(formatApiFetchThrownError(e) || "Something went wrong");
+    }
   }
 
   return (

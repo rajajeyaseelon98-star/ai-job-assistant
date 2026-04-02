@@ -83,7 +83,7 @@ test.describe("Recruiter smoke", () => {
   test("recruiter candidate search loads", async ({ page }) => {
     await page.goto("/recruiter/candidates");
     await expect(page.getByRole("heading", { name: "Candidate Search" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Search Candidates" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Apply filters" })).toBeVisible();
   });
 
   test("recruiter messages loads", async ({ page }) => {
@@ -161,24 +161,35 @@ test.describe("Recruiter smoke", () => {
     const candidateId = "00000000-0000-4000-8000-00000000c001";
     const candidateName = "Alice Jobseeker";
 
+    const candidatesListPayload = {
+      candidates: [
+        {
+          id: candidateId,
+          email: "alice@example.com",
+          name: candidateName,
+          resume_id: "00000000-0000-4000-8000-00000000r001",
+          resume_preview: "React developer with Next.js experience",
+          has_resume: true,
+          experience_level: "mid",
+          preferred_role: "Frontend Engineer",
+          preferred_location: "Remote",
+          salary_expectation: "INR 150000",
+          created_at: new Date().toISOString(),
+        },
+      ],
+      page: 1,
+      pageSize: 25,
+      total: 1,
+      totalPages: 1,
+      truncated: false,
+    };
+
     await page.route(/\/api\/recruiter\/candidates(\?|$)/, async (route) => {
       if (route.request().method() !== "GET") return route.fallback();
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify([
-          {
-            id: candidateId,
-            email: "alice@example.com",
-            name: candidateName,
-            resume_preview: "React developer with Next.js experience",
-            experience_level: "mid",
-            preferred_role: "Frontend Engineer",
-            preferred_location: "Remote",
-            salary_expectation: "INR 150000",
-            created_at: new Date().toISOString(),
-          },
-        ]),
+        body: JSON.stringify(candidatesListPayload),
       });
     });
 
@@ -208,7 +219,7 @@ test.describe("Recruiter smoke", () => {
         r.url().includes("/api/recruiter/candidates") &&
         !r.url().includes("/similar")
     );
-    await page.getByRole("button", { name: "Search Candidates" }).click();
+    await page.getByRole("button", { name: "Apply filters" }).click();
     await searchRes;
 
     await expect(page.getByText(candidateName)).toBeVisible({ timeout: 15_000 });

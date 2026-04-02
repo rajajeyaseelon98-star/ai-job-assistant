@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-fetcher";
+import { sharedQueryKeys } from "@/hooks/queries/shared-query-keys";
 import type { SmartApplyRule } from "@/types/autoApply";
 
 interface Resume {
@@ -13,7 +14,7 @@ interface Resume {
 export const smartApplyKeys = {
   all: ["smart-apply"] as const,
   rules: () => [...smartApplyKeys.all, "rules"] as const,
-  resumes: () => ["shared", "resumes"] as const,
+  resumes: sharedQueryKeys.resumes,
   usage: () => ["shared", "usage"] as const,
 };
 

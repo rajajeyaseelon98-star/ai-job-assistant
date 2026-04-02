@@ -2,19 +2,16 @@
 
 import { useState } from "react";
 import { Loader2, IndianRupee, TrendingUp } from "lucide-react";
-
-interface SalaryResult {
-  min: number;
-  max: number;
-  median: number;
-  currency: string;
-  factors: string[];
-  market_insight: string;
-}
+import {
+  useRecruiterSalaryEstimate,
+  type RecruiterSalaryEstimateResult,
+} from "@/hooks/queries/use-recruiter";
+import { formatApiFetchThrownError } from "@/lib/api-error";
 
 export default function SalaryEstimatorPage() {
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<SalaryResult | null>(null);
+  const estimateMut = useRecruiterSalaryEstimate();
+  const loading = estimateMut.isPending;
+  const [result, setResult] = useState<RecruiterSalaryEstimateResult | null>(null);
   const [error, setError] = useState("");
   const [title, setTitle] = useState("");
   const [skills, setSkills] = useState("");
@@ -24,29 +21,23 @@ export default function SalaryEstimatorPage() {
 
   async function handleEstimate(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim()) { setError("Job title is required"); return; }
-    setLoading(true);
+    if (!title.trim()) {
+      setError("Job title is required");
+      return;
+    }
     setError("");
     try {
-      const res = await fetch("/api/recruiter/salary-estimate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim(),
-          skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
-          experience_years: parseInt(experience) || 3,
-          location: location.trim() || "India",
-          work_type: workType,
-        }),
+      const data = await estimateMut.mutateAsync({
+        title: title.trim(),
+        skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
+        experience_years: parseInt(experience) || 3,
+        location: location.trim() || "India",
+        work_type: workType,
       });
-      if (res.ok) {
-        setResult(await res.json());
-      } else {
-        const data = await res.json();
-        setError(data.error || "Estimation failed");
-      }
-    } catch { setError("Something went wrong"); }
-    finally { setLoading(false); }
+      setResult(data);
+    } catch (e) {
+      setError(formatApiFetchThrownError(e) || "Something went wrong");
+    }
   }
 
   function formatSalary(val: number) {

@@ -91,7 +91,9 @@ CREATE POLICY "Users can view own row" ON public.users
   FOR SELECT USING (auth.uid() = id);
 
 CREATE POLICY "Users can update own row" ON public.users
-  FOR UPDATE USING (auth.uid() = id);
+  FOR UPDATE
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
 
 CREATE POLICY "Users can insert own row" ON public.users
   FOR INSERT WITH CHECK (auth.uid() = id);
@@ -245,6 +247,7 @@ CREATE POLICY "Users can manage own applications" ON public.applications FOR ALL
 
 -- Add role to users table
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'job_seeker' CHECK (role IN ('job_seeker', 'recruiter'));
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS last_active_role TEXT NOT NULL DEFAULT 'job_seeker' CHECK (last_active_role IN ('job_seeker', 'recruiter'));
 
 -- Company profiles for recruiters
 CREATE TABLE IF NOT EXISTS public.companies (

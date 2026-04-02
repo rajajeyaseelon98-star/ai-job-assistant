@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Upload, FileText, Target, Rocket, ChevronRight, CheckCircle2, Loader2, ArrowRight } from "lucide-react";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { useAnalyzeResume } from "@/hooks/mutations/use-analyze-resume";
 
 const STEPS = [
   { id: 1, title: "Upload Resume", icon: Upload, desc: "Get your ATS score instantly" },
@@ -12,9 +13,10 @@ const STEPS = [
 ];
 
 export default function OnboardingPage() {
+  const analyzeMut = useAnalyzeResume();
   const [step, setStep] = useState(1);
   const [resumeText, setResumeText] = useState("");
-  const [analyzing, setAnalyzing] = useState(false);
+  const analyzing = analyzeMut.isPending;
   const [score, setScore] = useState<number | null>(null);
   const [improvements, setImprovements] = useState<string[]>([]);
   const [missingSkills, setMissingSkills] = useState<string[]>([]);
@@ -36,28 +38,16 @@ export default function OnboardingPage() {
   }
 
   async function analyzeResume(text: string) {
-    setAnalyzing(true);
     setStep(2);
     try {
-      const res = await fetch("/api/analyze-resume", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText: text }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setScore(data.atsScore ?? data.score ?? 0);
-        setImprovements(data.resumeImprovements?.slice(0, 3) ?? []);
-        setMissingSkills(data.missingSkills?.slice(0, 5) ?? []);
-      } else {
-        setScore(65);
-        setImprovements(["Add more action verbs", "Include measurable achievements", "Optimize keywords"]);
-      }
+      const data = await analyzeMut.mutateAsync({ resumeText: text });
+      setScore(data.atsScore ?? 0);
+      setImprovements(data.resumeImprovements?.slice(0, 3) ?? []);
+      setMissingSkills(data.missingSkills?.slice(0, 5) ?? []);
     } catch {
       setScore(65);
-      setImprovements(["Add more action verbs", "Include measurable achievements"]);
-    } finally {
-      setAnalyzing(false);
+      setImprovements(["Add more action verbs", "Include measurable achievements", "Optimize keywords"]);
+      setMissingSkills([]);
     }
   }
 

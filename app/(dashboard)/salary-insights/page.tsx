@@ -12,18 +12,11 @@ import {
   MapPin,
   Briefcase,
 } from "lucide-react";
-
-interface SalaryInsight {
-  job_title: string;
-  location: string | null;
-  experience_range: string;
-  salary_range: { min: number; max: number; avg: number };
-  currency: string;
-  data_points: number;
-  percentiles: { p25: number; p50: number; p75: number };
-  trend: "rising" | "stable" | "declining";
-  comparable_roles: Array<{ title: string; avg_salary: number }>;
-}
+import {
+  useSalaryIntelligenceSearch,
+  type SalaryInsight,
+} from "@/hooks/mutations/use-salary-intelligence";
+import { formatApiFetchThrownError } from "@/lib/api-error";
 
 function formatSalary(amount: number): string {
   if (amount >= 10000000) return `${(amount / 10000000).toFixed(1)}Cr`;
@@ -33,32 +26,32 @@ function formatSalary(amount: number): string {
 }
 
 export default function SalaryInsightsPage() {
+  const searchMut = useSalaryIntelligenceSearch();
   const [jobTitle, setJobTitle] = useState("");
   const [location, setLocation] = useState("");
   const [experience, setExperience] = useState("");
   const [insight, setInsight] = useState<SalaryInsight | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [searchError, setSearchError] = useState("");
   const [searched, setSearched] = useState(false);
+  const loading = searchMut.isPending;
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     if (!jobTitle.trim()) return;
 
-    setLoading(true);
     setSearched(true);
+    setSearchError("");
     try {
-      const params = new URLSearchParams({ title: jobTitle });
-      if (location) params.set("location", location);
-      if (experience) params.set("experience", experience);
-
-      const res = await fetch(`/api/salary-intelligence?${params}`);
-      if (res.ok) {
-        setInsight(await res.json());
-      }
-    } catch {
-      // Ignore
+      const data = await searchMut.mutateAsync({
+        title: jobTitle,
+        location: location || undefined,
+        experience: experience || undefined,
+      });
+      setInsight(data);
+    } catch (e) {
+      setInsight(null);
+      setSearchError(formatApiFetchThrownError(e));
     }
-    setLoading(false);
   }
 
   const TrendIcon = insight?.trend === "rising"
@@ -136,6 +129,10 @@ export default function SalaryInsightsPage() {
           Search Salaries
         </button>
       </form>
+
+      {searchError ? (
+        <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{searchError}</p>
+      ) : null}
 
       {/* Results */}
       {loading && (

@@ -2,7 +2,7 @@
 
 **Purpose:** Step-by-step flow chart of every feature. Shows the data path from user action → frontend → API → lib → database → response for each feature.
 
-**Last updated:** 2026-03-07
+**Last updated:** 2026-04-02 (Per-component tables and hook-to-API mapping: see **`docs/KNOWLEDGE_TRANSFER.md`** §6.1–§6.3. Aligned with code: `PATCH /api/user/role`, dashboard `GET /api/dashboard` + `useDashboardStats`, history `GET /api/history`, cron trigger cleanup steps, public `/api/public/*` routes, job board `GET /api/jobs/applied`.)
 
 ---
 
@@ -73,7 +73,7 @@ User visits app
     │
     └─ /select-role ──► User picks job_seeker or recruiter
         │
-        └─ PUT /api/user/role ──► Updates users.role
+        └─ PATCH /api/user/role ──► Updates users.role
             │
             ├─ job_seeker ──► Redirect to /dashboard
             └─ recruiter ──► Redirect to /recruiter
@@ -88,6 +88,9 @@ User visits app
 ```
 User lands on /dashboard (after login)
     │
+    ├─ GET /api/dashboard (via useDashboardStats — TanStack Query)
+    │   └─ Recent analyses, matches, cover letters, applicationCount, avgMatchScore, usage, userName, planType
+    │
     ├─ ProductNarrativeBanner — "3× more interviews" + CTA → /resume-analyzer
     ├─ StartHereChecklist (client)
     │   ├─ Step 1 done? ──► user has ≥1 resume_analysis row (latest score)
@@ -101,7 +104,7 @@ User lands on /dashboard (after login)
         Smart Auto-Apply, Tailor, Cover Letter, Interview, Career Coach, Applications
 ```
 
-**Sidebar IA:** **Start here** (core loop) · **Explore more** (secondary tools) · **Advanced** (LinkedIn) · **Track & insights** · History / Pricing / Settings.
+**Sidebar IA:** **Start here** · **Explore more** · **Advanced** (LinkedIn only) · **Track & insights** · History / Pricing / Settings — see `components/layout/Sidebar.tsx` (`navGroups`).
 
 **Topbar:** Monthly usage counters + line: *Up to 3× more interviews — we help you apply, not only advise.*
 
@@ -109,7 +112,7 @@ User lands on /dashboard (after login)
 
 **Loading UI:** Shared skeleton `components/ui/PageLoading.tsx` (variants: `default`, `dense`, `dashboard`) used by route `loading.tsx` files.
 
-**Key files:** `app/(dashboard)/dashboard/page.tsx`, `components/dashboard/ProductNarrativeBanner.tsx`, `StartHereChecklist.tsx`, `StartHereActions.tsx`, `ExploreMoreActions.tsx`, `components/layout/Sidebar.tsx`, `components/layout/Topbar.tsx`, `components/ui/PageLoading.tsx`
+**Key files:** `app/(dashboard)/dashboard/page.tsx`, `app/api/dashboard/route.ts`, `hooks/queries/use-dashboard.ts`, `components/dashboard/ProductNarrativeBanner.tsx`, `StartHereChecklist.tsx`, `StartHereActions.tsx`, `ExploreMoreActions.tsx`, `components/layout/Sidebar.tsx`, `components/layout/Topbar.tsx`, `components/ui/PageLoading.tsx`
 
 ---
 
@@ -1231,12 +1234,13 @@ Recruiter visits /recruiter/jobs
 ```
 Recruiter visits /recruiter/candidates
     │
-    └─ GET /api/recruiter/candidates
+    └─ GET /api/recruiter/candidates?page=&pageSize=&skills=&experience=&location=
         │
-        ├─ Filters: skills, experience, location
-        ├─ Query users WHERE profile_visible = true
-        ├─ Enrich with candidate_skills, resume_analysis
-        └─ Return ranked candidates
+        ├─ Auth: recruiter only
+        ├─ Load up to 5000 newest job_seeker users with resumes + user_preferences
+        ├─ Keep rows with parsed resume text; optional filters on resume preview + prefs
+        ├─ Slice page (default 25 per page, max 100)
+        └─ JSON: { candidates, page, pageSize, total, totalPages, truncated? }
 
 ATS Pipeline: /recruiter/applications
     │
@@ -1479,30 +1483,21 @@ Every protected API route:
 ```
 POST /api/smart-apply/trigger
     │
-    ├─ Auth: Authorization header must match CRON_SECRET (production)
-    │   └─ Dev: always allowed
+    ├─ Auth: Authorization: Bearer CRON_SECRET (production)
+    │   └─ Dev: no secret required
     │
-    └─ Runs 6 tasks sequentially:
+    └─ Runs 8 tasks (see app/api/smart-apply/trigger/route.ts):
         │
         ├─ 1. Smart Auto-Apply ──► runAllSmartRules()
-        │   └─ Process enabled rules with past next_run_at
-        │
-        ├─ 2. Daily Reports ──► sendDailyReportNotification() for active users
-        │   └─ Summarize last 24h activity
-        │
+        ├─ 2. Daily Reports ──► sendDailyReportNotification() for a sample of users with recent auto_apply_runs
         ├─ 3. Platform Stats ──► refreshPlatformStats()
-        │   └─ Aggregate: total users, applications, hires, avg score
-        │
         ├─ 4. Skill Demand ──► refreshSkillDemand()
-        │   └─ Aggregate from job_postings + candidate_skills
-        │
         ├─ 5. Recruiter Auto-Push ──► runDailyRecruiterAutoPush()
-        │   └─ Match candidates to active jobs, send pushes
-        │
-        └─ 6. Opportunity Alerts ──► scanOpportunities() for recently active users
-            └─ Detect high-match, low-competition, recruiter interest
+        ├─ 6. Opportunity Alerts ──► scanOpportunities(userId) for users with recent streak activity
+        ├─ 7. Rate limit cleanup ──► DELETE usage_logs WHERE feature=rate_limit AND timestamp < now()-5min
+        └─ 8. AI cache cleanup ──► DELETE ai_cache WHERE expires_at < now()
 
-    Recommended: Run daily at midnight via Vercel Cron / Railway / GitHub Actions
+    Recommended: daily at midnight (Vercel / Railway / GitHub Actions)
     Example: curl -X POST https://yourapp.com/api/smart-apply/trigger -H "Authorization: Bearer $CRON_SECRET"
 ```
 
@@ -1532,6 +1527,15 @@ Application outcomes tracked ──► getApplicationInsights():
     │   └─ Weights approach optimal values over time
     └─ Used by: interviewScore.ts, analytics page, career coach
 ```
+
+### Public marketing APIs (no session)
+
+- **`POST /api/public/extract-resume`** — multipart file upload; returns extracted plain text from PDF/DOCX/TXT (max 4MB) for landing flows; client stores text (e.g. sessionStorage) before signup.
+- **`POST /api/public/fresher-resume`** — JSON (desired role, education, skills, projects); AI returns `{ resumeText, atsScore }` via `cachedAiGenerate`.
+
+### Job board: already applied
+
+- **`GET /api/jobs/applied`** — returns `job_id[]` from `job_applications` for the current user so the job board can hide or mark applied recruiter jobs.
 
 ### Usage Tracking & Limits
 ```
@@ -1714,39 +1718,30 @@ Every feature-gated API:
 
 ## 41. Sidebar Navigation Groups (Phase 9)
 
+Current job seeker sidebar (`components/layout/Sidebar.tsx` — `navGroups`):
+
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                    Sidebar Structure                                  │
-├──────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  Dashboard                                                           │
-│  ─────────────                                                       │
-│  APPLY                                                               │
+│  START HERE                                                          │
+│  ├─ Dashboard                                                        │
+│  ├─ Quick Resume Builder                                             │
 │  ├─ Resume Analyzer                                                  │
 │  ├─ Job Match                                                        │
+│  └─ AI Auto-Apply                                                    │
+│  EXPLORE MORE                                                        │
 │  ├─ Job Board                                                        │
 │  ├─ Auto Job Finder                                                  │
-│  ├─ AI Auto-Apply                                                    │
-│  └─ Smart Auto-Apply                                                 │
-│  IMPROVE                                                             │
+│  ├─ Smart Auto-Apply                                                 │
 │  ├─ Resume Tailoring                                                 │
 │  ├─ Cover Letter                                                     │
 │  ├─ Interview Prep                                                   │
-│  ├─ LinkedIn Import                                                  │
 │  └─ AI Career Coach                                                  │
-│  INSIGHTS                                                            │
-│  ├─ Applications                                                     │
-│  ├─ Career Analytics                                                 │
-│  ├─ Resume Performance                                               │
-│  ├─ Activity Feed                                                    │
-│  ├─ Salary Insights                                                  │
-│  ├─ Skill Demand                                                     │
-│  └─ Streak Rewards                                                   │
-│  ─────────────                                                       │
-│  History                                                             │
-│  Pricing                                                             │
-│  Settings                                                            │
-│  ─────────────                                                       │
+│  ADVANCED                                                            │
+│  └─ LinkedIn Import                                                  │
+│  TRACK & INSIGHTS                                                    │
+│  ├─ Applications · Career Analytics · Resume Performance             │
+│  ├─ Activity Feed · Salary Insights · Skill Demand · Streak Rewards   │
+│  History · Pricing · Settings                                        │
 │  [Switch to Recruiter]                                               │
 └──────────────────────────────────────────────────────────────────────┘
 ```

@@ -4,27 +4,25 @@ import { useState } from "react";
 import { use } from "react";
 import { Loader2, Zap, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAutoShortlistRecruiterJob } from "@/hooks/queries/use-recruiter";
+import { formatApiFetchThrownError } from "@/lib/api-error";
 
 export default function AutoShortlistPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const shortlistMut = useAutoShortlistRecruiterJob();
+  const loading = shortlistMut.isPending;
   const [result, setResult] = useState<{ shortlisted: number; total_screened: number } | null>(null);
   const [error, setError] = useState("");
 
   async function handleAutoShortlist() {
-    setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/recruiter/jobs/${id}/auto-shortlist`, { method: "POST" });
-      if (res.ok) {
-        setResult(await res.json());
-      } else {
-        const data = await res.json();
-        setError(data.error || "Auto-shortlisting failed");
-      }
-    } catch { setError("Something went wrong"); }
-    finally { setLoading(false); }
+      const data = await shortlistMut.mutateAsync(id);
+      setResult(data);
+    } catch (e) {
+      setError(formatApiFetchThrownError(e) || "Something went wrong");
+    }
   }
 
   return (

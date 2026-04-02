@@ -45,3 +45,41 @@ export function useStartAutoApply() {
     },
   });
 }
+
+export function usePatchAutoApplySelections() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      runId,
+      selected_job_ids,
+    }: {
+      runId: string;
+      selected_job_ids: string[];
+    }) =>
+      apiFetch<unknown>(`/api/auto-apply/${runId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selected_job_ids }),
+      }),
+    onSuccess: (_, { runId }) => {
+      void qc.invalidateQueries({ queryKey: autoApplyKeys.run(runId) });
+      void qc.invalidateQueries({ queryKey: autoApplyKeys.pastRuns() });
+    },
+  });
+}
+
+export function useConfirmAutoApply() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (runId: string) =>
+      apiFetch<{ success?: boolean; applied_count: number; total_selected?: number }>(
+        `/api/auto-apply/${runId}/confirm`,
+        { method: "POST" }
+      ),
+    onSuccess: (_, runId) => {
+      void qc.invalidateQueries({ queryKey: autoApplyKeys.run(runId) });
+      void qc.invalidateQueries({ queryKey: autoApplyKeys.pastRuns() });
+      void qc.invalidateQueries({ queryKey: ["applications"] });
+    },
+  });
+}

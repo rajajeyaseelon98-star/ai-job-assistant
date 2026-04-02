@@ -2,8 +2,7 @@
 
 import { useState, useEffect, Suspense, lazy } from "react";
 import { useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { apiFetch } from "@/lib/api-fetcher";
+import { useCoverLetterById } from "@/hooks/queries/use-jobseeker-persisted";
 import { SectionSkeleton } from "@/components/ui/SectionSkeleton";
 import type { CoverLetterGenerated } from "@/components/cover-letter/CoverLetterForm";
 
@@ -19,12 +18,7 @@ function CoverLetterContent() {
   const searchParams = useSearchParams();
   const idFromUrl = searchParams.get("id");
 
-  const { data: savedLetter } = useQuery({
-    queryKey: ["cover-letter", idFromUrl],
-    queryFn: () => apiFetch<Record<string, unknown>>(`/api/cover-letters/${idFromUrl}`),
-    enabled: !!idFromUrl,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: savedLetter } = useCoverLetterById(idFromUrl);
 
   useEffect(() => {
     if (!savedLetter) return;

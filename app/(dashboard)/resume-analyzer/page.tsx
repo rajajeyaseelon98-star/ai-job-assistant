@@ -2,10 +2,11 @@
 
 import { useState, useEffect, Suspense, lazy } from "react";
 import { useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { apiFetch } from "@/lib/api-fetcher";
+import {
+  useResumeAnalysisById,
+  useImprovedResumeById,
+} from "@/hooks/queries/use-jobseeker-persisted";
 import Link from "next/link";
-import { dispatchUsageUpdated } from "@/components/layout/Topbar";
 import { AIProgressIndicator } from "@/components/ui/AIProgressIndicator";
 import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
 import { SectionSkeleton } from "@/components/ui/SectionSkeleton";
@@ -13,6 +14,8 @@ import { Info } from "lucide-react";
 import type { ATSAnalysisResult } from "@/types/resume";
 import type { ImprovedResumeContent } from "@/types/analysis";
 import { humanizeImproveResumeError, humanizeNetworkError } from "@/lib/friendlyApiError";
+import { useAnalyzeResume } from "@/hooks/mutations/use-analyze-resume";
+import { useImproveResume } from "@/hooks/mutations/use-improve-resume";
 
 const ResumeUpload = lazy(() =>
   import("@/components/resume/ResumeUpload").then((m) => ({ default: m.ResumeUpload }))
@@ -31,16 +34,15 @@ function ResumeAnalyzerContent() {
   const [resumeId, setResumeId] = useState<string | null>(null);
   const [resumeText, setResumeText] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<ATSAnalysisResult | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [improving, setImproving] = useState(false);
   const [improveError, setImproveError] = useState<string | null>(null);
   const [improvedContent, setImprovedContent] = useState<ImprovedResumeContent | null>(null);
   const [improvedResumeId, setImprovedResumeId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const analyzeMut = useAnalyzeResume();
+  const improveMut = useImproveResume();
   
   const [improveJobTitle, setImproveJobTitle] = useState("");
   const [improveJobDescription, setImproveJobDescription] = useState("");
-  const [recheckLoading, setRecheckLoading] = useState(false);
   const [usageInfo, setUsageInfo] = useState<{ used: number; limit: number } | null>(null);
   // Snapshot of analysis that drove the current improvement (so Re-analyze button stays visible)
   const [analysisForRecheck, setAnalysisForRecheck] = useState<ATSAnalysisResult | null>(null);
@@ -73,19 +75,8 @@ function ResumeAnalyzerContent() {
     }
   }, [analysisId, improvedId]);
 
-  const { data: pastAnalysis, isLoading: pastAnalysisLoading } = useQuery({
-    queryKey: ["resume-analysis", analysisId],
-    queryFn: () => apiFetch<Record<string, unknown>>(`/api/resume-analysis/${analysisId}`),
-    enabled: !!analysisId,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: improvedData, isLoading: improvedLoading } = useQuery({
-    queryKey: ["improved-resume", improvedId],
-    queryFn: () => apiFetch<Record<string, unknown>>(`/api/improved-resumes/${improvedId}`),
-    enabled: !!improvedId,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: pastAnalysis, isLoading: pastAnalysisLoading } = useResumeAnalysisById(analysisId);
+  const { data: improvedData, isLoading: improvedLoading } = useImprovedResumeById(improvedId);
 
   useEffect(() => {
     if (!pastAnalysis) return;
@@ -119,42 +110,32 @@ function ResumeAnalyzerContent() {
     }
     setImprovedContent(null);
     setImprovedResumeId(null);
-    setImproving(true);
     try {
-      const res = await fetch("/api/improve-resume", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          resumeText,
-          resumeId: resumeId || undefined,
-          jobTitle: improveJobTitle.trim() || undefined,
-          jobDescription: improveJobDescription.trim() || undefined,
-          tailorIntent:
-            improveJobTitle.trim() || improveJobDescription.trim()
-              ? tailorIntent
-              : undefined,
-          previousAnalysis: analysis
-            ? {
-                atsScore: analysis.atsScore,
-                missingSkills: analysis.missingSkills ?? [],
-                resumeImprovements: analysis.resumeImprovements ?? [],
-              }
+      const data = await improveMut.mutateAsync({
+        resumeText,
+        resumeId: resumeId || undefined,
+        jobTitle: improveJobTitle.trim() || undefined,
+        jobDescription: improveJobDescription.trim() || undefined,
+        tailorIntent:
+          improveJobTitle.trim() || improveJobDescription.trim()
+            ? tailorIntent
             : undefined,
-        }),
+        previousAnalysis: analysis
+          ? {
+              atsScore: analysis.atsScore,
+              missingSkills: analysis.missingSkills ?? [],
+              resumeImprovements: analysis.resumeImprovements ?? [],
+            }
+          : undefined,
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setImproveError(humanizeImproveResumeError(typeof data.error === "string" ? data.error : undefined));
-        return;
-      }
       const { improvedResumeId: id, ...contentOnly } = data;
       setImprovedContent(contentOnly as ImprovedResumeContent);
       if (typeof id === "string") setImprovedResumeId(id);
       if (analysis) setAnalysisForRecheck(analysis);
-    } catch {
-      setImproveError(humanizeNetworkError());
-    } finally {
-      setImproving(false);
+    } catch (e) {
+      setImproveError(
+        e instanceof Error ? humanizeImproveResumeError(e.message) : humanizeNetworkError()
+      );
     }
   }
 
@@ -162,36 +143,28 @@ function ResumeAnalyzerContent() {
     const prevAnalysis = analysisForRecheck ?? analysis;
     if (!improvedContent || !prevAnalysis) return;
     setError(null);
-    setRecheckLoading(true);
     try {
       const { improvedToPlainText } = await import("@/components/resume/ImprovedResumeView");
       const improvedText = improvedToPlainText(improvedContent);
-      const res = await fetch("/api/analyze-resume", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          resumeText: improvedText,
-          recheckAfterImprovement: true,
-          previousAnalysis: {
-            atsScore: prevAnalysis.atsScore,
-            missingSkills: prevAnalysis.missingSkills ?? [],
-            resumeImprovements: prevAnalysis.resumeImprovements ?? [],
-          },
-        }),
+      const result = await analyzeMut.mutateAsync({
+        resumeText: improvedText,
+        recheckAfterImprovement: true,
+        previousAnalysis: {
+          atsScore: prevAnalysis.atsScore,
+          missingSkills: prevAnalysis.missingSkills ?? [],
+          resumeImprovements: prevAnalysis.resumeImprovements ?? [],
+        },
       });
-      const data = await res.json();
-      if (!res.ok) {
-        const msg = data.detail ? `${data.error}: ${data.detail}` : (data.error || "Re-check failed");
-        setError(msg);
-        return;
+      const { _usage, ...analysisData } = result;
+      setAnalysis(analysisData as ATSAnalysisResult);
+      setAnalysisForRecheck(analysisData as ATSAnalysisResult);
+      if (_usage) {
+        setUsageInfo({ used: _usage.used, limit: _usage.limit });
       }
-      setAnalysis(data);
-      setAnalysisForRecheck(data);
-      dispatchUsageUpdated();
     } catch (e) {
-      setError(e instanceof Error ? humanizeImproveResumeError(e.message) : humanizeNetworkError());
-    } finally {
-      setRecheckLoading(false);
+      setError(
+        e instanceof Error ? humanizeImproveResumeError(e.message) : humanizeNetworkError()
+      );
     }
   }
 
@@ -201,39 +174,25 @@ function ResumeAnalyzerContent() {
       return;
     }
     setError(null);
-    setLoading(true);
     try {
-      const res = await fetch("/api/analyze-resume", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          resumeText,
-          resumeId: resumeId || undefined,
-        }),
+      const data = await analyzeMut.mutateAsync({
+        resumeText,
+        resumeId: resumeId || undefined,
       });
-      const data = await res.json();
-      if (!res.ok) {
-        const msg = data.detail
-          ? `${typeof data.error === "string" ? data.error : "Error"}: ${data.detail}`
-          : typeof data.error === "string"
-            ? data.error
-            : "Analysis failed";
-        throw new Error(msg);
+      const { _usage, ...analysisData } = data;
+      setAnalysis(analysisData as ATSAnalysisResult);
+      if (_usage) {
+        setUsageInfo({ used: _usage.used, limit: _usage.limit });
       }
-      setAnalysis(data);
-      // Track usage for upgrade banner
-      if (data._usage) {
-        setUsageInfo({ used: data._usage.used, limit: data._usage.limit });
-      }
-      dispatchUsageUpdated();
     } catch (e) {
       setError(
         e instanceof Error ? humanizeImproveResumeError(e.message) : humanizeImproveResumeError(undefined)
       );
-    } finally {
-      setLoading(false);
     }
   }
+
+  const analyzing = analyzeMut.isPending;
+  const improving = improveMut.isPending;
 
   return (
     <div className="mx-auto w-full max-w-3xl py-8 space-y-4 sm:space-y-6 md:space-y-8">
@@ -333,13 +292,13 @@ function ResumeAnalyzerContent() {
             <button
               type="button"
               onClick={runAnalysis}
-              disabled={loading}
+              disabled={analyzing}
               className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 font-medium text-white shadow-md shadow-indigo-600/20 transition-all hover:bg-indigo-700 disabled:opacity-50 sm:w-auto"
             >
-              {loading ? "Analyzing…" : "Analyze resume"}
+              {analyzing ? "Analyzing…" : "Analyze resume"}
             </button>
           </div>
-          {loading && <div className="mt-3"><AIProgressIndicator message="Analyzing your resume…" /></div>}
+          {analyzing && <div className="mt-3"><AIProgressIndicator message="Analyzing your resume…" /></div>}
           {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
         </section>
       )}
@@ -436,10 +395,10 @@ function ResumeAnalyzerContent() {
                 <button
                   type="button"
                   onClick={handleRecheckImproved}
-                  disabled={recheckLoading}
+                  disabled={analyzing}
                   className="mt-3 w-full rounded-lg border border-indigo-200 bg-white px-5 py-2.5 text-sm font-semibold text-indigo-700 shadow-sm transition-colors hover:bg-indigo-50 disabled:opacity-50 sm:w-auto"
                 >
-                  {recheckLoading ? "Scoring your improved resume…" : "See your new ATS score →"}
+                  {analyzing ? "Scoring your improved resume…" : "See your new ATS score →"}
                 </button>
                 <p className="mt-2 text-sm leading-relaxed text-indigo-800">
                   Should show 90%+ if the improvements addressed the previous feedback.

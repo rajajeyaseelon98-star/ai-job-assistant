@@ -5,6 +5,9 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api-fetcher";
+import { userKeys, type UserData } from "@/hooks/queries/use-user";
 import { AuthSplitShell } from "@/components/auth/auth-split-shell";
 import { AuthTrustSignals } from "@/components/auth/auth-trust-signals";
 
@@ -35,6 +38,7 @@ const inputClass =
   "mt-1.5 w-full min-h-[44px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-base text-slate-900 placeholder:text-slate-400 transition focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-60 sm:text-sm";
 
 function LoginForm() {
+  const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -77,16 +81,19 @@ function LoginForm() {
     const next = searchParams.get("next") || "/dashboard";
     const safePath = next.startsWith("/") && !next.startsWith("//") && !next.includes("://") ? next : "/dashboard";
 
-    // Role-aware redirect: if landing on default /dashboard, check actual role
+    // Role-aware redirect: default /dashboard → last active mode (same as users.role after switch)
     let redirectPath = safePath;
     if (safePath === "/dashboard" && authData.user) {
       try {
-        const res = await fetch("/api/user");
-        if (res.ok) {
-          const userData = await res.json();
-          if (userData.role === "recruiter") redirectPath = "/recruiter";
-        }
-      } catch { /* fallback to /dashboard */ }
+        const userData = await queryClient.fetchQuery({
+          queryKey: userKeys.me(),
+          queryFn: () => apiFetch<UserData>("/api/user"),
+        });
+        const mode = userData.last_active_role ?? userData.role;
+        if (mode === "recruiter") redirectPath = "/recruiter";
+      } catch {
+        /* fallback to /dashboard */
+      }
     }
 
     router.push(redirectPath);

@@ -13,6 +13,7 @@ import {
   Loader2,
   FileText,
   CheckCircle2,
+  Wand2,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -22,6 +23,8 @@ const ReactMarkdown = dynamic(() => import("react-markdown"), {
   ssr: false,
 });
 import { useJobs, useAppliedJobIds, useJobBoardResumes, useApplyToJob } from "@/hooks/queries/use-job-board";
+import { useGenerateCoverLetter } from "@/hooks/mutations/use-generate-cover-letter";
+import { buildJobPostingPromptText } from "@/lib/job-posting-text";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -124,6 +127,7 @@ export default function JobBoardPage() {
   const { data: appliedIds = [] } = useAppliedJobIds();
   const { data: resumes = [] } = useJobBoardResumes(showApplyForm);
   const applyMutation = useApplyToJob();
+  const coverGen = useGenerateCoverLetter();
 
   useEffect(() => {
     if (resumes.length > 0 && !selectedResume) {
@@ -159,6 +163,36 @@ export default function JobBoardPage() {
       setApplyError(err instanceof Error ? err.message : "Network error. Please try again.");
     } finally {
       setApplying(false);
+    }
+  }
+
+  async function handleGenerateCoverLetter() {
+    if (!selectedJob) return;
+    if (!selectedResume) {
+      setApplyError("Select a resume to generate a cover letter.");
+      return;
+    }
+    setApplyError("");
+    try {
+      const jobDescription = buildJobPostingPromptText({
+        title: selectedJob.title,
+        description: selectedJob.description,
+        requirements: selectedJob.requirements,
+        skills_required: selectedJob.skills_required,
+        location: selectedJob.location,
+        work_type: selectedJob.work_type,
+        employment_type: selectedJob.employment_type,
+        companyName: selectedJob.companies?.name ?? undefined,
+      });
+      const data = await coverGen.mutateAsync({
+        resumeId: selectedResume,
+        jobDescription,
+        companyName: selectedJob.companies?.name ?? undefined,
+        role: selectedJob.title,
+      });
+      setCoverLetter(data.coverLetter);
+    } catch (err) {
+      setApplyError(err instanceof Error ? err.message : "Cover letter generation failed.");
     }
   }
 
@@ -605,9 +639,28 @@ export default function JobBoardPage() {
 
                   {/* Cover letter */}
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-text-muted">
-                      Cover letter (optional)
-                    </label>
+                    <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+                      <label className="block text-xs font-medium text-text-muted">
+                        Cover letter (optional)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => void handleGenerateCoverLetter()}
+                        disabled={
+                          coverGen.isPending ||
+                          !selectedResume ||
+                          resumes.length === 0
+                        }
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {coverGen.isPending ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Wand2 className="h-3 w-3" />
+                        )}
+                        Generate with AI
+                      </button>
+                    </div>
                     <textarea
                       value={coverLetter}
                       onChange={(e) => setCoverLetter(e.target.value)}

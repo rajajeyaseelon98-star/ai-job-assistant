@@ -4,36 +4,30 @@ import { useState } from "react";
 import { InterviewQuestions } from "@/components/interview/InterviewQuestions";
 import { AIProgressIndicator } from "@/components/ui/AIProgressIndicator";
 import type { InterviewPrepResponse } from "@/types/analysis";
+import { useInterviewPrep } from "@/hooks/mutations/use-interview-prep";
+import { formatApiFetchThrownError } from "@/lib/api-error";
 
 const EXPERIENCE_LEVELS = ["Junior", "Mid", "Senior"] as const;
 
 export default function InterviewPrepPage() {
+  const prepMut = useInterviewPrep();
   const [role, setRole] = useState("React Developer");
   const [experienceLevel, setExperienceLevel] = useState<string>("Mid");
   const [data, setData] = useState<InterviewPrepResponse | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const loading = prepMut.isPending;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setLoading(true);
     try {
-      const res = await fetch("/api/interview-prep", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          role: role.trim() || "Software Developer",
-          experienceLevel: experienceLevel || undefined,
-        }),
+      const json = await prepMut.mutateAsync({
+        role: role.trim() || "Software Developer",
+        experienceLevel: experienceLevel || undefined,
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to generate");
       setData(json);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setLoading(false);
+      setError(formatApiFetchThrownError(e) || "Failed");
     }
   }
 

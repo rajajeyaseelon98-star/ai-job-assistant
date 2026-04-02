@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-fetcher";
+import { sharedQueryKeys } from "@/hooks/queries/shared-query-keys";
 
 interface Company {
   id: string;
@@ -53,7 +54,7 @@ export const jobBoardKeys = {
   all: ["job-board"] as const,
   list: (filters: JobsFilters) => [...jobBoardKeys.all, "list", filters] as const,
   applied: () => [...jobBoardKeys.all, "applied"] as const,
-  resumes: () => ["shared", "resumes"] as const,
+  resumes: sharedQueryKeys.resumes,
 };
 
 export function useJobs(filters: JobsFilters) {

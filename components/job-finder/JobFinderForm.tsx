@@ -3,6 +3,8 @@
 import { useState, useRef } from "react";
 import { Upload, Search, MapPin, Loader2 } from "lucide-react";
 import type { ExtractedSkills, JobResult } from "@/types/jobFinder";
+import { useUploadResume } from "@/hooks/mutations/use-upload-resume";
+import { useAutoJobsSearch } from "@/hooks/mutations/use-auto-jobs";
 
 interface JobFinderFormProps {
   onResult: (result: {
@@ -17,36 +19,23 @@ interface JobFinderFormProps {
 export function JobFinderForm({ onResult }: JobFinderFormProps) {
   const [resumeText, setResumeText] = useState("");
   const [location, setLocation] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [step, setStep] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const uploadMut = useUploadResume();
+  const autoJobsMut = useAutoJobsSearch();
 
   async function handleFileUpload(file: File) {
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setError("File too large. Max 5MB.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-
+    setError("");
+    setStep("Parsing resume...");
     try {
-      setError("");
-      setStep("Parsing resume...");
-      const res = await fetch("/api/upload-resume", { method: "POST", body: formData });
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || "Upload failed");
-        return;
-      }
-      const data = await res.json();
+      const data = await uploadMut.mutateAsync(file);
       if (data.parsed_text) {
         setResumeText(data.parsed_text);
       }
-    } catch {
-      setError("Failed to parse file");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to parse file");
     } finally {
       setStep("");
     }
@@ -59,33 +48,23 @@ export function JobFinderForm({ onResult }: JobFinderFormProps) {
       return;
     }
 
-    setLoading(true);
     setError("");
-    setStep("Extracting skills from resume...");
+    setStep("Finding matching jobs...");
 
     try {
-      const res = await fetch("/api/auto-jobs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText, location: location.trim() || undefined }),
+      const data = await autoJobsMut.mutateAsync({
+        resumeText,
+        location: location.trim() || undefined,
       });
-
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || "Search failed");
-        return;
-      }
-
-      setStep("Finding matching jobs...");
-      const data = await res.json();
       onResult(data);
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
     } finally {
-      setLoading(false);
       setStep("");
     }
   }
+
+  const loading = autoJobsMut.isPending;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
@@ -105,10 +84,11 @@ export function JobFinderForm({ onResult }: JobFinderFormProps) {
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600 transition-all hover:border-indigo-500"
+          disabled={uploadMut.isPending}
+          className="flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600 transition-all hover:border-indigo-500 disabled:opacity-50"
         >
           <Upload className="h-4 w-4" />
-          Choose file or drag & drop
+          {uploadMut.isPending ? "Parsing…" : "Choose file or drag & drop"}
         </button>
       </div>
 

@@ -3,6 +3,7 @@ import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { isValidUUID } from "@/lib/validation";
+import { getResumeForJobApplication } from "@/lib/resume-for-user";
 
 export async function POST(
   request: Request,
@@ -64,18 +65,11 @@ export async function POST(
   // If resume_id provided, fetch the parsed text
   let resumeText: string | null = null;
   if (resume_id) {
-    const { data: resume, error: resumeError } = await supabase
-      .from("resumes")
-      .select("id, parsed_text")
-      .eq("id", resume_id)
-      .eq("user_id", user.id)
-      .single();
-
-    if (resumeError || !resume) {
+    const loaded = await getResumeForJobApplication(supabase, user.id, resume_id);
+    if (!loaded.ok) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
     }
-
-    resumeText = resume.parsed_text || null;
+    resumeText = loaded.text;
   }
 
   // Insert the application

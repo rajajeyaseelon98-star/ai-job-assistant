@@ -23,15 +23,24 @@ export async function GET(
     .from("users")
     .select(`
       id, email, name, created_at,
-      resumes(id, parsed_text, file_url, created_at),
-      user_preferences(experience_level, preferred_role, preferred_location, salary_expectation),
-      resume_analysis:resume_analysis(id, score, analysis_json, created_at)
+      resumes(
+        id, parsed_text, file_url, created_at,
+        resume_analysis(id, score, analysis_json, created_at)
+      ),
+      user_preferences(experience_level, preferred_role, preferred_location, salary_expectation)
     `)
     .eq("id", id)
     .eq("role", "job_seeker")
     .single();
 
-  if (error || !candidate) {
+  if (error) {
+    console.error("[recruiter/candidates/[id]]", error.message);
+    return NextResponse.json(
+      { error: "Candidate not found", detail: error.message },
+      { status: 404 }
+    );
+  }
+  if (!candidate) {
     return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
   }
 

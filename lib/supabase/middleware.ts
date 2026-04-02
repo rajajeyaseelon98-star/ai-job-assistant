@@ -1,3 +1,4 @@
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import {
@@ -10,8 +11,13 @@ type CookieTuple = { name: string; value: string; options?: Record<string, unkno
 /**
  * Refresh the Supabase session and return the authenticated user (if any).
  * Callers can reuse the returned user to avoid a second auth round-trip.
+ * `supabase` is the same client (for follow-up queries like `public.users.role`).
  */
-export async function updateSession(request: NextRequest) {
+export async function updateSession(request: NextRequest): Promise<{
+  response: NextResponse;
+  user: User | null;
+  supabase: SupabaseClient;
+}> {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -36,5 +42,5 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
   const e2eRole = readE2eMockRoleFromCookies(request.cookies);
   const user = authUser ?? (e2eRole ? buildSupabaseUserFromE2eRole(e2eRole) : null);
-  return { response: supabaseResponse, user };
+  return { response: supabaseResponse, user, supabase };
 }

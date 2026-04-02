@@ -3,7 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Upload, Wand2, Loader2, Briefcase } from "lucide-react";
 import type { ImprovedResumeContent } from "@/types/analysis";
-import { humanizeImproveResumeError, humanizeNetworkError } from "@/lib/friendlyApiError";
+import { humanizeNetworkError } from "@/lib/friendlyApiError";
+import { useUploadResume } from "@/hooks/mutations/use-upload-resume";
+import { useImproveResume } from "@/hooks/mutations/use-improve-resume";
 
 interface TailorResumeFormProps {
   onResult: (content: ImprovedResumeContent, improvedResumeId?: string) => void;
@@ -13,10 +15,11 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
   const [resumeText, setResumeText] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [step, setStep] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const uploadMut = useUploadResume();
+  const improveMut = useImproveResume();
 
   useEffect(() => {
     try {
@@ -38,34 +41,15 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
 
   async function handleFileUpload(file: File) {
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setError("File too large. Max 5MB.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-
+    setError("");
+    setStep("Parsing resume...");
     try {
-      setError("");
-      setStep("Parsing resume...");
-      const res = await fetch("/api/upload-resume", { method: "POST", body: formData });
-      if (!res.ok) {
-        const data = await res.json();
-        const msg = data.error || "Upload failed";
-        setError(
-          msg.includes("couldn’t") || msg.includes("couldn't") || msg.includes("copy-paste")
-            ? msg
-            : "We couldn’t read this file. Try DOCX or paste your resume text below."
-        );
-        return;
-      }
-      const data = await res.json();
+      const data = await uploadMut.mutateAsync(file);
       if (data.parsed_text) {
         setResumeText(data.parsed_text);
       }
-    } catch {
-      setError(humanizeNetworkError());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Upload failed");
     } finally {
       setStep("");
     }
@@ -82,48 +66,36 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
       return;
     }
 
-    setLoading(true);
     setError("");
     setStep("Tailoring your resume for this role...");
 
     try {
-      const res = await fetch("/api/improve-resume", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          resumeText,
-          jobTitle: jobTitle.trim() || undefined,
-          jobDescription: jobDescription.trim(),
-          tailorIntent: "target_job",
-        }),
+      const data = await improveMut.mutateAsync({
+        resumeText,
+        jobTitle: jobTitle.trim() || undefined,
+        jobDescription: jobDescription.trim(),
+        tailorIntent: "target_job",
       });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(humanizeImproveResumeError(typeof data.error === "string" ? data.error : undefined));
-        return;
-      }
-
-      const data = await res.json();
       const { improvedResumeId, ...content } = data;
       onResult(content as ImprovedResumeContent, improvedResumeId);
-    } catch {
-      setError(humanizeNetworkError());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : humanizeNetworkError());
     } finally {
-      setLoading(false);
       setStep("");
     }
   }
 
+  const loading = improveMut.isPending;
+  const parsing = uploadMut.isPending;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-      {/* Resume Input */}
       <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <div className="mb-6 flex items-center gap-3">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 text-sm font-bold text-indigo-600">1</span>
-          <h3 className="font-display text-xl font-semibold text-slate-900">
-          Your Resume
-          </h3>
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 text-sm font-bold text-indigo-600">
+            1
+          </span>
+          <h3 className="font-display text-xl font-semibold text-slate-900">Your Resume</h3>
         </div>
 
         <input
@@ -133,13 +105,14 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
           className="hidden"
           onChange={(e) => {
             const f = e.target.files?.[0];
-            if (f) handleFileUpload(f);
+            if (f) void handleFileUpload(f);
           }}
         />
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="mb-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50"
+          disabled={parsing}
+          className="mb-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 disabled:opacity-50"
         >
           <Upload className="h-4 w-4" />
           Upload PDF/DOCX
@@ -158,13 +131,12 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
         />
       </div>
 
-      {/* Job Details */}
       <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <div className="mb-6 flex items-center gap-3">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 text-sm font-bold text-indigo-600">2</span>
-          <h3 className="font-display text-xl font-semibold text-slate-900">
-          Target Job
-          </h3>
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 text-sm font-bold text-indigo-600">
+            2
+          </span>
+          <h3 className="font-display text-xl font-semibold text-slate-900">Target Job</h3>
         </div>
 
         <div className="mb-3 sm:mb-4">
@@ -195,9 +167,7 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
         </div>
       </div>
 
-      {error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
 
       {step && (
         <div className="flex items-center gap-2 text-sm text-primary">
@@ -208,7 +178,7 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
 
       <button
         type="submit"
-        disabled={loading || !resumeText.trim() || !jobDescription.trim()}
+        disabled={loading || !resumeText.trim() || !jobDescription.trim() || parsing}
         className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-8 py-3.5 font-medium text-white shadow-md shadow-indigo-500/25 transition-all hover:from-indigo-700 hover:to-violet-700 disabled:opacity-50 sm:w-auto"
       >
         {loading ? (

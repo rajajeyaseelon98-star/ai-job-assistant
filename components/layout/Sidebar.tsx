@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useUser } from "@/hooks/queries/use-user";
 import {
   LayoutDashboard,
   FileText,
@@ -90,6 +91,8 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const { data: user } = useUser();
+  const canSwitchToRecruiter = !!user?.recruiter_onboarding_complete;
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
@@ -199,14 +202,24 @@ export function Sidebar() {
         </nav>
 
         {/* Footer */}
-        <div className="safe-bottom shrink-0 border-t border-slate-200 px-3 py-3">
-          <Link
-            href="/select-role?next=/recruiter"
-            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600 shadow-sm transition-all duration-200 hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-indigo-700"
-          >
-            <ArrowLeftRight className="h-4 w-4 shrink-0 text-slate-500" />
-            <span className="truncate">Switch to Recruiter</span>
-          </Link>
+        <div className="safe-bottom shrink-0 space-y-2 border-t border-slate-200 px-3 py-3">
+          {canSwitchToRecruiter ? (
+            <Link
+              href="/select-role?next=/recruiter"
+              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600 shadow-sm transition-all duration-200 hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-indigo-700"
+            >
+              <ArrowLeftRight className="h-4 w-4 shrink-0 text-slate-500" />
+              <span className="truncate">Switch to Recruiter</span>
+            </Link>
+          ) : (
+            <Link
+              href="/select-role?next=/recruiter/company"
+              className="flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50/60 px-3 py-2.5 text-sm font-medium text-indigo-800 shadow-sm transition-all duration-200 hover:border-indigo-300 hover:bg-indigo-50"
+            >
+              <Briefcase className="h-4 w-4 shrink-0 text-indigo-600" />
+              <span className="truncate">Hire talent (recruiter)</span>
+            </Link>
+          )}
         </div>
       </aside>
     </>

@@ -3,20 +3,12 @@
 import { useMemo } from "react";
 import { BarChart3, Users, Briefcase, TrendingUp, Target } from "lucide-react";
 import { useRecruiterJobs, useRecruiterApplications } from "@/hooks/queries/use-recruiter";
-
-interface Analytics {
-  totalJobs: number;
-  activeJobs: number;
-  totalApplications: number;
-  avgMatchScore: number;
-  stageBreakdown: Record<string, number>;
-  topJobs: { title: string; applications: number }[];
-  hiringRate: number;
-}
+import { useRecruiterIntelligence } from "@/hooks/queries/use-recruiter-intelligence";
 
 export default function AnalyticsPage() {
   const { data: jobsRaw, isLoading: jobsLoading, error: jobsError } = useRecruiterJobs();
   const { data: appsRaw, isLoading: appsLoading, error: appsError } = useRecruiterApplications();
+  const { data: intel, isLoading: intelLoading, error: intelError } = useRecruiterIntelligence();
   const loading = jobsLoading || appsLoading;
 
   const data = useMemo(() => {
@@ -80,6 +72,53 @@ export default function AnalyticsPage() {
           </div>
         ))}
       </div>
+
+      {intel && !intelError && (
+        <div className="bg-gradient-to-br from-indigo-50/80 to-white border border-indigo-100 shadow-sm rounded-[32px] p-8 mb-8">
+          <h2 className="flex items-center gap-3 mb-4 font-display text-lg font-bold text-slate-800">
+            <TrendingUp className="text-indigo-600 w-5 h-5 shrink-0" />
+            Intelligence insights
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 text-sm">
+            <div className="rounded-xl bg-white/80 border border-slate-100 p-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Avg. time to hire</p>
+              <p className="mt-1 font-display text-2xl font-bold text-slate-900">
+                {intel.hiring_metrics.avg_time_to_hire_days != null
+                  ? `${intel.hiring_metrics.avg_time_to_hire_days} days`
+                  : "—"}
+              </p>
+            </div>
+            <div className="rounded-xl bg-white/80 border border-slate-100 p-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">In pipeline</p>
+              <p className="mt-1 font-display text-2xl font-bold text-slate-900">
+                {intel.pipeline_health.total_in_pipeline}
+              </p>
+            </div>
+            <div className="rounded-xl bg-white/80 border border-slate-100 p-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Stale applications</p>
+              <p className="mt-1 font-display text-2xl font-bold text-amber-700">
+                {intel.pipeline_health.stale_applications}
+              </p>
+            </div>
+            <div className="rounded-xl bg-white/80 border border-slate-100 p-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Screen → interview</p>
+              <p className="mt-1 font-display text-2xl font-bold text-slate-900">
+                {intel.hiring_metrics.screening_to_interview_rate}%
+              </p>
+            </div>
+          </div>
+          {intel.recommendations.length > 0 && (
+            <ul className="space-y-2 text-sm text-slate-700 list-disc list-inside">
+              {intel.recommendations.slice(0, 6).map((r, i) => (
+                <li key={i}>{r}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+      {intelLoading && !intel && !intelError && (
+        <p className="text-sm text-slate-500 mb-4">Loading intelligence…</p>
+      )}
 
       {/* Pipeline Breakdown */}
       <div className="bg-white border border-slate-200 shadow-sm rounded-[32px] p-8 mb-8">

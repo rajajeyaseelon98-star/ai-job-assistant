@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
+import { useSubmitFeedback } from "@/hooks/mutations/use-feedback";
 
 interface FeedbackButtonsProps {
   feature: string;
@@ -9,6 +10,7 @@ interface FeedbackButtonsProps {
 }
 
 export function FeedbackButtons({ feature, resultId }: FeedbackButtonsProps) {
+  const submitMut = useSubmitFeedback();
   const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
@@ -16,11 +18,7 @@ export function FeedbackButtons({ feature, resultId }: FeedbackButtonsProps) {
     setFeedback(type);
     setSubmitted(true);
     try {
-      await fetch("/api/feedback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ feature, resultId, type }),
-      });
+      await submitMut.mutateAsync({ feature, resultId, type });
     } catch {
       // Non-blocking — feedback is best-effort
     }

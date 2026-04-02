@@ -42,3 +42,29 @@ export function useUpdateApplicationStatus() {
     },
   });
 }
+
+export function useSaveApplication() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      id?: string;
+      body: Record<string, unknown>;
+    }) => {
+      if (input.id) {
+        return apiFetch<Application>(`/api/applications/${input.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(input.body),
+        });
+      }
+      return apiFetch<Application>("/api/applications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input.body),
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: applicationKeys.all });
+    },
+  });
+}
