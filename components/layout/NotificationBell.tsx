@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Bell, Volume2 } from "lucide-react";
 import { createBrowserClient } from "@supabase/ssr";
 import { useNotifications, useMarkAllRead, useMarkRead, notificationKeys } from "@/hooks/queries/use-notifications";
+import { useUser } from "@/hooks/queries/use-user";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface Notification {
@@ -28,6 +29,7 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const { data: userData } = useUser();
 
   const { data: notifications = [] } = useNotifications();
   const markAllReadMutation = useMarkAllRead();
@@ -39,24 +41,36 @@ export function NotificationBell() {
   useEffect(() => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const uid = userData?.id;
 
-    if (!supabaseUrl || !supabaseKey) return;
+    if (!supabaseUrl || !supabaseKey || !uid) return;
 
     const supabase = createBrowserClient(supabaseUrl, supabaseKey);
     const channel = supabase
-      .channel("notifications-realtime")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, (payload) => {
+      .channel(`notifications-realtime:${uid}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${uid}`,
+        },
+        (payload) => {
           const newNotif = payload.new as Notification;
-          queryClient.setQueryData(notificationKeys.list(), (old: Notification[] | undefined) => 
-              [newNotif, ...(old ?? [])].slice(0, 30)
+          queryClient.setQueryData(notificationKeys.list(), (old: Notification[] | undefined) =>
+            [newNotif, ...(old ?? [])].slice(0, 30)
           );
           setToast(newNotif.title);
           setTimeout(() => setToast(null), 4000);
-      })
+        }
+      )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
-  }, [queryClient]);
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [queryClient, userData?.id]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

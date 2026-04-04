@@ -45,6 +45,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/import-linkedin") ||
     pathname.startsWith("/job-board") ||
     pathname.startsWith("/applications") ||
+    pathname.startsWith("/messages") ||
     pathname.startsWith("/analytics") ||
     pathname.startsWith("/activity") ||
     pathname.startsWith("/salary-insights") ||

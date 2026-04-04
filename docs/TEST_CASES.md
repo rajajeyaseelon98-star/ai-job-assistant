@@ -2,7 +2,7 @@
 
 **Purpose:** In-depth test cases for every feature flow. Covers happy paths, edge cases, error handling, and integration scenarios.
 
-**Last updated:** 2026-04-02 (role switch `PATCH /api/user/role`; cron trigger includes DB cleanups; new cases for `/api/dashboard`, `/api/history`, `/api/jobs/applied`, public extract/fresher routes. **Component ↔ API mapping** for manual QA: `docs/KNOWLEDGE_TRANSFER.md` §6.1–§6.3.)
+**Last updated:** 2026-04-05 (**Section 30 / TC-30.1:** recipient **`notifications`** row on send when **`SUPABASE_SERVICE_ROLE_KEY`** is set; bell realtime filtered by **`user_id`**. Earlier 2026-04-02: role switch `PATCH /api/user/role`; cron trigger includes DB cleanups; new cases for `/api/dashboard`, `/api/history`, `/api/jobs/applied`, public extract/fresher routes. **Section 30:** job seeker `/messages`, compose/`peer` URLs, **`POST /api/messages`** role rules (**403**), mark-read, candidate list Message CTA. **Component ↔ API mapping** for manual QA: `docs/KNOWLEDGE_TRANSFER.md` §6.1–§6.3.)
 
 ---
 
@@ -1142,11 +1142,13 @@
 
 ## 30. Recruiter: Messaging
 
-### TC-30.1: Send message
+Shared inbox UI (**`MessagesInbox`**) for recruiters at **`/recruiter/messages`** and job seekers at **`/messages`**. **API:** **`GET`/`POST /api/messages`** (canonical); **`GET`/`POST /api/recruiter/messages`** re-exports the same handlers; **`POST /api/messages/mark-read`** with **`{ peer_id }`** marks inbound messages from that peer as read when a thread is opened.
+
+### TC-30.1: Send message (recruiter → candidate)
 - **Steps:**
-  1. Compose message to candidate
-  2. Send
-- **Expected:** Message saved. Notification sent to candidate.
+  1. As recruiter, open **`/recruiter/messages`**, compose a message to a **job seeker** user id (e.g. from candidate search / profile).
+  2. Send.
+- **Expected:** **`POST /api/messages`** returns **201**; row inserted in **`messages`**. Recipient must be **`job_seeker`** or API returns **403** (see TC-30.8). With **`SUPABASE_SERVICE_ROLE_KEY`** set on the server, a **`notifications`** row is inserted for the **`receiver_id`** (**`type`** = **`message`**); without the service role key, the message still sends but the in-app bell notification is skipped (dev console warning).
 
 ### TC-30.2: Use template
 - **Steps:**
@@ -1165,6 +1167,40 @@
   2. Edit template
   3. Delete template
 - **Expected:** Full CRUD works. Types: general, interview_invite, rejection, offer, follow_up.
+
+### TC-30.5: Job seeker inbox
+- **Steps:**
+  1. As job seeker, open **`/messages`** (Sidebar → **Messages**).
+  2. Confirm list + main panel load (conversation list, empty state or threads).
+- **Expected:** Same inbox behavior as recruiter layout; **`GET /api/messages`** returns messages where the user is sender or receiver.
+
+### TC-30.6: Compose deep link (`compose` + `receiver_id`)
+- **Steps:**
+  1. Visit **`/messages?compose=1&receiver_id=<recruiter UUID>`** (job seeker) or **`/recruiter/messages?compose=1&receiver_id=<job seeker UUID>`** (recruiter).
+- **Expected:** Compose form opens; **Recipient user ID** field is prefilled; URL can be used from candidate profile **Message in app** or candidate list **Message**.
+
+### TC-30.7: Thread deep link (`peer`) and mark read
+- **Steps:**
+  1. Open **`/messages?peer=<uuid>`** or **`/recruiter/messages?peer=<uuid>`** for an existing conversation partner.
+  2. Observe network or server logs.
+- **Expected:** Thread loads; **`POST /api/messages/mark-read`** runs with **`{ peer_id }`**; inbound messages from that peer become read.
+
+### TC-30.8: API role validation on send (**403**)
+- **Precondition:** Authenticated sender; **`receiver_id`** exists in **`users`**.
+- **Steps:**
+  1. As **recruiter**, **`POST /api/messages`** with **`receiver_id`** of another **recruiter** (or non-job_seeker).
+  2. As **job seeker**, **`POST /api/messages`** with **`receiver_id`** of another **job seeker** (or non-recruiter).
+- **Expected:** **403** JSON error: recruiter path — *"Recruiters can only message job seeker accounts."*; job seeker path — *"You can only message recruiter accounts."*
+
+### TC-30.9: Candidate search row Message (recruiter)
+- **Steps:**
+  1. On **`/recruiter/candidates`**, click **Message** on a row (not only the profile link).
+- **Expected:** Navigates to **`/recruiter/messages?compose=1&receiver_id=<that candidate’s user id>`**; compose opens without invalid nested links.
+
+### TC-30.10: Copy user ID on candidate profile (recruiter)
+- **Steps:**
+  1. On **`/recruiter/candidates/[id]`**, use **Copy user ID** (or equivalent control).
+- **Expected:** User UUID is copied to the clipboard; optional short “copied” feedback.
 
 ---
 

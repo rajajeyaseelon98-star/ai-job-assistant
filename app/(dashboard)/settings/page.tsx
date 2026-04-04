@@ -25,6 +25,8 @@ export default function SettingsPage() {
         name={user.name ?? ""}
         email={user.email ?? ""}
         planType={user.plan_type ?? "free"}
+        avatarUrl={user.avatar_url ?? null}
+        profileStrength={user.profile_strength ?? null}
         experienceLevel={user.preferences?.experience_level ?? ""}
         preferredRole={user.preferences?.preferred_role ?? ""}
         preferredLocation={user.preferences?.preferred_location ?? ""}

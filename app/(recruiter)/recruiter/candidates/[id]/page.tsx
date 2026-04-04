@@ -15,6 +15,9 @@ import {
   BarChart3,
   Eye,
   Sparkles,
+  MessageSquare,
+  Copy,
+  Check,
 } from "lucide-react";
 import type { ATSAnalysisResult } from "@/types/resume";
 import {
@@ -100,6 +103,7 @@ export default function CandidateProfilePage() {
   const [previewResumeId, setPreviewResumeId] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [analyzeMessage, setAnalyzeMessage] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState(false);
 
   async function downloadResume(resumeId: string) {
     try {
@@ -224,6 +228,32 @@ export default function CandidateProfilePage() {
                 <p className="mt-2 text-xs text-slate-500">
                   Member since {new Date(data.created_at).toLocaleDateString(undefined, { dateStyle: "medium" })}
                 </p>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <Link
+                    href={`/recruiter/messages?compose=1&receiver_id=${encodeURIComponent(data.id)}`}
+                    className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+                  >
+                    <MessageSquare className="h-4 w-4 shrink-0" />
+                    Message in app
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(data.id).then(() => {
+                        setCopiedId(true);
+                        setTimeout(() => setCopiedId(false), 2000);
+                      });
+                    }}
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                  >
+                    {copiedId ? (
+                      <Check className="h-4 w-4 text-emerald-600" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                    {copiedId ? "Copied" : "Copy user ID"}
+                  </button>
+                </div>
               </div>
             </div>
             {resumes.length === 0 && (

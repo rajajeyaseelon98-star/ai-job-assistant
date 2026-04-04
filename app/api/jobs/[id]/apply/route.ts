@@ -3,7 +3,7 @@ import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { isValidUUID } from "@/lib/validation";
-import { getResumeForJobApplication } from "@/lib/resume-for-user";
+import { getImprovedResumePlainTextForUser, getResumeForJobApplication } from "@/lib/resume-for-user";
 
 export async function POST(
   request: Request,
@@ -36,13 +36,25 @@ export async function POST(
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { resume_id, cover_letter } = body as {
+  const { resume_id, improved_resume_id, cover_letter } = body as {
     resume_id?: string;
+    improved_resume_id?: string;
     cover_letter?: string;
   };
 
+  if (resume_id && improved_resume_id) {
+    return NextResponse.json(
+      { error: "Use only one of resume_id or improved_resume_id" },
+      { status: 400 }
+    );
+  }
+
   if (resume_id && !isValidUUID(resume_id)) {
     return NextResponse.json({ error: "Invalid resume ID" }, { status: 400 });
+  }
+
+  if (improved_resume_id && !isValidUUID(improved_resume_id)) {
+    return NextResponse.json({ error: "Invalid improved resume ID" }, { status: 400 });
   }
 
   const supabase = await createClient();
@@ -62,14 +74,30 @@ export async function POST(
     return NextResponse.json({ error: "This job is no longer accepting applications" }, { status: 400 });
   }
 
-  // If resume_id provided, fetch the parsed text
   let resumeText: string | null = null;
+  /** FK to `resumes` when applying with an upload, or when improved resume was derived from one */
+  let applicationResumeId: string | null = null;
+
   if (resume_id) {
     const loaded = await getResumeForJobApplication(supabase, user.id, resume_id);
     if (!loaded.ok) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
     }
     resumeText = loaded.text;
+    applicationResumeId = resume_id;
+  } else if (improved_resume_id) {
+    const loaded = await getImprovedResumePlainTextForUser(supabase, user.id, improved_resume_id);
+    if (!loaded.ok) {
+      if (loaded.reason === "not_found") {
+        return NextResponse.json({ error: "Improved resume not found" }, { status: 404 });
+      }
+      return NextResponse.json(
+        { error: "Improved resume has no usable text. Try re-generating it in Resume Analyzer." },
+        { status: 400 }
+      );
+    }
+    resumeText = loaded.text;
+    applicationResumeId = loaded.underlying_resume_id;
   }
 
   // Insert the application
@@ -79,7 +107,7 @@ export async function POST(
       job_id: jobId,
       candidate_id: user.id,
       recruiter_id: job.recruiter_id,
-      resume_id: resume_id || null,
+      resume_id: applicationResumeId,
       resume_text: resumeText,
       cover_letter: cover_letter?.trim().slice(0, 5000) || null,
       stage: "applied",

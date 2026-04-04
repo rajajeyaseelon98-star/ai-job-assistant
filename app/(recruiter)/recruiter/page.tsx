@@ -12,7 +12,7 @@ export default function RecruiterDashboardPage() {
 
   const jobsArr = (Array.isArray(jobsData) ? jobsData : []) as Record<string, unknown>[];
   const appsArr = (Array.isArray(appsData) ? appsData : []) as Record<string, unknown>[];
-  const msgsArr = (Array.isArray(msgsData) ? msgsData : []) as Record<string, unknown>[];
+  const msgsArr = msgsData?.messages ?? [];
 
   const stats = {
     activeJobs: jobsArr.filter((j) => j.status === "active").length,

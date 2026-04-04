@@ -2,7 +2,10 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-fetcher";
+import type { Message } from "@/types/recruiter";
+import type { MessagesListResponse } from "@/types/messages";
 import { recruiterKeys } from "./recruiter-keys";
+import { userKeys, type UserData } from "./use-user";
 
 export function useRecruiterResumeSignedUrl() {
   return useMutation({
@@ -115,7 +118,40 @@ export function useSaveCompany() {
       });
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: recruiterKeys.company() });
+      void qc.invalidateQueries({ queryKey: recruiterKeys.company() });
+      void qc.invalidateQueries({ queryKey: userKeys.all });
+      void qc.invalidateQueries({ queryKey: recruiterKeys.user() });
+    },
+  });
+}
+
+export function useUploadCompanyLogo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ companyId, file }: { companyId: string; file: File }) => {
+      const form = new FormData();
+      form.set("file", file);
+      return apiFetch<{ logo_url: string; company: Record<string, unknown> }>(
+        `/api/recruiter/company/${companyId}/logo`,
+        { method: "POST", body: form }
+      );
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: recruiterKeys.company() });
+    },
+  });
+}
+
+export function useRemoveCompanyLogo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (companyId: string) =>
+      apiFetch<{ ok?: boolean; logo_url: null; company: Record<string, unknown> }>(
+        `/api/recruiter/company/${companyId}/logo`,
+        { method: "DELETE" }
+      ),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: recruiterKeys.company() });
     },
   });
 }
@@ -124,13 +160,23 @@ export function useSendMessage() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: { receiver_id: string; subject: string | null; content: string }) =>
-      apiFetch<unknown>("/api/recruiter/messages", {
+      apiFetch<Message>("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: recruiterKeys.messages() });
+    onSuccess: (newMsg) => {
+      qc.setQueryData<MessagesListResponse>(recruiterKeys.messagesList("all"), (prev) => {
+        const base: MessagesListResponse =
+          prev && !Array.isArray(prev) && "messages" in prev
+            ? prev
+            : { messages: Array.isArray(prev) ? prev : [], peer_profiles: {} };
+        const msgs = base.messages;
+        if (!msgs.length) return { ...base, messages: [newMsg] };
+        if (msgs.some((m) => m.id === newMsg.id)) return base;
+        return { ...base, messages: [newMsg, ...msgs] };
+      });
+      void qc.invalidateQueries({ queryKey: recruiterKeys.messages() });
     },
   });
 }
@@ -176,14 +222,21 @@ export function useUpdateUser() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: Record<string, unknown>) =>
-      apiFetch<unknown>("/api/user", {
+      apiFetch<{ ok?: boolean; profile_strength?: number }>("/api/user", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: recruiterKeys.user() });
-      qc.invalidateQueries({ queryKey: ["user"] });
+    onSuccess: (data) => {
+      if (typeof data?.profile_strength === "number") {
+        const ps = data.profile_strength;
+        const patch = (old: UserData | undefined) =>
+          old ? { ...old, profile_strength: ps } : old;
+        qc.setQueryData(userKeys.me(), patch);
+        qc.setQueryData(recruiterKeys.user(), patch);
+      }
+      void qc.invalidateQueries({ queryKey: recruiterKeys.user() });
+      void qc.invalidateQueries({ queryKey: ["user"] });
     },
   });
 }

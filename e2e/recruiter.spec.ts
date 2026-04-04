@@ -234,10 +234,18 @@ test.describe("Recruiter smoke", () => {
   });
 
   test("recruiter messages compose UI can open and submit (smoke)", async ({ page }) => {
+    await page.route("**/api/messages/recipient-search**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ results: [] }),
+      });
+    });
+
     await page.route(
       (url) => {
         const u = url instanceof URL ? url : new URL(url);
-        return u.pathname.replace(/\/$/, "") === "/api/recruiter/messages";
+        return u.pathname.replace(/\/$/, "") === "/api/messages";
       },
       async (route) => {
         const req = route.request();
@@ -245,7 +253,7 @@ test.describe("Recruiter smoke", () => {
           await route.fulfill({
             status: 200,
             contentType: "application/json",
-            body: "[]",
+            body: JSON.stringify({ messages: [], peer_profiles: {} }),
           });
           return;
         }
@@ -253,7 +261,17 @@ test.describe("Recruiter smoke", () => {
           await route.fulfill({
             status: 201,
             contentType: "application/json",
-            body: JSON.stringify({ id: "msg-1" }),
+            body: JSON.stringify({
+              id: "msg-1",
+              sender_id: "00000000-0000-4000-8000-000000000001",
+              receiver_id: "00000000-0000-4000-8000-000000000002",
+              job_id: null,
+              subject: null,
+              content: "Hello from Playwright smoke test",
+              is_read: false,
+              template_name: null,
+              created_at: new Date().toISOString(),
+            }),
           });
           return;
         }
@@ -261,18 +279,19 @@ test.describe("Recruiter smoke", () => {
       }
     );
 
-    await page.goto("/recruiter/messages");
+    await page.goto(
+      "/recruiter/messages?compose=1&receiver_id=00000000-0000-4000-8000-000000000002",
+      { waitUntil: "domcontentloaded" }
+    );
     await page.waitForURL(/\/recruiter\/messages/, { timeout: 30_000 });
 
-    await page.getByRole("button", { name: "Compose" }).click();
     await expect(page.getByText("New Message")).toBeVisible();
-    await expect(page.getByPlaceholder("Recipient User ID (from candidate search)")).toBeVisible();
+    await expect(page.getByText(/00000002/)).toBeVisible();
     await expect(page.getByPlaceholder("Write your message...")).toBeVisible();
 
-    await page.getByPlaceholder("Recipient User ID (from candidate search)").fill("00000000-0000-4000-8000-000000000002");
     await page.getByPlaceholder("Write your message...").fill("Hello from Playwright smoke test");
     await page.getByRole("button", { name: "Send" }).click();
 
-    await expect(page.getByText("No conversations selected")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Select a conversation")).toBeVisible({ timeout: 15_000 });
   });
 });

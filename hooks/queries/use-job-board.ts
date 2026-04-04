@@ -42,6 +42,12 @@ interface Resume {
   file_name: string;
 }
 
+export interface ImprovedResumeOption {
+  id: string;
+  label: string;
+  created_at: string;
+}
+
 interface JobsFilters {
   search: string;
   location: string;
@@ -55,6 +61,7 @@ export const jobBoardKeys = {
   list: (filters: JobsFilters) => [...jobBoardKeys.all, "list", filters] as const,
   applied: () => [...jobBoardKeys.all, "applied"] as const,
   resumes: sharedQueryKeys.resumes,
+  improvedResumes: () => [...jobBoardKeys.all, "improved-resumes"] as const,
 };
 
 export function useJobs(filters: JobsFilters) {
@@ -94,16 +101,32 @@ export function useJobBoardResumes(enabled: boolean) {
   });
 }
 
+export function useJobBoardImprovedResumes(enabled: boolean) {
+  return useQuery({
+    queryKey: jobBoardKeys.improvedResumes(),
+    queryFn: async () => {
+      const data = await apiFetch<{ improvedResumes: ImprovedResumeOption[] }>(
+        "/api/improved-resumes"
+      );
+      return data.improvedResumes ?? [];
+    },
+    enabled,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
 export function useApplyToJob() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({
       jobId,
       resumeId,
+      improvedResumeId,
       coverLetter,
     }: {
       jobId: string;
       resumeId?: string;
+      improvedResumeId?: string;
       coverLetter?: string;
     }) =>
       apiFetch(`/api/jobs/${jobId}/apply`, {
@@ -111,6 +134,7 @@ export function useApplyToJob() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           resume_id: resumeId || undefined,
+          improved_resume_id: improvedResumeId || undefined,
           cover_letter: coverLetter || undefined,
         }),
       }),

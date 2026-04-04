@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { ChevronDown, User, CreditCard, LogOut } from "lucide-react";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 import { useUsage } from "@/hooks/queries/use-smart-apply";
 import { useUser } from "@/hooks/queries/use-user";
 
@@ -38,6 +39,7 @@ export function Topbar({ planType: propPlanType }: TopbarProps) {
 
   const planType = userData?.plan_type ?? propPlanType ?? "free";
   const usage = (queryUsage as unknown as UsageSummary) ?? null;
+  const displayName = userData?.name || userData?.email || "";
 
   useEffect(() => {
     function onUsageUpdated() {
@@ -105,9 +107,13 @@ export function Topbar({ planType: propPlanType }: TopbarProps) {
           onClick={() => setOpen(!open)}
           className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors duration-200 hover:bg-slate-100 active:bg-slate-200/70 sm:gap-2"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
-            <User className="h-4 w-4" />
-          </div>
+          <UserAvatar
+            name={displayName}
+            avatarUrl={userData?.avatar_url}
+            userId={userData?.id}
+            size={32}
+            className="ring-1 ring-indigo-100"
+          />
           <ChevronDown className="h-4 w-4 text-slate-500" />
         </button>
         {open && (

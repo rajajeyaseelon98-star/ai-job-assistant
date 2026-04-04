@@ -31,6 +31,7 @@ import {
   Award,
   Brain,
   Gift,
+  MessageSquare,
 } from "lucide-react";
 
 interface NavGroup {
@@ -69,6 +70,7 @@ const navGroups: NavGroup[] = [
     label: "Track & insights",
     items: [
       { href: "/applications", label: "Applications", icon: ClipboardList },
+      { href: "/messages", label: "Messages", icon: MessageSquare },
       { href: "/analytics", label: "Career Analytics", icon: BarChart3 },
       { href: "/resume-performance", label: "Resume Performance", icon: Award },
       { href: "/activity", label: "Activity Feed", icon: Activity },

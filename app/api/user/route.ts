@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { getE2eMockUserApiResponse, isE2eMockUserId } from "@/lib/e2e-auth";
 import { createClient } from "@/lib/supabase/server";
+import { recalculateProfileStrengthForUser } from "@/lib/recalculate-profile-strength";
 
 export async function GET() {
   const user = await getUser();
@@ -13,7 +14,9 @@ export async function GET() {
   const [{ data: profile }, { data: prefs }, { data: companies, error: companyErr }] = await Promise.all([
     supabase
       .from("users")
-      .select("id, email, name, plan_type, role, last_active_role")
+      .select(
+        "id, email, name, plan_type, role, last_active_role, headline, bio, avatar_url, profile_strength"
+      )
       .eq("id", user.id)
       .single(),
     supabase
@@ -43,7 +46,7 @@ export async function PATCH(request: Request) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (isE2eMockUserId(user.id)) {
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, profile_strength: 72 });
   }
 
   let body: Record<string, unknown>;
@@ -77,7 +80,10 @@ export async function PATCH(request: Request) {
   };
   const hasPrefs = Object.values(prefs).some((v) => v != null && v !== "");
 
+  let didUpdate = false;
+
   if (name !== undefined && hasPrefs) {
+    didUpdate = true;
     await Promise.all([
       supabase.from("users").update({ name }).eq("id", user.id),
       supabase.from("user_preferences").upsert(
@@ -86,13 +92,35 @@ export async function PATCH(request: Request) {
       ),
     ]);
   } else if (name !== undefined) {
+    didUpdate = true;
     await supabase.from("users").update({ name }).eq("id", user.id);
   } else if (hasPrefs) {
+    didUpdate = true;
     await supabase.from("user_preferences").upsert(
       { user_id: user.id, ...prefs, updated_at: new Date().toISOString() },
       { onConflict: "user_id" }
     );
   }
 
-  return NextResponse.json({ ok: true });
+  if (!didUpdate) {
+    const { data: row } = await supabase.from("users").select("profile_strength").eq("id", user.id).single();
+    return NextResponse.json({
+      ok: true,
+      profile_strength: row?.profile_strength ?? 0,
+    });
+  }
+
+  // Preferences alone do not affect profile_strength (see calculateProfileStrength); skip full recalc.
+  const nameChanged = name !== undefined;
+  if (!nameChanged) {
+    const { data: row } = await supabase.from("users").select("profile_strength").eq("id", user.id).single();
+    return NextResponse.json({
+      ok: true,
+      profile_strength: row?.profile_strength ?? 0,
+    });
+  }
+
+  const profile_strength = await recalculateProfileStrengthForUser(supabase, user.id);
+
+  return NextResponse.json({ ok: true, profile_strength });
 }

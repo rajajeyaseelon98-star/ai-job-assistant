@@ -2,7 +2,16 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Search, Loader2, User, MapPin, Briefcase, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Search,
+  Loader2,
+  User,
+  MapPin,
+  Briefcase,
+  ChevronLeft,
+  ChevronRight,
+  MessageSquare,
+} from "lucide-react";
 import { useRecruiterCandidatesSearch } from "@/hooks/queries/use-recruiter";
 import { formatApiFetchThrownError } from "@/lib/api-error";
 
@@ -181,12 +190,14 @@ export default function CandidateSearchPage() {
           <>
             <div className="space-y-3">
               {results.map((c) => (
-                <Link
+                <div
                   key={c.id}
-                  href={`/recruiter/candidates/${c.id}`}
-                  className="group bg-white border border-slate-200 rounded-2xl p-5 mb-4 hover:shadow-md hover:border-indigo-200 transition-all flex justify-between items-center"
+                  className="group bg-white border border-slate-200 rounded-2xl p-5 mb-4 hover:shadow-md hover:border-indigo-200 transition-all flex justify-between items-stretch gap-3"
                 >
-                  <div className="flex gap-4 items-center min-w-0 flex-1">
+                  <Link
+                    href={`/recruiter/candidates/${c.id}`}
+                    className="flex gap-4 items-center min-w-0 flex-1 min-h-0"
+                  >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <div className="bg-slate-50 text-slate-400 w-12 h-12 rounded-xl flex items-center justify-center">
@@ -232,11 +243,24 @@ export default function CandidateSearchPage() {
                         <span className="bg-indigo-50 text-indigo-600 text-[10px] px-2 py-0.5 rounded">{c.experience_level}</span>
                       )}
                     </div>
+                  </Link>
+                  <div className="flex shrink-0 flex-col items-end justify-center gap-2 sm:flex-row sm:items-center">
+                    <Link
+                      href={`/recruiter/messages?compose=1&receiver_id=${encodeURIComponent(c.id)}`}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-bold text-indigo-700 transition hover:bg-indigo-100"
+                    >
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      Message
+                    </Link>
+                    <Link
+                      href={`/recruiter/candidates/${c.id}`}
+                      className="flex items-center text-slate-300 transition group-hover:text-indigo-500"
+                      aria-label="View profile"
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </Link>
                   </div>
-                  <span className="ml-2 flex shrink-0 items-center text-slate-300 transition group-hover:text-indigo-500" aria-hidden>
-                    <ChevronRight className="h-5 w-5" />
-                  </span>
-                </Link>
+                </div>
               ))}
             </div>
 

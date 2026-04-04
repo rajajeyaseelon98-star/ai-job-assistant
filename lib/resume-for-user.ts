@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { normalizeImprovedResumeContent } from "@/lib/normalizeImprovedResume";
+import { improvedResumeContentToPlainText } from "@/lib/improved-resume-plaintext";
 
 export type ResumeTextResult =
   | { ok: true; text: string }
@@ -55,4 +57,38 @@ export async function getResumeForJobApplication(
   }
 
   return { ok: true, text: String(raw).trim() };
+}
+
+export type ImprovedResumeForApplication =
+  | { ok: false; reason: "not_found" | "empty" }
+  | { ok: true; text: string; underlying_resume_id: string | null };
+
+/** Loads improved resume JSON for the user and returns plain text for applications / cover letters. */
+export async function getImprovedResumePlainTextForUser(
+  supabase: SupabaseClient,
+  userId: string,
+  improvedResumeId: string
+): Promise<ImprovedResumeForApplication> {
+  const { data: row, error } = await supabase
+    .from("improved_resumes")
+    .select("id, resume_id, improved_content")
+    .eq("id", improvedResumeId)
+    .eq("user_id", userId)
+    .single();
+
+  if (error || !row) {
+    return { ok: false, reason: "not_found" };
+  }
+
+  const content = normalizeImprovedResumeContent(row.improved_content);
+  const text = improvedResumeContentToPlainText(content);
+  if (!text.trim()) {
+    return { ok: false, reason: "empty" };
+  }
+
+  return {
+    ok: true,
+    text,
+    underlying_resume_id: row.resume_id ?? null,
+  };
 }

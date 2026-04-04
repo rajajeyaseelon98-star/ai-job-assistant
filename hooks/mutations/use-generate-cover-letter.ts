@@ -9,6 +9,8 @@ import { dashboardKeys } from "@/hooks/queries/use-dashboard";
 export type GenerateCoverLetterInput = {
   /** When set, server loads parsed_text for this resume (preferred over resumeText). */
   resumeId?: string;
+  /** When set, server flattens structured improved resume JSON (preferred over resumeText). */
+  improvedResumeId?: string;
   resumeText?: string;
   jobDescription: string;
   companyName?: string;
@@ -33,6 +35,7 @@ async function postGenerateCoverLetter(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         resumeId: input.resumeId,
+        improvedResumeId: input.improvedResumeId,
         resumeText: input.resumeText,
         jobDescription: input.jobDescription,
         companyName: input.companyName,

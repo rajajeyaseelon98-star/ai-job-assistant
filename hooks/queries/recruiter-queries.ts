@@ -29,14 +29,7 @@ export function useRecruiterApplications() {
   });
 }
 
-export function useRecruiterMessages(opts?: { unread?: boolean }) {
-  const url = opts?.unread ? "/api/recruiter/messages?unread=true" : "/api/recruiter/messages";
-  return useQuery({
-    queryKey: [...recruiterKeys.messages(), opts?.unread ? "unread" : "all"],
-    queryFn: () => apiFetch<unknown[]>(url),
-    staleTime: 30 * 1000,
-  });
-}
+export { useMessages, useMessages as useRecruiterMessages } from "./use-messages";
 
 export function useRecruiterAlerts() {
   return useQuery({
@@ -54,10 +47,15 @@ export function useRecruiterTemplates() {
   });
 }
 
+/** First company row for the recruiter, or `null` (GET /api/recruiter/company returns an array). */
 export function useRecruiterCompany() {
   return useQuery({
     queryKey: recruiterKeys.company(),
-    queryFn: () => apiFetch<unknown>("/api/recruiter/company"),
+    queryFn: async () => {
+      const rows = await apiFetch<Record<string, unknown>[]>("/api/recruiter/company");
+      if (!Array.isArray(rows)) return null;
+      return rows[0] ?? null;
+    },
     staleTime: 5 * 60 * 1000,
   });
 }

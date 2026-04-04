@@ -4,13 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUpdateUser } from "@/hooks/queries/use-recruiter";
-import { useDeleteAccount } from "@/hooks/queries/use-user";
+import { useDeleteAccount, useRemoveAvatar, useUploadAvatar } from "@/hooks/queries/use-user";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 import { DevPlanSwitcher } from "./DevPlanSwitcher";
 
 interface SettingsFormProps {
   name: string;
   email: string;
   planType: string;
+  avatarUrl: string | null;
+  profileStrength: number | null;
   experienceLevel: string;
   preferredRole: string;
   preferredLocation: string;
@@ -23,6 +26,8 @@ export function SettingsForm({
   name: initialName,
   email,
   planType,
+  avatarUrl: initialAvatarUrl,
+  profileStrength,
   experienceLevel: initialExp,
   preferredRole: initialRole,
   preferredLocation: initialLoc,
@@ -30,6 +35,8 @@ export function SettingsForm({
 }: SettingsFormProps) {
   const router = useRouter();
   const updateUserMut = useUpdateUser();
+  const uploadAvatarMut = useUploadAvatar();
+  const removeAvatarMut = useRemoveAvatar();
   const deleteAccountMut = useDeleteAccount();
   const [name, setName] = useState(initialName);
   const [experienceLevel, setExperienceLevel] = useState(initialExp);
@@ -38,6 +45,29 @@ export function SettingsForm({
   const [salaryExpectation, setSalaryExpectation] = useState(initialSalary);
   const saving = updateUserMut.isPending;
   const deleting = deleteAccountMut.isPending;
+  const avatarBusy = uploadAvatarMut.isPending || removeAvatarMut.isPending;
+
+  async function onPickAvatar(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      await uploadAvatarMut.mutateAsync(file);
+      router.refresh();
+    } catch {
+      /* ignore */
+    }
+  }
+
+  async function onRemoveAvatar() {
+    if (!confirm("Remove your profile photo?")) return;
+    try {
+      await removeAvatarMut.mutateAsync();
+      router.refresh();
+    } catch {
+      /* ignore */
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -69,6 +99,61 @@ export function SettingsForm({
     <>
       <section className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 sm:p-8 mb-8">
         <h2 className="font-display text-xl font-bold text-slate-900 mb-6 pb-4 border-b border-slate-50">Profile</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-8 pb-8 border-b border-slate-50">
+          <UserAvatar name={name} avatarUrl={initialAvatarUrl} userId={undefined} size={96} />
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-slate-800">Profile photo</p>
+            <p className="text-xs text-slate-500 max-w-md">
+              JPEG, PNG, or WebP — max 2MB. Shown on your public profile and in messages.
+              {profileStrength != null ? (
+                <span className="block mt-1 text-slate-600">
+                  Profile strength: <strong>{profileStrength}%</strong>
+                </span>
+              ) : null}
+            </p>
+            <details className="mt-3 max-w-lg rounded-lg border border-slate-100 bg-slate-50/80 px-3 py-2 text-xs text-slate-600">
+              <summary className="cursor-pointer font-semibold text-indigo-700 outline-none hover:text-indigo-800">
+                What counts toward profile strength?
+              </summary>
+              <p className="mt-2 leading-relaxed">
+                The percentage reflects your <strong>public profile</strong> and resume signals — not the career
+                preference fields on this page (those help job matching).
+              </p>
+              <ul className="mt-2 list-disc space-y-1 pl-4">
+                <li>Display name</li>
+                <li>Headline and bio (edit via your public profile when enabled)</li>
+                <li>Profile photo</li>
+                <li>Skills (from your resume / skill badges)</li>
+                <li>At least one uploaded resume</li>
+                <li>ATS score from resume analysis</li>
+              </ul>
+            </details>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <label className="inline-flex">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="sr-only"
+                  disabled={avatarBusy}
+                  onChange={onPickAvatar}
+                />
+                <span className="cursor-pointer rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+                  {avatarBusy ? "Working…" : "Upload photo"}
+                </span>
+              </label>
+              {initialAvatarUrl ? (
+                <button
+                  type="button"
+                  disabled={avatarBusy}
+                  onClick={() => void onRemoveAvatar()}
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  Remove
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>

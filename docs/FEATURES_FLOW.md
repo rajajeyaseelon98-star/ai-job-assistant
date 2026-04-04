@@ -2,7 +2,7 @@
 
 **Purpose:** Step-by-step flow chart of every feature. Shows the data path from user action → frontend → API → lib → database → response for each feature.
 
-**Last updated:** 2026-04-02 (Per-component tables and hook-to-API mapping: see **`docs/KNOWLEDGE_TRANSFER.md`** §6.1–§6.3. Aligned with code: `PATCH /api/user/role`, dashboard `GET /api/dashboard` + `useDashboardStats`, history `GET /api/history`, cron trigger cleanup steps, public `/api/public/*` routes, job board `GET /api/jobs/applied`.)
+**Last updated:** 2026-04-02 (Per-component tables and hook-to-API mapping: see **`docs/KNOWLEDGE_TRANSFER.md`** §6.1–§6.3. Aligned with code: `PATCH /api/user/role`, dashboard `GET /api/dashboard` + `useDashboardStats`, history `GET /api/history`, cron trigger cleanup steps, public `/api/public/*` routes, job board `GET /api/jobs/applied`. **§30:** shared **`MessagesInbox`**, **`GET`/`POST /api/messages`**, **`POST /api/messages/mark-read`**, job seeker **`/messages`**, recruiter **`/api/recruiter/messages`** re-export.)
 
 ---
 
@@ -1329,24 +1329,48 @@ Recruiter visits /recruiter/instant-shortlist
 
 ## 30. Recruiter: Messaging & Templates
 
+Shared inbox UI: **`components/messages/MessagesInbox.tsx`** on **`/recruiter/messages`** (recruiter) and **`/messages`** (job seeker). Layout: conversation list (sidebar) + selected thread + reply; URL can drive compose and selection.
+
 ```
-Recruiter visits /recruiter/messages
+API (canonical)
+    ├─ GET  /api/messages
+    │       └─ Query: ?unread=true → inbound unread only
     │
-    ├─ GET /api/recruiter/messages ──► List all conversations
-    │
-    ├─ Send message:
-    │   └─ POST /api/recruiter/messages
-    │       ├─ Body: { receiver_id, subject, content, job_id?, template_name? }
+    ├─ POST /api/messages
+    │       ├─ Body: { receiver_id, content, subject?, job_id?, template_name? }
+    │       ├─ Recipient role: RPC user_role_for_id(receiver_id) — not a direct users SELECT
+    │       │   (RLS lets recruiters read job_seekers but not vice versa; RPC is SECURITY DEFINER)
+    │       ├─ Server: sender role must be opposite of receiver
+    │       │       recruiter → receiver must be job_seeker
+    │       │       job_seeker → receiver must be recruiter
     │       ├─ INSERT into messages
     │       └─ createNotification(receiverId, "message", subject, content)
     │
-    └─ Templates: /recruiter/templates
-        ├─ Types: general, interview_invite, rejection, offer, follow_up
-        ├─ CRUD: GET/POST/PATCH/DELETE /api/recruiter/templates
-        └─ Use template: populates message content on compose
+    ├─ POST /api/messages/mark-read
+    │       └─ Body: { peer_id } → mark inbound from peer as read
+    │
+    └─ GET/POST /api/recruiter/messages
+            └─ Same handlers as /api/messages (re-export for legacy clients)
+
+Recruiter: /recruiter/messages
+    ├─ GET/POST as above (hooks: useMessages / useSendMessage → /api/messages)
+    ├─ Open thread → POST /api/messages/mark-read { peer_id }
+    ├─ Deep link: ?compose=1&receiver_id=<candidate user id> [&peer=…]
+    └─ Entry points:
+            ├─ Candidate list row: Message → compose to that user
+            └─ Candidate profile: "Message in app" (+ optional copy user id)
+
+Job seeker: /messages
+    ├─ Same inbox component; Sidebar → Messages
+    └─ Deep link: ?compose=1&receiver_id=<recruiter user id> [&peer=…]
+
+Templates (recruiter only): /recruiter/templates
+    ├─ Types: general, interview_invite, rejection, offer, follow_up
+    ├─ CRUD: GET/POST/PATCH/DELETE /api/recruiter/templates
+    └─ Use template: populates message content on compose (recruiter flows)
 ```
 
-**Key files:** `app/(recruiter)/recruiter/messages/page.tsx`, `app/(recruiter)/recruiter/templates/page.tsx`, `app/api/recruiter/messages/route.ts`, `app/api/recruiter/templates/`
+**Key files:** `app/(recruiter)/recruiter/messages/page.tsx`, `app/(dashboard)/messages/page.tsx`, `components/messages/MessagesInbox.tsx`, `app/api/messages/route.ts`, `app/api/messages/mark-read/route.ts`, `app/api/recruiter/messages/route.ts` (re-export), `app/(recruiter)/recruiter/templates/page.tsx`, `app/api/recruiter/templates/`, `hooks/queries/use-messages.ts`, `hooks/queries/recruiter-mutations.ts` (`useSendMessage`), `middleware.ts` (protected `/messages`)
 
 ---
 

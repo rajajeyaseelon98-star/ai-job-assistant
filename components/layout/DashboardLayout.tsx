@@ -2,6 +2,7 @@
 
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
+import { ProfileCompletionBanner } from "./ProfileCompletionBanner";
 
 export default function DashboardLayout({
   children,
@@ -13,6 +14,7 @@ export default function DashboardLayout({
       <Sidebar />
       <div className="lg:pl-[240px]">
         <Topbar planType="free" />
+        <ProfileCompletionBanner />
         <main className="bg-slate-50 px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 lg:px-8">
           {children}
         </main>

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { E2E_MOCK_JOB_SEEKER_ID, E2E_MOCK_RECRUITER_ID } from "../lib/e2e-auth";
 import { applyE2eMockAuth } from "./e2e-mock-auth";
 
 /**
@@ -56,6 +57,114 @@ test.describe("Job seeker smoke", () => {
   test("job seeker application tracker loads", async ({ page }) => {
     await page.goto("/applications", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: "Application Tracker" })).toBeVisible();
+  });
+
+  test("job seeker messages inbox loads", async ({ page }) => {
+    await page.route(
+      (url) => {
+        const u = url instanceof URL ? url : new URL(url);
+        return u.pathname.replace(/\/$/, "") === "/api/messages";
+      },
+      async (route) => {
+        if (route.request().method() !== "GET") return route.fallback();
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ messages: [], peer_profiles: {} }),
+        });
+      }
+    );
+
+    await page.goto("/messages", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: "Inbox" })).toBeVisible();
+    await expect(page.getByText("Select a conversation")).toBeVisible();
+  });
+
+  test("job seeker messages compose URL prefills receiver_id", async ({ page }) => {
+    await page.route(
+      (url) => {
+        const u = url instanceof URL ? url : new URL(url);
+        return u.pathname.replace(/\/$/, "") === "/api/messages";
+      },
+      async (route) => {
+        if (route.request().method() !== "GET") return route.fallback();
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ messages: [], peer_profiles: {} }),
+        });
+      }
+    );
+
+    const q = new URLSearchParams({
+      compose: "1",
+      receiver_id: E2E_MOCK_RECRUITER_ID,
+    });
+    await page.goto(`/messages?${q.toString()}`, { waitUntil: "domcontentloaded" });
+
+    await expect(page.getByText("New Message")).toBeVisible();
+    await expect(page.getByText(new RegExp(E2E_MOCK_RECRUITER_ID.slice(-8)))).toBeVisible();
+  });
+
+  test("job seeker messages peer query opens thread (stubbed list + mark-read)", async ({ page }) => {
+    const stubMessage = {
+      id: "msg-e2e-js-1",
+      sender_id: E2E_MOCK_RECRUITER_ID,
+      receiver_id: E2E_MOCK_JOB_SEEKER_ID,
+      job_id: null,
+      subject: "Hello",
+      content: "Hi from recruiter (stub)",
+      is_read: false,
+      template_name: null,
+      created_at: new Date().toISOString(),
+    };
+
+    await page.route(
+      (url) => {
+        const u = url instanceof URL ? url : new URL(url);
+        return u.pathname.replace(/\/$/, "") === "/api/messages";
+      },
+      async (route) => {
+        if (route.request().method() !== "GET") return route.fallback();
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            messages: [stubMessage],
+            peer_profiles: {
+              [E2E_MOCK_RECRUITER_ID]: { name: "E2E Recruiter", avatar_url: null },
+            },
+          }),
+        });
+      }
+    );
+
+    await page.route(
+      (url) => {
+        const u = url instanceof URL ? url : new URL(url);
+        return u.pathname.replace(/\/$/, "") === "/api/messages/mark-read";
+      },
+      async (route) => {
+        if (route.request().method() !== "POST") return route.fallback();
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ ok: true }),
+        });
+      }
+    );
+
+    await page.goto(
+      `/messages?peer=${encodeURIComponent(E2E_MOCK_RECRUITER_ID)}`,
+      { waitUntil: "domcontentloaded" }
+    );
+
+    await expect(page.getByText("Conversation")).toBeVisible();
+    await expect(page.getByText("E2E Recruiter")).toBeVisible();
+    await expect(
+      page.locator("main p.whitespace-pre-wrap").filter({ hasText: "Hi from recruiter (stub)" })
+    ).toBeVisible();
+    await expect(page.getByPlaceholder("Reply…")).toBeVisible();
   });
 
   test("job seeker resume analyzer input mode + Improve my resume button (analysisId)", async ({
