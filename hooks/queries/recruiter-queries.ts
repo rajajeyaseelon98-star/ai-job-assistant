@@ -95,6 +95,15 @@ export type RecruiterCandidatesListResponse = {
   total: number;
   totalPages: number;
   truncated?: boolean;
+  limits?: {
+    max_job_seekers_scanned: number;
+    resume_preview_chars: number;
+    max_page_size: number;
+  };
+  search_quality?: {
+    model: string;
+    note: string;
+  };
 };
 
 export function useRecruiterCandidatesSearch(params: {

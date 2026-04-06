@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { ChevronDown, LogOut, Settings } from "lucide-react";
+import { ChevronDown, LogOut, MessageSquare, Settings } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { useRecruiterCompany } from "@/hooks/queries/use-recruiter";
@@ -50,6 +50,13 @@ export function RecruiterTopbar({ userName, avatarUrl, userId }: RecruiterTopbar
         </span>
       </div>
       <div className="flex items-center gap-1 sm:gap-2">
+        <Link
+          href="/recruiter/messages"
+          className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+          aria-label="Messages"
+        >
+          <MessageSquare className="h-5 w-5" />
+        </Link>
         <NotificationBell />
         <div className="relative" ref={ref}>
           <button

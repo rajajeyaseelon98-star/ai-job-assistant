@@ -1,10 +1,10 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-fetcher";
 import type { Message } from "@/types/recruiter";
-import type { MessagesListResponse } from "@/types/messages";
 import { recruiterKeys } from "./recruiter-keys";
+import type { ThreadApiResponse } from "./use-thread-messages";
 import { userKeys, type UserData } from "./use-user";
 
 export function useRecruiterResumeSignedUrl() {
@@ -159,23 +159,32 @@ export function useRemoveCompanyLogo() {
 export function useSendMessage() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { receiver_id: string; subject: string | null; content: string }) =>
+    mutationFn: (payload: {
+      receiver_id: string;
+      subject: string | null;
+      content: string;
+      attachment_path?: string | null;
+      attachment_name?: string | null;
+      attachment_mime?: string | null;
+    }) =>
       apiFetch<Message>("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       }),
-    onSuccess: (newMsg) => {
-      qc.setQueryData<MessagesListResponse>(recruiterKeys.messagesList("all"), (prev) => {
-        const base: MessagesListResponse =
-          prev && !Array.isArray(prev) && "messages" in prev
-            ? prev
-            : { messages: Array.isArray(prev) ? prev : [], peer_profiles: {} };
-        const msgs = base.messages;
-        if (!msgs.length) return { ...base, messages: [newMsg] };
-        if (msgs.some((m) => m.id === newMsg.id)) return base;
-        return { ...base, messages: [newMsg, ...msgs] };
-      });
+    onSuccess: (newMsg, variables) => {
+      qc.setQueryData<InfiniteData<ThreadApiResponse>>(
+        recruiterKeys.threadMessages(variables.receiver_id),
+        (old) => {
+          if (!old?.pages?.length) return old;
+          const p0 = old.pages[0];
+          if (p0.messages.some((m) => m.id === newMsg.id)) return old;
+          return {
+            ...old,
+            pages: [{ ...p0, messages: [newMsg, ...p0.messages] }, ...old.pages.slice(1)],
+          };
+        }
+      );
       void qc.invalidateQueries({ queryKey: recruiterKeys.messages() });
     },
   });

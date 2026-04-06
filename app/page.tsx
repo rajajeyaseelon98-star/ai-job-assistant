@@ -19,6 +19,7 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+import { FREE_PLAN_LIMITS } from "@/lib/usage-limits";
 
 type ActiveTab = "job_seeker" | "recruiter";
 
@@ -148,11 +149,11 @@ export default function LandingPage() {
                       className="space-y-5"
                     >
                       <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
-                        Get 3x More Interviews Using AI.
+                        Apply smarter with AI-assisted tools.
                       </h1>
                       <p className="text-lg leading-relaxed text-slate-300 sm:text-xl">
-                        Stop applying manually. Our Learning Engine finds the best jobs, tailors your resume,
-                        and auto-applies for you daily.
+                        Score your resume, tailor it for roles, discover matches, and use automation where it fits your
+                        workflow — built to save time on repetitive work.
                       </p>
                     </motion.div>
                   ) : (
@@ -163,11 +164,11 @@ export default function LandingPage() {
                       className="space-y-5"
                     >
                       <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
-                        Hire Top 10 Candidates in 5 Seconds.
+                        Find strong candidates faster.
                       </h1>
                       <p className="text-lg leading-relaxed text-slate-300 sm:text-xl">
-                        Stop screening resumes. Our AI instantly matches your job requirements with the perfect
-                        candidates based on verified skill graphs.
+                        Post roles, shortlist from job seeker profiles, and message candidates — with AI to draft and rank
+                        so your team spends less time on manual triage.
                       </p>
                     </motion.div>
                   )}
@@ -198,8 +199,8 @@ export default function LandingPage() {
                         <BarChart3 className="h-5 w-5 shrink-0 text-indigo-300" strokeWidth={2} />
                         <span className="text-xs font-semibold uppercase tracking-wide">ATS</span>
                       </div>
-                      <p className="mt-4 text-3xl font-bold tabular-nums text-white">94%</p>
-                      <p className="mt-1 text-sm font-medium text-slate-200">Match Score</p>
+                      <p className="mt-4 text-3xl font-bold tabular-nums text-white">Sample</p>
+                      <p className="mt-1 text-sm font-medium text-slate-200">ATS-style score (illustrative)</p>
                     </motion.div>
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
@@ -208,9 +209,9 @@ export default function LandingPage() {
                       className="rounded-2xl border border-white/10 border-t-white/20 bg-slate-800 p-6 shadow-2xl shadow-slate-900/20"
                     >
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-200">
-                        Interview Probability
+                        Readiness signal
                       </p>
-                      <p className="mt-3 text-2xl font-bold text-emerald-300">HIGH</p>
+                      <p className="mt-3 text-2xl font-bold text-emerald-300">Strong</p>
                       <div className="mt-4 space-y-2">
                         <div className="h-2 overflow-hidden rounded-full bg-slate-700/80">
                           <div className="h-full w-[85%] rounded-full bg-gradient-to-r from-indigo-500 to-emerald-400" />
@@ -251,10 +252,10 @@ export default function LandingPage() {
                         </div>
                         <div>
                           <p className="text-xs font-medium text-slate-200">Candidate Match</p>
-                          <p className="text-xl font-bold text-white">94%</p>
+                          <p className="text-xl font-bold text-white">Demo</p>
                         </div>
                       </div>
-                      <p className="mt-3 text-xs font-medium text-slate-200">Profile preview · Senior Frontend</p>
+                      <p className="mt-3 text-xs font-medium text-slate-200">Illustrative profile card</p>
                     </motion.div>
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
@@ -263,8 +264,8 @@ export default function LandingPage() {
                       className="rounded-2xl border border-white/10 border-t-white/20 bg-slate-800 p-6 shadow-2xl shadow-slate-900/20"
                     >
                       <Sparkles className="h-6 w-6 text-indigo-300" strokeWidth={2} />
-                      <p className="mt-3 text-lg font-semibold text-white">Instant Shortlist Generated</p>
-                      <p className="mt-2 text-sm font-medium text-slate-200">Top 10 ranked by skill graph</p>
+                      <p className="mt-3 text-lg font-semibold text-white">Shortlist preview</p>
+                      <p className="mt-2 text-sm font-medium text-slate-200">Ranked suggestions (example)</p>
                     </motion.div>
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
@@ -289,7 +290,7 @@ export default function LandingPage() {
           <motion.section {...view} className="border-y border-slate-200/80 bg-white pt-32 pb-12">
             <div className="mx-auto max-w-6xl px-4 text-center sm:px-6 lg:px-8">
               <p className="text-sm font-medium text-slate-500">
-                Trusted by professionals and hiring teams at top companies
+                Built for job seekers and hiring teams who want less busywork
               </p>
               <div className="mt-8 flex flex-wrap items-center justify-center gap-x-10 gap-y-6 opacity-50 grayscale">
                 {["Nexus", "Vertex", "Pulse", "Apex", "Orbit", "Stride"].map((name) => (
@@ -357,7 +358,7 @@ export default function LandingPage() {
                       <>
                         <li className="flex gap-3">
                           <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-indigo-600" />
-                          Instant skill-graph matching
+                          Faster resume and keyword alignment
                         </li>
                         <li className="flex gap-3">
                           <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-indigo-600" />
@@ -409,8 +410,8 @@ export default function LandingPage() {
                     />
                     <StepCard
                       step={2}
-                      title="Instant Shortlist"
-                      desc="Top candidates in 5 seconds."
+                      title="Shortlist"
+                      desc="Review ranked candidates from your pipeline."
                       icon={<Users className="h-8 w-8 text-indigo-600" strokeWidth={2} />}
                     />
                     <StepCard
@@ -431,15 +432,15 @@ export default function LandingPage() {
               <div className="grid gap-6 sm:grid-cols-3">
                 {activeTab === "job_seeker" ? (
                   <>
-                    <MetricCard label="More Interviews" value="3.2×" hint="vs manual applying" />
-                    <MetricCard label="ATS Pass Rate" value="89%" hint="optimized resumes" />
-                    <MetricCard label="Applications Sent" value="50,000+" hint="via Smart Auto-Apply" />
+                    <MetricCard label="Time saved" value="Hours/wk" hint="less manual formatting" />
+                    <MetricCard label="ATS-style feedback" value="Actionable" hint="gap-focused suggestions" />
+                    <MetricCard label="Applications" value="Scalable" hint="rules-based auto-apply (limits apply)" />
                   </>
                 ) : (
                   <>
-                    <MetricCard label="Shortlists" value="5 sec" hint="instant generation" />
-                    <MetricCard label="Quality Pass" value="92%" hint="candidate match bar" />
-                    <MetricCard label="Time-to-Hire" value="3× faster" hint="vs traditional screening" />
+                    <MetricCard label="Triage" value="Faster" hint="ranked views for your pipeline" />
+                    <MetricCard label="Fit signals" value="Transparent" hint="skills & preferences" />
+                    <MetricCard label="Coordination" value="In-app" hint="messaging & notifications" />
                   </>
                 )}
               </div>
@@ -462,7 +463,11 @@ export default function LandingPage() {
                       name="Free"
                       price="₹0"
                       period=""
-                      features={["1 resume analysis", "Basic ATS score", "Limited job matches"]}
+                      features={[
+                        `${FREE_PLAN_LIMITS.resume_analysis} resume analyses / month`,
+                        "ATS-style score & feedback",
+                        `${FREE_PLAN_LIMITS.job_match} job matches / month`,
+                      ]}
                       cta="Start free"
                       href={signupHref}
                       highlight={false}
@@ -474,8 +479,8 @@ export default function LandingPage() {
                       features={[
                         "Unlimited resume scans",
                         "AI resume improvements",
-                        "Smart Auto-Apply (100/day)",
-                        "Interview boost score",
+                        "Smart Auto-Apply (rule-based daily limits)",
+                        "Interview readiness signals",
                       ]}
                       cta="Start free trial"
                       href={signupHref}
@@ -555,13 +560,13 @@ export default function LandingPage() {
                     transition={{ duration: 0.3 }}
                   >
                     <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                      Stop Applying. Start Getting Interviews.
+                      Ready to tighten your applications?
                     </h2>
                     <Link
                       href={signupHref}
                       className="mt-8 inline-flex min-h-[52px] items-center justify-center rounded-full bg-indigo-600 px-10 py-3.5 text-base font-semibold text-white shadow-[0_0_40px_-10px_rgba(79,70,229,0.45)] transition hover:bg-indigo-500"
                     >
-                      Get Your First Interview This Week
+                      Create your free account
                     </Link>
                   </motion.div>
                 ) : (
@@ -573,13 +578,13 @@ export default function LandingPage() {
                     transition={{ duration: 0.3 }}
                   >
                     <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                      Stop Screening Resumes. Start Hiring Faster.
+                      Ready to streamline hiring workflows?
                     </h2>
                     <Link
                       href={signupHref}
                       className="mt-8 inline-flex min-h-[52px] items-center justify-center rounded-full bg-indigo-600 px-10 py-3.5 text-base font-semibold text-white shadow-[0_0_40px_-10px_rgba(79,70,229,0.45)] transition hover:bg-indigo-500"
                     >
-                      Hire Your First Candidate Today
+                      Create your free account
                     </Link>
                   </motion.div>
                 )}

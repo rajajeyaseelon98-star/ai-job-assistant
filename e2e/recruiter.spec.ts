@@ -253,7 +253,13 @@ test.describe("Recruiter smoke", () => {
           await route.fulfill({
             status: 200,
             contentType: "application/json",
-            body: JSON.stringify({ messages: [], peer_profiles: {} }),
+            body: JSON.stringify({
+              messages: [],
+              peer_profiles: {},
+              has_more: false,
+              next_before: null,
+              partial: true,
+            }),
           });
           return;
         }
@@ -269,6 +275,7 @@ test.describe("Recruiter smoke", () => {
               subject: null,
               content: "Hello from Playwright smoke test",
               is_read: false,
+              read_at: null,
               template_name: null,
               created_at: new Date().toISOString(),
             }),
@@ -278,6 +285,15 @@ test.describe("Recruiter smoke", () => {
         await route.fallback();
       }
     );
+
+    await page.route("**/api/messages/unread-summary**", async (route) => {
+      if (route.request().method() !== "GET") return route.fallback();
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ counts: {} }),
+      });
+    });
 
     await page.goto(
       "/recruiter/messages?compose=1&receiver_id=00000000-0000-4000-8000-000000000002",

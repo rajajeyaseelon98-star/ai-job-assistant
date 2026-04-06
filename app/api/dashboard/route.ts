@@ -20,7 +20,8 @@ export async function GET() {
   ] = await Promise.all([
     supabase
       .from("resume_analysis")
-      .select("id, score, created_at")
+      .select("id, score, created_at, resumes!inner(user_id)")
+      .eq("resumes.user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(5),
     supabase

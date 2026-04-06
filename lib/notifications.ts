@@ -38,11 +38,10 @@ export async function createNotificationForUser(
 ): Promise<void> {
   const admin = createServiceRoleClient();
   if (!admin) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn(
-        "[notifications] createNotificationForUser skipped: set SUPABASE_SERVICE_ROLE_KEY so recipients get in-app alerts (e.g. new messages)."
-      );
-    }
+    // Stable prefix for log alerts — delivery is skipped without service role (RLS blocks cross-user inserts).
+    console.warn(
+      `[notifications] notification_delivery_skipped reason=no_service_role_client targetUserId=${targetUserId} type=${type}`
+    );
     return;
   }
   try {
@@ -53,7 +52,11 @@ export async function createNotificationForUser(
       message,
       data: data || {},
     });
-  } catch {
-    // Non-critical — silently ignore
+  } catch (e) {
+    console.warn("[notifications] notification_insert_failed", {
+      targetUserId,
+      type,
+      error: e instanceof Error ? e.message : String(e),
+    });
   }
 }

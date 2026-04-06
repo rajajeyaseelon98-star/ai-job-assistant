@@ -197,7 +197,10 @@ function ResumeAnalyzerContent() {
   return (
     <div className="mx-auto w-full max-w-3xl py-8 space-y-4 sm:space-y-6 md:space-y-8">
       <h1 className="mb-2 font-display text-3xl font-bold tracking-tight text-slate-900">Resume Analyzer</h1>
-      <p className="mb-8 text-base text-slate-500">Add your resume for ATS analysis — upload a file or paste text.</p>
+      <p className="mb-8 max-w-2xl text-base leading-relaxed text-slate-500">
+        Upload or paste your resume for ATS-style feedback. Scores and suggestions depend on your content and the role;
+        they are a guide, not a guarantee.
+      </p>
 
       {/* Smart upgrade trigger */}
       {usageInfo && usageInfo.limit > 0 && (
@@ -401,7 +404,8 @@ function ResumeAnalyzerContent() {
                   {analyzing ? "Scoring your improved resume…" : "See your new ATS score →"}
                 </button>
                 <p className="mt-2 text-sm leading-relaxed text-indigo-800">
-                  Should show 90%+ if the improvements addressed the previous feedback.
+                  After re-scoring, expect movement in line with your edits — scores depend on content and role, not a fixed
+                  target.
                 </p>
               </div>
             </div>

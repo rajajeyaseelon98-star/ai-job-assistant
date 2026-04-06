@@ -2,7 +2,7 @@
 
 **Purpose:** In-depth test cases for every feature flow. Covers happy paths, edge cases, error handling, and integration scenarios.
 
-**Last updated:** 2026-04-05 (**Section 30 / TC-30.1:** recipient **`notifications`** row on send when **`SUPABASE_SERVICE_ROLE_KEY`** is set; bell realtime filtered by **`user_id`**. Earlier 2026-04-02: role switch `PATCH /api/user/role`; cron trigger includes DB cleanups; new cases for `/api/dashboard`, `/api/history`, `/api/jobs/applied`, public extract/fresher routes. **Section 30:** job seeker `/messages`, compose/`peer` URLs, **`POST /api/messages`** role rules (**403**), mark-read, candidate list Message CTA. **Component ↔ API mapping** for manual QA: `docs/KNOWLEDGE_TRANSFER.md` §6.1–§6.3.)
+**Last updated:** 2026-04-08 (**Section 30:** **`GET /api/messages`** returns pagination fields (**`has_more`**, **`next_before`**, **`partial`**); **`GET /api/messages/thread`**, **`GET /api/messages/unread-summary`**, **`POST /api/messages/attachment`**; **`mark-read`** sets **`read_at`**; optional message attachments + read receipts in UI. Recruiter **`/recruiter`** dashboard unread total uses **`unread-summary`** (not first page of **`GET /api/messages?unread=true`**). **Earlier 2026-04-05 — Section 30 / TC-30.1:** recipient **`notifications`** row on send when **`SUPABASE_SERVICE_ROLE_KEY`** is set; bell realtime filtered by **`user_id`**. Earlier 2026-04-02: role switch `PATCH /api/user/role`; cron trigger includes DB cleanups; new cases for `/api/dashboard`, `/api/history`, `/api/jobs/applied`, public extract/fresher routes. **Component ↔ API mapping** for manual QA: `docs/KNOWLEDGE_TRANSFER.md` §6.1–§6.3.)
 
 ---
 
@@ -1142,7 +1142,7 @@
 
 ## 30. Recruiter: Messaging
 
-Shared inbox UI (**`MessagesInbox`**) for recruiters at **`/recruiter/messages`** and job seekers at **`/messages`**. **API:** **`GET`/`POST /api/messages`** (canonical); **`GET`/`POST /api/recruiter/messages`** re-exports the same handlers; **`POST /api/messages/mark-read`** with **`{ peer_id }`** marks inbound messages from that peer as read when a thread is opened.
+Shared inbox UI (**`MessagesInbox`**) for recruiters at **`/recruiter/messages`** and job seekers at **`/messages`**. **API:** **`GET`/`POST /api/messages`** (canonical; **`GET`** supports **`limit`**, **`before`**, **`unread`**); **`GET /api/messages/thread`** (peer thread + pagination); **`GET /api/messages/unread-summary`** (**`{ counts }`** per sender); **`POST /api/messages/attachment`** (multipart **`file`**); **`GET`/`POST /api/recruiter/messages`** re-exports the same **`GET`/`POST`** handlers; **`POST /api/messages/mark-read`** with **`{ peer_id }`** sets **`is_read`** and **`read_at`** on inbound rows from that peer when a thread is opened.
 
 ### TC-30.1: Send message (recruiter → candidate)
 - **Steps:**

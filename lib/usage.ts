@@ -1,25 +1,11 @@
 import { createClient } from "./supabase/server";
+import type { FeatureType } from "./usage-limits";
+import { FREE_PLAN_LIMITS } from "./usage-limits";
 
-export type FeatureType =
-  | "resume_analysis"
-  | "job_match"
-  | "cover_letter"
-  | "interview_prep"
-  | "resume_improve"
-  | "job_finder"
-  | "auto_apply"
-  | "smart_apply";
+export type { FeatureType } from "./usage-limits";
+export { FREE_PLAN_LIMITS } from "./usage-limits";
 
-const FREE_LIMITS: Record<FeatureType, number> = {
-  resume_analysis: 3,
-  job_match: 3,
-  cover_letter: 1,
-  interview_prep: 0,
-  resume_improve: 0, // Pro/Premium only
-  job_finder: 1, // Free users get 1 search; Pro/Premium unlimited
-  auto_apply: 2, // Free users get 2/month; Pro unlimited
-  smart_apply: 0, // Pro/Premium only
-};
+const FREE_LIMITS = FREE_PLAN_LIMITS;
 
 /** Get current usage count for a feature in the current period (e.g. monthly). */
 export async function getUsageCount(
@@ -75,10 +61,11 @@ export async function checkAndLogUsage(
   feature: FeatureType,
   planType: "free" | "pro" | "premium"
 ): Promise<{ allowed: boolean; used: number; limit: number }> {
-  // Pro/Premium users always allowed — just log usage
+  // Pro/Premium users always allowed — log usage and return accurate monthly count for UI
   if (planType === "pro" || planType === "premium") {
     await logUsage(userId, feature);
-    return { allowed: true, used: 0, limit: -1 };
+    const used = await getUsageCount(userId, feature);
+    return { allowed: true, used, limit: -1 };
   }
 
   const limit = FREE_LIMITS[feature];
@@ -174,19 +161,22 @@ export async function getUsageSummary(userId: string, planType: "free" | "pro" |
   // For users with hundreds of monthly actions, this avoids loading all rows into JS memory
   const counts: Record<string, number> = {};
 
-  // Single query with limit to prevent unbounded data fetch
-  const { data, error } = await supabase
-    .from("usage_logs")
-    .select("feature")
-    .eq("user_id", userId)
-    .gte("timestamp", startOfMonth.toISOString())
-    .in("feature", ALL_FEATURES)
-    .limit(500); // Cap at 500 rows — enough for accurate counts
-
-  if (!error && data) {
-    for (const row of data) {
-      counts[row.feature] = (counts[row.feature] || 0) + 1;
-    }
+  // Per-feature exact COUNT (monthly) — avoids undercounting power users (no 500-row cap)
+  const from = startOfMonth.toISOString();
+  const countResults = await Promise.all(
+    ALL_FEATURES.map(async (feature) => {
+      const { count, error } = await supabase
+        .from("usage_logs")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("feature", feature)
+        .gte("timestamp", from);
+      if (error) return { feature, count: 0 };
+      return { feature, count: count ?? 0 };
+    })
+  );
+  for (const { feature, count } of countResults) {
+    counts[feature] = count;
   }
 
   const summary = {} as Record<FeatureType, { used: number; limit: number }>;

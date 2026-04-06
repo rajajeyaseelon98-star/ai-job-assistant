@@ -338,7 +338,11 @@ CREATE TABLE IF NOT EXISTS public.messages (
   subject TEXT,
   content TEXT NOT NULL,
   is_read BOOLEAN DEFAULT false,
+  read_at TIMESTAMPTZ,
   template_name TEXT,
+  attachment_path TEXT,
+  attachment_name TEXT,
+  attachment_mime TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON public.messages(sender_id);

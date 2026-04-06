@@ -8,6 +8,10 @@ export const recruiterKeys = {
   /** Matches useMessages: ["recruiter","messages","all"|"unread"] */
   messagesList: (filter: "all" | "unread" = "all") =>
     [...recruiterKeys.messages(), filter] as const,
+  /** Full thread with one peer: ["recruiter","messages","thread", peerId] */
+  threadMessages: (peerId: string) => [...recruiterKeys.messages(), "thread", peerId] as const,
+  /** Per-peer unread counts: ["recruiter","messages","unread-summary"] */
+  unreadSummary: () => [...recruiterKeys.messages(), "unread-summary"] as const,
   alerts: () => [...recruiterKeys.all, "alerts"] as const,
   templates: () => [...recruiterKeys.all, "templates"] as const,
   company: () => [...recruiterKeys.all, "company"] as const,

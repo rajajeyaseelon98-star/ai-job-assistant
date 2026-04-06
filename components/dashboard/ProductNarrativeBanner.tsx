@@ -18,8 +18,9 @@ export function ProductNarrativeBanner() {
           </div>
           <div className="min-w-0">
             <p className="font-display text-base font-semibold leading-snug text-white sm:text-lg">
-              Get up to <span className="text-indigo-200">3× more interviews</span> — we don&apos;t only score your resume, we help you{" "}
-              <span className="whitespace-nowrap">apply automatically.</span>
+              Stronger applications start with a clear ATS-style score — then{" "}
+              <span className="text-indigo-200">tailor, match, and apply</span> with guided tools (including auto-apply
+              where available).
             </p>
             <p className="mt-2 font-sans text-sm leading-relaxed text-slate-300">
               Follow <strong className="font-medium text-white">Start here</strong> below, then use{" "}

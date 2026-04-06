@@ -79,4 +79,9 @@ test.describe("Public + protected API (no auth)", () => {
     await expect(page.getByLabel("Password")).toBeVisible();
     await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
   });
+
+  test("landing page job seeker hero renders (soft marketing copy)", async ({ page }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: /Apply smarter with AI-assisted tools/i })).toBeVisible();
+  });
 });

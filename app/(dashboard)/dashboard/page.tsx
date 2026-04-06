@@ -2,6 +2,7 @@
 
 import { Suspense, useMemo, lazy } from "react";
 import { useDashboardStats } from "@/hooks/queries/use-dashboard";
+import { FREE_PLAN_LIMITS } from "@/lib/usage-limits";
 import { ScoreCard } from "@/components/dashboard/ScoreCard";
 import { JobMatchAvgCard } from "@/components/dashboard/JobMatchAvgCard";
 import { UsageCard } from "@/components/dashboard/UsageCard";
@@ -48,9 +49,9 @@ function DashboardStats() {
       <ScoreCard score={latestScore} />
       <JobMatchAvgCard avgScore={data.avgMatchScore} />
       <UsageCard
-        resume={usage?.resume_analysis ?? { used: 0, limit: 2 }}
-        jobMatch={usage?.job_match ?? { used: 0, limit: 1 }}
-        coverLetter={usage?.cover_letter ?? { used: 0, limit: 1 }}
+        resume={usage?.resume_analysis ?? { used: 0, limit: FREE_PLAN_LIMITS.resume_analysis }}
+        jobMatch={usage?.job_match ?? { used: 0, limit: FREE_PLAN_LIMITS.job_match }}
+        coverLetter={usage?.cover_letter ?? { used: 0, limit: FREE_PLAN_LIMITS.cover_letter }}
         isPro={planType === "pro" || planType === "premium"}
       />
     </div>
@@ -118,7 +119,7 @@ export default function DashboardPage() {
   const { data } = useDashboardStats();
 
   return (
-    <div className="space-y-5 sm:space-y-6 md:space-y-8">
+    <div className="mx-auto max-w-6xl space-y-5 sm:space-y-6 md:space-y-8">
       <DashboardHeader userName={data?.userName ?? null} />
 
       <div className="mb-8">
@@ -139,26 +140,26 @@ export default function DashboardPage() {
         <DailyActions />
       </Suspense>
 
-      <div>
-        <h2 className="font-display mb-2 text-lg font-semibold text-slate-900 sm:text-xl">Start here</h2>
-        <p className="mb-4 font-sans text-sm text-slate-500 sm:text-base">
+      <section className="rounded-2xl border border-slate-100/80 bg-white/40 p-1 sm:p-0">
+        <h2 className="font-display mb-2 text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">Start here</h2>
+        <p className="mb-4 max-w-2xl font-sans text-sm leading-relaxed text-slate-500 sm:text-base">
           The shortest path to interviews: score → match → apply.
         </p>
         <StartHereActions />
-      </div>
+      </section>
 
-      <div>
-        <h2 className="font-display mb-2 text-lg font-semibold text-slate-900 sm:text-xl">Explore more</h2>
-        <p className="mb-4 font-sans text-sm text-slate-500 sm:text-base">
+      <section className="rounded-2xl border border-slate-100/80 bg-white/40 p-1 sm:p-0">
+        <h2 className="font-display mb-2 text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">Explore more</h2>
+        <p className="mb-4 max-w-2xl font-sans text-sm leading-relaxed text-slate-500 sm:text-base">
           Optional tools — use after your first resume score or when you need a specific edge.
         </p>
         <ExploreMoreActions />
-      </div>
+      </section>
 
-      <div>
-        <h2 className="font-display mb-4 text-lg font-semibold text-slate-900 sm:text-xl">Recent Activity</h2>
+      <section>
+        <h2 className="font-display mb-4 text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">Recent activity</h2>
         <RecentActivity />
-      </div>
+      </section>
     </div>
   );
 }

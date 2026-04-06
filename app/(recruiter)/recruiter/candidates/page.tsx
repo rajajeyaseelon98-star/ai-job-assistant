@@ -77,9 +77,11 @@ export default function CandidateSearchPage() {
     <div className="max-w-5xl mx-auto w-full py-12 px-6">
       <h1 className="font-display text-4xl font-extrabold text-slate-900 tracking-tight mb-3">Candidate Search</h1>
       <p className="text-slate-500 text-lg mb-10 max-w-2xl">
-        Browse all job seeker profiles (with or without a resume). Results are paginated ({PAGE_SIZE} per page). Skill
-        search uses resume text when available. Filters apply to the full list (up to {5000} profiles scanned per
-        request).
+        Browse job seeker profiles (with or without a resume). Results are paginated (up to 100 per page; this screen
+        uses {PAGE_SIZE}). Skill and location filters match against a{" "}
+        <span className="whitespace-nowrap">short resume text preview</span> when a resume exists (first ~500 characters
+        of parsed text). The API scans up to 5,000 profiles per request, then applies filters — if you hit the cap, try
+        narrowing skills or location.
       </p>
 
       <form onSubmit={handleSearch} className="bg-white border border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] p-8 sm:p-10 mb-12">

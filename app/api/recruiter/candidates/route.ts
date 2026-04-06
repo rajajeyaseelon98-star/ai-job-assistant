@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 const MAX_USERS_SCAN = 5000;
 const DEFAULT_PAGE_SIZE = 25;
 const MAX_PAGE_SIZE = 100;
+/** Characters of parsed resume text exposed for list cards and skill/location filtering. */
+const RESUME_PREVIEW_CHARS = 500;
 
 type CandidateRow = {
   id: string;
@@ -50,7 +52,7 @@ function shapeCandidates(
       name: (c.name as string | null) ?? null,
       resume_id: (latestResume?.id as string) || null,
       resume_preview: latestResume?.parsed_text
-        ? String(latestResume.parsed_text).slice(0, 300)
+        ? String(latestResume.parsed_text).slice(0, RESUME_PREVIEW_CHARS)
         : null,
       has_resume: hasResume,
       experience_level: String((prefs as Record<string, unknown>)?.experience_level || "") || null,
@@ -139,6 +141,17 @@ export async function GET(request: NextRequest) {
     total,
     totalPages,
     truncated: scanHitCap,
+    limits: {
+      max_job_seekers_scanned: MAX_USERS_SCAN,
+      resume_preview_chars: RESUME_PREVIEW_CHARS,
+      max_page_size: MAX_PAGE_SIZE,
+    },
+    /** Honest scope for clients — not full-text search across all profiles. */
+    search_quality: {
+      model: "recent_users_then_in_memory_filter",
+      note:
+        "Filters apply to the newest job_seeker rows up to the scan cap, using a short resume text prefix for skills/location — not exhaustive search over the entire user base.",
+    },
   };
 
   return NextResponse.json(body);

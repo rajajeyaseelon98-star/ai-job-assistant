@@ -51,7 +51,7 @@ test.describe("Job seeker smoke", () => {
   test("job seeker resume analyzer loads", async ({ page }) => {
     await page.goto("/resume-analyzer", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: "Resume Analyzer" })).toBeVisible();
-    await expect(page.getByText("Add your resume for ATS analysis")).toBeVisible();
+    await expect(page.getByText(/ATS-style feedback/i)).toBeVisible();
   });
 
   test("job seeker application tracker loads", async ({ page }) => {
@@ -70,10 +70,24 @@ test.describe("Job seeker smoke", () => {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify({ messages: [], peer_profiles: {} }),
+          body: JSON.stringify({
+            messages: [],
+            peer_profiles: {},
+            has_more: false,
+            next_before: null,
+            partial: true,
+          }),
         });
       }
     );
+    await page.route("**/api/messages/unread-summary**", async (route) => {
+      if (route.request().method() !== "GET") return route.fallback();
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ counts: {} }),
+      });
+    });
 
     await page.goto("/messages", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: "Inbox" })).toBeVisible();
@@ -91,10 +105,24 @@ test.describe("Job seeker smoke", () => {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify({ messages: [], peer_profiles: {} }),
+          body: JSON.stringify({
+            messages: [],
+            peer_profiles: {},
+            has_more: false,
+            next_before: null,
+            partial: true,
+          }),
         });
       }
     );
+    await page.route("**/api/messages/unread-summary**", async (route) => {
+      if (route.request().method() !== "GET") return route.fallback();
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ counts: {} }),
+      });
+    });
 
     const q = new URLSearchParams({
       compose: "1",
@@ -115,6 +143,7 @@ test.describe("Job seeker smoke", () => {
       subject: "Hello",
       content: "Hi from recruiter (stub)",
       is_read: false,
+      read_at: null,
       template_name: null,
       created_at: new Date().toISOString(),
     };
@@ -134,6 +163,9 @@ test.describe("Job seeker smoke", () => {
             peer_profiles: {
               [E2E_MOCK_RECRUITER_ID]: { name: "E2E Recruiter", avatar_url: null },
             },
+            has_more: false,
+            next_before: null,
+            partial: true,
           }),
         });
       }
@@ -153,6 +185,31 @@ test.describe("Job seeker smoke", () => {
         });
       }
     );
+
+    await page.route("**/api/messages/thread**", async (route) => {
+      if (route.request().method() !== "GET") return route.fallback();
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          messages: [stubMessage],
+          peer_profiles: {
+            [E2E_MOCK_RECRUITER_ID]: { name: "E2E Recruiter", avatar_url: null },
+          },
+          has_more: false,
+          next_before: null,
+          peer_id: E2E_MOCK_RECRUITER_ID,
+        }),
+      });
+    });
+    await page.route("**/api/messages/unread-summary**", async (route) => {
+      if (route.request().method() !== "GET") return route.fallback();
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ counts: { [E2E_MOCK_RECRUITER_ID]: 1 } }),
+      });
+    });
 
     await page.goto(
       `/messages?peer=${encodeURIComponent(E2E_MOCK_RECRUITER_ID)}`,

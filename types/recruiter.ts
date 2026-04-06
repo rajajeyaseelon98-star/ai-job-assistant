@@ -110,8 +110,15 @@ export interface Message {
   subject: string | null;
   content: string;
   is_read: boolean;
+  /** Set when the recipient marks the message read (outgoing: peer has read). */
+  read_at?: string | null;
   template_name: string | null;
   created_at: string;
+  attachment_path?: string | null;
+  attachment_name?: string | null;
+  attachment_mime?: string | null;
+  /** Present on API responses when `attachment_path` is set (signed URL). */
+  attachment_url?: string | null;
 }
 
 export interface MessageTemplate {

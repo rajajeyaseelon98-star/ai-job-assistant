@@ -21,9 +21,10 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createClient();
+  const readAt = new Date().toISOString();
   const { error } = await supabase
     .from("messages")
-    .update({ is_read: true })
+    .update({ is_read: true, read_at: readAt })
     .eq("receiver_id", user.id)
     .eq("sender_id", peerId)
     .eq("is_read", false);

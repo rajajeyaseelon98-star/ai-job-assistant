@@ -1,24 +1,29 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
-import { useRecruiterJobs, useRecruiterApplications, useRecruiterMessages } from "@/hooks/queries/use-recruiter";
+import { useRecruiterJobs, useRecruiterApplications } from "@/hooks/queries/use-recruiter";
+import { useMessageUnreadSummary } from "@/hooks/queries/use-message-unread-summary";
 import { Briefcase, Users, ClipboardList, MessageSquare, Plus, TrendingUp } from "lucide-react";
 
 export default function RecruiterDashboardPage() {
   const { data: jobsData, isLoading: jobsLoading } = useRecruiterJobs();
   const { data: appsData, isLoading: appsLoading } = useRecruiterApplications();
-  const { data: msgsData, isLoading: msgsLoading } = useRecruiterMessages({ unread: true });
-  const loading = jobsLoading || appsLoading || msgsLoading;
+  const { data: unreadSummary, isLoading: unreadLoading } = useMessageUnreadSummary();
+  const loading = jobsLoading || appsLoading || unreadLoading;
 
   const jobsArr = (Array.isArray(jobsData) ? jobsData : []) as Record<string, unknown>[];
   const appsArr = (Array.isArray(appsData) ? appsData : []) as Record<string, unknown>[];
-  const msgsArr = msgsData?.messages ?? [];
+  const unreadMessageTotal = useMemo(() => {
+    const c = unreadSummary?.counts ?? {};
+    return Object.values(c).reduce((sum, n) => sum + n, 0);
+  }, [unreadSummary]);
 
   const stats = {
     activeJobs: jobsArr.filter((j) => j.status === "active").length,
     totalApplications: appsArr.length,
     newApplications: appsArr.filter((a) => a.stage === "applied").length,
-    unreadMessages: msgsArr.length,
+    unreadMessages: unreadMessageTotal,
   };
   const recentApps = appsArr.slice(0, 5);
 
