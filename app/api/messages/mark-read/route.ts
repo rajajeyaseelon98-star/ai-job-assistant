@@ -22,17 +22,22 @@ export async function POST(request: Request) {
 
   const supabase = await createClient();
   const readAt = new Date().toISOString();
-  const { error } = await supabase
+  const { data, error, count } = await supabase
     .from("messages")
     .update({ is_read: true, read_at: readAt })
     .eq("receiver_id", user.id)
     .eq("sender_id", peerId)
-    .eq("is_read", false);
+    .eq("is_read", false)
+    .select("id", { count: "exact" });
 
   if (error) {
     console.error("mark-read error:", error);
     return NextResponse.json({ error: "Failed to update messages" }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({
+    ok: true,
+    updated_count: count ?? data?.length ?? 0,
+    read_at: readAt,
+  });
 }

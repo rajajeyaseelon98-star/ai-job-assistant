@@ -352,6 +352,8 @@ CREATE POLICY "Users can view own messages" ON public.messages FOR SELECT USING 
 CREATE POLICY "Users can send messages" ON public.messages FOR INSERT WITH CHECK (auth.uid() = sender_id);
 CREATE POLICY "Users can update own received messages" ON public.messages FOR UPDATE USING (auth.uid() = receiver_id);
 
+ALTER TABLE public.messages REPLICA IDENTITY FULL;
+
 -- Message templates for recruiters
 CREATE TABLE IF NOT EXISTS public.message_templates (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

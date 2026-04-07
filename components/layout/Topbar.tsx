@@ -10,6 +10,7 @@ import { UserAvatar } from "@/components/ui/UserAvatar";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { useUsage } from "@/hooks/queries/use-smart-apply";
 import { useUser } from "@/hooks/queries/use-user";
+import { useMessageUnreadState } from "@/hooks/queries/use-message-unread-state";
 import { FREE_PLAN_LIMITS } from "@/lib/usage-limits";
 
 const USAGE_UPDATED_EVENT = "usage-updated";
@@ -41,6 +42,7 @@ export function Topbar({ planType: propPlanType }: TopbarProps) {
   const messagesHref = pathname.startsWith("/recruiter") ? "/recruiter/messages" : "/messages";
   const { data: userData, isPending: userPending } = useUser();
   const { data: queryUsage } = useUsage();
+  const { totalUnread } = useMessageUnreadState();
 
   const usage = (queryUsage as unknown as UsageSummary) ?? null;
   const resolvedPlan = userData?.plan_type ?? propPlanType ?? "free";
@@ -120,10 +122,15 @@ export function Topbar({ planType: propPlanType }: TopbarProps) {
       <div className="relative flex min-w-0 flex-1 items-center justify-end gap-1 sm:gap-2">
         <Link
           href={messagesHref}
-          className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+          className="relative rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
           aria-label="Messages"
         >
           <MessageSquare className="h-5 w-5" />
+          {totalUnread > 0 ? (
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] font-bold leading-none text-white">
+              {totalUnread > 9 ? "9+" : totalUnread}
+            </span>
+          ) : null}
         </Link>
         <NotificationBell />
         <div className="relative" ref={ref}>

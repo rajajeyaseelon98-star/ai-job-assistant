@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Send, Loader2, MessageSquare, Reply, Paperclip, X } from "lucide-react";
@@ -16,6 +16,7 @@ import { apiFetch, apiFetchMultipartJson } from "@/lib/api-fetcher";
 import { RecipientPicker } from "@/components/messages/RecipientPicker";
 import { recruiterKeys } from "@/hooks/queries/recruiter-keys";
 import { useMessagingTyping } from "@/hooks/use-messaging-typing";
+import { useMessagingReadSync } from "@/hooks/use-messaging-read-sync";
 
 function peerIdForMessage(m: Message, myId: string): string {
   return m.sender_id === myId ? m.receiver_id : m.sender_id;
@@ -85,6 +86,7 @@ export function MessagesInbox() {
   const unreadByPeer = unreadSummary?.counts ?? {};
 
   const sendMutation = useSendMessage();
+  const { notifyPeerRead } = useMessagingReadSync(selectedPeerId, myId || undefined);
 
   const threadPeerProfiles = useMemo(
     () => ({ ...peerProfiles, ...threadQuery.peer_profiles }),
@@ -92,6 +94,37 @@ export function MessagesInbox() {
   );
 
   const threadMessages = threadQuery.messages;
+  const messageListRef = useRef<HTMLDivElement | null>(null);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const prevLastMessageIdRef = useRef<string | null>(null);
+  const initialScrolledPeerRef = useRef<string | null>(null);
+  const [nearBottom, setNearBottom] = useState(true);
+  const [hasNewBelow, setHasNewBelow] = useState(false);
+
+  const scrollToBottom = useCallback((behavior: ScrollBehavior) => {
+    const el = bottomRef.current;
+    if (!el) return;
+    try {
+      el.scrollIntoView({ block: "end", behavior });
+    } catch {
+      // ignore (older browsers / transient DOM)
+    }
+  }, []);
+
+  const unreadInboundCount = useMemo(() => {
+    if (!selectedPeerId || !myId) return 0;
+    return threadMessages.filter(
+      (m) => m.sender_id === selectedPeerId && m.receiver_id === myId && !m.is_read
+    ).length;
+  }, [threadMessages, selectedPeerId, myId]);
+
+  const firstUnreadInboundId = useMemo(() => {
+    if (!selectedPeerId || !myId) return null;
+    const first = threadMessages.find(
+      (m) => m.sender_id === selectedPeerId && m.receiver_id === myId && !m.is_read
+    );
+    return first?.id ?? null;
+  }, [threadMessages, selectedPeerId, myId]);
 
   const [receiverId, setReceiverId] = useState("");
   const [subject, setSubject] = useState("");
@@ -184,17 +217,66 @@ export function MessagesInbox() {
 
   useEffect(() => {
     if (!selectedPeerId || !myId) return;
+    if (unreadInboundCount <= 0) return;
+    // Avoid marking read when mounted but not actually seen.
+    if (typeof document !== "undefined") {
+      if (document.visibilityState !== "visible") return;
+      if (typeof document.hasFocus === "function" && !document.hasFocus()) return;
+    }
     void apiFetch("/api/messages/mark-read", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ peer_id: selectedPeerId }),
     })
       .then(() => {
+        // Optimistic: clear this peer in unread summary immediately so header/sidebar badges drop instantly.
+        queryClient.setQueryData(recruiterKeys.unreadSummary(), (prev: unknown) => {
+          if (!prev || typeof prev !== "object") return prev;
+          const p = prev as { counts?: Record<string, number> };
+          const counts = { ...(p.counts ?? {}) };
+          counts[selectedPeerId] = 0;
+          return { ...p, counts };
+        });
         void queryClient.invalidateQueries({ queryKey: recruiterKeys.unreadSummary() });
         void queryClient.invalidateQueries({ queryKey: recruiterKeys.messages() });
+        void queryClient.invalidateQueries({
+          queryKey: recruiterKeys.threadMessages(selectedPeerId),
+          refetchType: "all",
+        });
+        void notifyPeerRead();
       })
       .catch(() => {});
-  }, [selectedPeerId, myId, queryClient]);
+  }, [selectedPeerId, myId, unreadInboundCount, queryClient, notifyPeerRead]);
+
+  // Scroll to latest on first open of a thread (instant).
+  useEffect(() => {
+    if (!selectedPeerId) return;
+    if (threadQuery.isLoading) return;
+    if (threadMessages.length === 0) return;
+    if (initialScrolledPeerRef.current === selectedPeerId) return;
+    initialScrolledPeerRef.current = selectedPeerId;
+    setHasNewBelow(false);
+    setNearBottom(true);
+    scrollToBottom("auto");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPeerId, threadQuery.isLoading, threadMessages.length]);
+
+  // Detect incoming messages and apply conditional scroll policy.
+  useEffect(() => {
+    if (!selectedPeerId) return;
+    const last = threadMessages[threadMessages.length - 1];
+    const lastId = last?.id ?? null;
+    const prev = prevLastMessageIdRef.current;
+    prevLastMessageIdRef.current = lastId;
+    if (!lastId || !prev || lastId === prev) return;
+
+    if (nearBottom) {
+      setHasNewBelow(false);
+      scrollToBottom("smooth");
+    } else {
+      setHasNewBelow(true);
+    }
+  }, [threadMessages, selectedPeerId, nearBottom, scrollToBottom]);
 
   function clearQueryParams() {
     router.replace(pathname, { scroll: false });
@@ -312,6 +394,9 @@ export function MessagesInbox() {
       });
       setReplyContent("");
       setReplyAttachment(null);
+      setHasNewBelow(false);
+      setNearBottom(true);
+      scrollToBottom("smooth");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send");
     } finally {
@@ -326,9 +411,13 @@ export function MessagesInbox() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto w-full py-8 px-6 h-[calc(100vh-140px)]">
-      <div className="bg-white border border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden flex h-full min-h-[480px]">
-        <aside className="w-1/3 min-w-[220px] border-r border-slate-100 bg-slate-50/50 flex flex-col">
+    <div className="w-full lg:max-w-6xl lg:mx-auto lg:py-8 lg:px-6 min-h-[calc(100dvh-140px)]">
+      <div className="bg-white overflow-hidden flex flex-col lg:flex-row min-h-[calc(100dvh-140px)] lg:min-h-[480px] lg:h-[calc(100vh-140px)] lg:border lg:border-slate-200 lg:shadow-xl lg:shadow-slate-200/40 lg:rounded-[32px]">
+        <aside
+          className={`w-full lg:w-1/3 lg:min-w-[220px] lg:border-r lg:border-slate-100 bg-slate-50/50 flex flex-col ${
+            selectedPeerId || showCompose ? "hidden lg:flex" : "flex"
+          }`}
+        >
           <div className="p-6 border-b border-slate-100 bg-white/50 backdrop-blur-md flex items-center justify-between gap-3">
             <div className="min-w-0">
               <h1 className="font-display text-lg font-bold text-slate-900">Inbox</h1>
@@ -366,7 +455,7 @@ export function MessagesInbox() {
                   key={c.peerId}
                   type="button"
                   onClick={() => selectPeer(c.peerId)}
-                  className={`w-full text-left p-4 border-b border-slate-50 hover:bg-white transition-all flex gap-3 ${
+                  className={`w-full text-left p-3 lg:p-4 border-b border-slate-50 hover:bg-white transition-all flex gap-3 ${
                     selectedPeerId === c.peerId && !showCompose ? "bg-white ring-1 ring-indigo-100" : ""
                   }`}
                 >
@@ -410,7 +499,11 @@ export function MessagesInbox() {
           </div>
         </aside>
 
-        <main className="flex-1 flex flex-col bg-white relative min-w-0">
+        <main
+          className={`flex-1 flex flex-col bg-white relative min-w-0 ${
+            !selectedPeerId && !showCompose && !resolvingComposeUrl ? "hidden lg:flex" : "flex"
+          }`}
+        >
           {resolvingComposeUrl ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-3 p-12 text-slate-500">
               <Loader2 className="h-10 w-10 animate-spin text-indigo-500" />
@@ -418,22 +511,34 @@ export function MessagesInbox() {
             </div>
           ) : showCompose ? (
             <form onSubmit={handleSendCompose} className="flex-1 flex flex-col min-h-0">
-              <div className="p-6 border-b border-slate-100 flex justify-between items-center shrink-0">
+              <div className="p-4 lg:p-6 border-b border-slate-100 flex justify-between items-center shrink-0">
                 <p className="font-display text-sm font-bold text-indigo-600 uppercase tracking-widest">
                   New Message
                 </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowCompose(false);
-                    clearQueryParams();
-                  }}
-                  className="text-xs text-slate-500 hover:text-slate-800"
-                >
-                  Close
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCompose(false);
+                      clearQueryParams();
+                    }}
+                    className="lg:hidden text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCompose(false);
+                      clearQueryParams();
+                    }}
+                    className="hidden lg:inline text-xs text-slate-500 hover:text-slate-800"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
-              <div className="p-8 space-y-4 flex-1 overflow-y-auto">
+              <div className="p-4 lg:p-8 space-y-4 flex-1 overflow-y-auto">
                 <RecipientPicker receiverId={receiverId} onReceiverIdChange={setReceiverId} />
                 <input
                   type="text"
@@ -486,7 +591,7 @@ export function MessagesInbox() {
                 <button
                   type="submit"
                   disabled={sending || uploadingComposeFile}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 rounded-xl px-8 py-3 font-bold transition-all flex items-center gap-2 w-fit disabled:opacity-50"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 rounded-xl px-6 py-3 font-bold transition-all flex items-center gap-2 w-full sm:w-fit disabled:opacity-50"
                 >
                   {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                   Send
@@ -510,16 +615,28 @@ export function MessagesInbox() {
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedPeerId(null);
-                    clearQueryParams();
-                  }}
-                  className="text-xs text-slate-500 hover:text-slate-800"
-                >
-                  Close
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedPeerId(null);
+                      clearQueryParams();
+                    }}
+                    className="lg:hidden text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedPeerId(null);
+                      clearQueryParams();
+                    }}
+                    className="hidden lg:inline text-xs text-slate-500 hover:text-slate-800"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
               {peerTyping ? (
                 <p className="border-b border-slate-100 px-4 py-2 text-xs italic text-slate-500">
@@ -546,14 +663,33 @@ export function MessagesInbox() {
               ) : threadQuery.error ? (
                 <div className="flex-1 p-6 text-sm text-rose-600">Could not load full thread. Try again.</div>
               ) : (
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div
+                ref={messageListRef}
+                className="flex-1 overflow-y-auto p-6 space-y-4 relative"
+                onScroll={() => {
+                  const el = messageListRef.current;
+                  if (!el) return;
+                  const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+                  const nb = distance <= 80;
+                  setNearBottom(nb);
+                  if (nb) setHasNewBelow(false);
+                }}
+              >
                 {threadMessages.map((m) => {
                   const mine = m.sender_id === myId;
+                  const showUnreadDivider = !mine && firstUnreadInboundId === m.id;
                   return (
-                    <div
-                      key={m.id}
-                      className={`flex gap-2 items-end ${mine ? "justify-end" : "justify-start"}`}
-                    >
+                    <div key={m.id}>
+                      {showUnreadDivider ? (
+                        <div className="my-2 flex items-center gap-3">
+                          <div className="h-px flex-1 bg-slate-200" />
+                          <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                            New messages
+                          </span>
+                          <div className="h-px flex-1 bg-slate-200" />
+                        </div>
+                      ) : null}
+                      <div className={`flex gap-2 items-end ${mine ? "justify-end" : "justify-start"}`}>
                       {!mine ? (
                         <UserAvatar
                           name={threadPeerProfiles[selectedPeerId]?.name ?? null}
@@ -617,15 +753,32 @@ export function MessagesInbox() {
                           ) : null}
                         </p>
                       </div>
+                      </div>
                     </div>
                   );
                 })}
+                <div ref={bottomRef} />
+                {hasNewBelow ? (
+                  <div className="pointer-events-none sticky bottom-16 lg:bottom-2 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHasNewBelow(false);
+                        setNearBottom(true);
+                        scrollToBottom("smooth");
+                      }}
+                      className="pointer-events-auto rounded-full bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow-lg hover:bg-indigo-700"
+                    >
+                      Jump to latest
+                    </button>
+                  </div>
+                ) : null}
               </div>
               )}
               {!threadQuery.isLoading || threadMessages.length > 0 ? (
               <form
                 onSubmit={handleSendReply}
-                className="border-t border-slate-100 p-4 bg-slate-50/80 shrink-0 space-y-2"
+                className="border-t border-slate-100 p-3 lg:p-4 bg-slate-50/80 shrink-0 space-y-2 safe-bottom"
               >
                 <input ref={replyFileRef} type="file" className="hidden" onChange={handleReplyFileChange} />
                 {replyAttachment ? (

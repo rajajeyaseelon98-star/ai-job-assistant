@@ -11,5 +11,8 @@ export function useMessageUnreadSummary() {
     queryKey: recruiterKeys.unreadSummary(),
     queryFn: () => apiFetch<UnreadSummaryResponse>("/api/messages/unread-summary"),
     staleTime: 20 * 1000,
+    // Resilience fallback when Realtime is unavailable/misconfigured.
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: true,
   });
 }

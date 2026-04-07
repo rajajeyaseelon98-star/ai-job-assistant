@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/hooks/queries/use-user";
+import { useMessageUnreadState } from "@/hooks/queries/use-message-unread-state";
 import {
   LayoutDashboard,
   Briefcase,
@@ -48,6 +49,7 @@ export function RecruiterSidebar() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const { data: user } = useUser();
+  const { totalUnread } = useMessageUnreadState();
   // Always allow switching back to job seeker while in recruiter shell (recruiter-only users may have no company row yet).
   const canSwitchToJobSeeker = user?.role === "recruiter";
 
@@ -121,6 +123,7 @@ export function RecruiterSidebar() {
                   ? pathname === "/recruiter"
                   : pathname.startsWith(item.href);
               const Icon = item.icon;
+              const showMessagesBadge = item.href === "/recruiter/messages" && totalUnread > 0;
               return (
                 <Link
                   key={item.href}
@@ -136,6 +139,11 @@ export function RecruiterSidebar() {
                 >
                   <Icon className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
                   <span className="truncate">{item.label}</span>
+                  {showMessagesBadge ? (
+                    <span className="ml-auto shrink-0 rounded-full bg-indigo-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+                      {totalUnread > 9 ? "9+" : totalUnread}
+                    </span>
+                  ) : null}
                 </Link>
               );
             })}

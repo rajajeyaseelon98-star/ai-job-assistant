@@ -33,6 +33,7 @@ import {
   Gift,
   MessageSquare,
 } from "lucide-react";
+import { useMessageUnreadState } from "@/hooks/queries/use-message-unread-state";
 
 interface NavGroup {
   label: string;
@@ -94,6 +95,7 @@ export function Sidebar() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const { data: user } = useUser();
+  const { totalUnread } = useMessageUnreadState();
   const canSwitchToRecruiter = !!user?.recruiter_onboarding_complete;
 
   // Close sidebar on route change (mobile)
@@ -180,6 +182,7 @@ export function Sidebar() {
                 {group.items.map((item) => {
                   const isActive = pathname === item.href;
                   const Icon = item.icon;
+                  const showMessagesBadge = item.href === "/messages" && totalUnread > 0;
                   return (
                     <Link
                       key={item.href}
@@ -195,6 +198,15 @@ export function Sidebar() {
                     >
                       <Icon className="h-4 w-4 shrink-0" />
                       <span className="truncate">{item.label}</span>
+                      {showMessagesBadge ? (
+                        <span
+                          className={`ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none text-white ${
+                            isActive ? "bg-indigo-600" : "bg-indigo-600"
+                          }`}
+                        >
+                          {totalUnread > 9 ? "9+" : totalUnread}
+                        </span>
+                      ) : null}
                     </Link>
                   );
                 })}

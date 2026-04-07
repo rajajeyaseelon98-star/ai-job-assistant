@@ -74,8 +74,11 @@ export function useMessages(opts?: { unread?: boolean }) {
     const supabase = createClient();
 
     const invalidate = () => {
-      void queryClient.invalidateQueries({ queryKey: recruiterKeys.messages() });
-      void queryClient.invalidateQueries({ queryKey: recruiterKeys.unreadSummary() });
+      // refetchType: 'all' so thread + inbox infinite queries all refetch (not only "active" in edge cases).
+      void queryClient.invalidateQueries({
+        queryKey: recruiterKeys.messages(),
+        refetchType: "all",
+      });
     };
 
     const channel = supabase

@@ -9,6 +9,7 @@ import { ChevronDown, LogOut, MessageSquare, Settings } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { useRecruiterCompany } from "@/hooks/queries/use-recruiter";
+import { useMessageUnreadState } from "@/hooks/queries/use-message-unread-state";
 
 interface RecruiterTopbarProps {
   userName: string;
@@ -21,6 +22,7 @@ export function RecruiterTopbar({ userName, avatarUrl, userId }: RecruiterTopbar
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { data: companyRow } = useRecruiterCompany();
+  const { totalUnread } = useMessageUnreadState();
   const companyLogo =
     companyRow && typeof companyRow === "object"
       ? ((companyRow as Record<string, unknown>).logo_url as string | null | undefined)
@@ -52,10 +54,15 @@ export function RecruiterTopbar({ userName, avatarUrl, userId }: RecruiterTopbar
       <div className="flex items-center gap-1 sm:gap-2">
         <Link
           href="/recruiter/messages"
-          className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+          className="relative rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
           aria-label="Messages"
         >
           <MessageSquare className="h-5 w-5" />
+          {totalUnread > 0 ? (
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] font-bold leading-none text-white">
+              {totalUnread > 9 ? "9+" : totalUnread}
+            </span>
+          ) : null}
         </Link>
         <NotificationBell />
         <div className="relative" ref={ref}>

@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useEffect, useMemo } from "react";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-fetcher";
+import { createClient } from "@/lib/supabase/client";
 import { recruiterKeys } from "./recruiter-keys";
 import type { Message } from "@/types/recruiter";
 import type { PeerProfile } from "@/types/messages";
+import { useUser } from "./use-user";
 
 export type ThreadApiResponse = {
   messages: Message[];
@@ -19,6 +21,8 @@ const PAGE = 100;
 
 export function useThreadMessages(peerId: string | null) {
   const enabled = Boolean(peerId);
+  const queryClient = useQueryClient();
+  const { data: user } = useUser();
 
   const infinite = useInfiniteQuery({
     queryKey: enabled && peerId ? recruiterKeys.threadMessages(peerId) : ["recruiter", "messages", "thread", "disabled"],
@@ -34,7 +38,71 @@ export function useThreadMessages(peerId: string | null) {
     getNextPageParam: (lastPage) =>
       lastPage.has_more && lastPage.next_before ? lastPage.next_before : undefined,
     staleTime: 15 * 1000,
+    /** Fallback when Realtime is off or `messages` is not in the Supabase publication — still pick up new messages. */
+    refetchInterval: enabled && peerId ? 12_000 : false,
+    refetchIntervalInBackground: true,
   });
+
+  // Second realtime path for the open thread (narrow filters) + refetchInterval fallback if Realtime is off.
+  useEffect(() => {
+    const uid = user?.id;
+    if (!peerId || !uid || !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      return;
+    }
+
+    const supabase = createClient();
+    const invalidateThread = () => {
+      void queryClient.invalidateQueries({
+        queryKey: recruiterKeys.threadMessages(peerId),
+        refetchType: "all",
+      });
+      void queryClient.invalidateQueries({ queryKey: recruiterKeys.unreadSummary(), refetchType: "all" });
+    };
+
+    const isThisThread = (row: { sender_id?: string; receiver_id?: string }) =>
+      (row.sender_id === uid && row.receiver_id === peerId) ||
+      (row.sender_id === peerId && row.receiver_id === uid);
+
+    const channel = supabase
+      .channel(`messages-thread:${uid}:${peerId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `sender_id=eq.${peerId}` },
+        (payload) => {
+          const row = payload.new as { sender_id?: string; receiver_id?: string };
+          if (isThisThread(row)) invalidateThread();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `receiver_id=eq.${peerId}` },
+        (payload) => {
+          const row = payload.new as { sender_id?: string; receiver_id?: string };
+          if (isThisThread(row)) invalidateThread();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "messages", filter: `sender_id=eq.${peerId}` },
+        (payload) => {
+          const row = (payload.new ?? payload.old) as { sender_id?: string; receiver_id?: string };
+          if (isThisThread(row)) invalidateThread();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "messages", filter: `receiver_id=eq.${peerId}` },
+        (payload) => {
+          const row = (payload.new ?? payload.old) as { sender_id?: string; receiver_id?: string };
+          if (isThisThread(row)) invalidateThread();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [user?.id, peerId, queryClient]);
 
   const merged = useMemo(() => {
     const pages = infinite.data?.pages ?? [];
