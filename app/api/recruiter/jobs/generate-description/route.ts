@@ -3,6 +3,7 @@ import { getUser } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { validateTextLength } from "@/lib/validation";
 import { cachedAiGenerate } from "@/lib/ai";
+import { CREDITS_EXHAUSTED_CODE, isCreditsExhaustedError } from "@/lib/aiCreditError";
 
 const SYSTEM_PROMPT = `You are an expert recruiter copywriter. Output a single JSON object only (no markdown fences, no commentary).
 
@@ -135,6 +136,8 @@ export async function POST(request: Request) {
     const raw = await cachedAiGenerate(SYSTEM_PROMPT, userPrompt, {
       jsonMode: true,
       cacheFeature: "job_description",
+      featureName: "job_description",
+      userId: user.id,
     });
     const parsed = parseJobGenerationJson(raw);
     if (!parsed.description) {
@@ -149,6 +152,15 @@ export async function POST(request: Request) {
       skills_required: parsed.skills_required,
     });
   } catch (err) {
+    if (isCreditsExhaustedError(err)) {
+      return NextResponse.json(
+        {
+          error: CREDITS_EXHAUSTED_CODE,
+          message: "You have reached your AI credit limit. Please upgrade.",
+        },
+        { status: 402 }
+      );
+    }
     console.error("AI job description generation error:", err);
     return NextResponse.json(
       { error: "Failed to generate job description" },

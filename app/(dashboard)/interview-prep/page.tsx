@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { InterviewQuestions } from "@/components/interview/InterviewQuestions";
 import { AIProgressIndicator } from "@/components/ui/AIProgressIndicator";
+import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
 import type { InterviewPrepResponse } from "@/types/analysis";
 import { useInterviewPrep } from "@/hooks/mutations/use-interview-prep";
-import { formatApiFetchThrownError } from "@/lib/api-error";
+import { toAiUiError } from "@/lib/client-ai-error";
 
 const EXPERIENCE_LEVELS = ["Junior", "Mid", "Senior"] as const;
 
@@ -15,11 +16,13 @@ export default function InterviewPrepPage() {
   const [experienceLevel, setExperienceLevel] = useState<string>("Mid");
   const [data, setData] = useState<InterviewPrepResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isCreditError, setIsCreditError] = useState(false);
   const loading = prepMut.isPending;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setIsCreditError(false);
     try {
       const json = await prepMut.mutateAsync({
         role: role.trim() || "Software Developer",
@@ -27,7 +30,9 @@ export default function InterviewPrepPage() {
       });
       setData(json);
     } catch (e) {
-      setError(formatApiFetchThrownError(e) || "Failed");
+      const ui = toAiUiError(e);
+      setError(ui.message || "Failed");
+      setIsCreditError(ui.isCreditsExhausted);
     }
   }
 
@@ -78,7 +83,15 @@ export default function InterviewPrepPage() {
           </button>
           {loading && <AIProgressIndicator message="Generating interview questions…" />}
         </form>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+        {error && (
+          <div className="mt-2">
+            {isCreditError ? (
+              <AICreditExhaustedAlert message={error} pricingHref="/pricing" />
+            ) : (
+              <p className="text-sm text-red-600">{error}</p>
+            )}
+          </div>
+        )}
       </section>
 
       {data && (

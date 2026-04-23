@@ -16,6 +16,8 @@ import type { ImprovedResumeContent } from "@/types/analysis";
 import { humanizeImproveResumeError, humanizeNetworkError } from "@/lib/friendlyApiError";
 import { useAnalyzeResume } from "@/hooks/mutations/use-analyze-resume";
 import { useImproveResume } from "@/hooks/mutations/use-improve-resume";
+import { toAiUiError } from "@/lib/client-ai-error";
+import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
 
 const ResumeUpload = lazy(() =>
   import("@/components/resume/ResumeUpload").then((m) => ({ default: m.ResumeUpload }))
@@ -38,6 +40,8 @@ function ResumeAnalyzerContent() {
   const [improvedContent, setImprovedContent] = useState<ImprovedResumeContent | null>(null);
   const [improvedResumeId, setImprovedResumeId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isAnalyzeCreditError, setIsAnalyzeCreditError] = useState(false);
+  const [isImproveCreditError, setIsImproveCreditError] = useState(false);
   const analyzeMut = useAnalyzeResume();
   const improveMut = useImproveResume();
   
@@ -55,6 +59,7 @@ function ResumeAnalyzerContent() {
   useEffect(() => {
     setError(null);
     setImproveError(null);
+    setIsImproveCreditError(false);
   }, []);
 
   // Quick Resume Builder → open in analyzer
@@ -133,9 +138,11 @@ function ResumeAnalyzerContent() {
       if (typeof id === "string") setImprovedResumeId(id);
       if (analysis) setAnalysisForRecheck(analysis);
     } catch (e) {
+      const ui = toAiUiError(e);
       setImproveError(
-        e instanceof Error ? humanizeImproveResumeError(e.message) : humanizeNetworkError()
+        e instanceof Error ? humanizeImproveResumeError(ui.message) : humanizeNetworkError()
       );
+      setIsImproveCreditError(ui.isCreditsExhausted);
     }
   }
 
@@ -143,6 +150,7 @@ function ResumeAnalyzerContent() {
     const prevAnalysis = analysisForRecheck ?? analysis;
     if (!improvedContent || !prevAnalysis) return;
     setError(null);
+    setIsAnalyzeCreditError(false);
     try {
       const { improvedToPlainText } = await import("@/components/resume/ImprovedResumeView");
       const improvedText = improvedToPlainText(improvedContent);
@@ -162,9 +170,11 @@ function ResumeAnalyzerContent() {
         setUsageInfo({ used: _usage.used, limit: _usage.limit });
       }
     } catch (e) {
+      const ui = toAiUiError(e);
       setError(
-        e instanceof Error ? humanizeImproveResumeError(e.message) : humanizeNetworkError()
+        e instanceof Error ? humanizeImproveResumeError(ui.message) : humanizeNetworkError()
       );
+      setIsAnalyzeCreditError(ui.isCreditsExhausted);
     }
   }
 
@@ -174,6 +184,7 @@ function ResumeAnalyzerContent() {
       return;
     }
     setError(null);
+    setIsAnalyzeCreditError(false);
     try {
       const data = await analyzeMut.mutateAsync({
         resumeText,
@@ -185,9 +196,11 @@ function ResumeAnalyzerContent() {
         setUsageInfo({ used: _usage.used, limit: _usage.limit });
       }
     } catch (e) {
+      const ui = toAiUiError(e);
       setError(
-        e instanceof Error ? humanizeImproveResumeError(e.message) : humanizeImproveResumeError(undefined)
+        e instanceof Error ? humanizeImproveResumeError(ui.message) : humanizeImproveResumeError(undefined)
       );
+      setIsAnalyzeCreditError(ui.isCreditsExhausted);
     }
   }
 
@@ -302,7 +315,15 @@ function ResumeAnalyzerContent() {
             </button>
           </div>
           {analyzing && <div className="mt-3"><AIProgressIndicator message="Analyzing your resume…" /></div>}
-          {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+          {error && (
+            <div className="mt-2">
+              {isAnalyzeCreditError ? (
+                <AICreditExhaustedAlert message={error} pricingHref="/pricing" />
+              ) : (
+                <p className="text-sm text-red-600">{error}</p>
+              )}
+            </div>
+          )}
         </section>
       )}
 
@@ -373,12 +394,16 @@ function ResumeAnalyzerContent() {
             </button>
             {improving && <AIProgressIndicator message="AI is rewriting your resume…" />}
             {improveError && (
-              <p className="text-sm text-rose-200">
-                {improveError}
-                {improveError.includes("Pro") && (
-                  <> <Link href="/pricing" className="font-medium text-primary hover:underline">Upgrade to Pro</Link></>
-                )}
-              </p>
+              isImproveCreditError ? (
+                <AICreditExhaustedAlert message={improveError} pricingHref="/pricing" />
+              ) : (
+                <p className="text-sm text-rose-200">
+                  {improveError}
+                  {improveError.includes("Pro") && (
+                    <> <Link href="/pricing" className="font-medium text-primary hover:underline">Upgrade to Pro</Link></>
+                  )}
+                </p>
+              )
             )}
             </div>
           </div>

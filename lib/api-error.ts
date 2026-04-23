@@ -5,6 +5,7 @@
 export type ApiErrorFields = {
   error?: string;
   detail?: string;
+  message?: string;
 };
 
 /** Read body once; safe if server returned non-JSON. */
@@ -16,6 +17,7 @@ export async function parseApiErrorJson(res: Response): Promise<ApiErrorFields> 
     return {
       error: typeof j.error === "string" ? j.error : undefined,
       detail: typeof j.detail === "string" ? j.detail : undefined,
+      message: typeof j.message === "string" ? j.message : undefined,
     };
   } catch {
     return { error: text.slice(0, 300) };
@@ -28,11 +30,16 @@ export function parseErrorFieldsFromJson(body: unknown): ApiErrorFields {
   return {
     error: typeof o.error === "string" ? o.error : undefined,
     detail: typeof o.detail === "string" ? o.detail : undefined,
+    message: typeof o.message === "string" ? o.message : undefined,
   };
 }
 
 export function formatApiError(parsed: ApiErrorFields): string {
+  if (parsed.error === "CREDITS_EXHAUSTED") {
+    return parsed.message || "You have reached your AI credit limit. Please upgrade to continue.";
+  }
   if (parsed.error && parsed.detail) return `${parsed.error}: ${parsed.detail}`;
+  if (parsed.message) return parsed.message;
   if (parsed.error) return parsed.error;
   if (parsed.detail) return parsed.detail;
   return "";
@@ -52,5 +59,8 @@ export function formatApiFetchThrownError(error: unknown): string {
     /* not JSON */
   }
   const msg = error.message.trim();
+  if (msg === "CREDITS_EXHAUSTED") {
+    return "You have reached your AI credit limit. Please upgrade to continue.";
+  }
   return msg || "Something went wrong";
 }

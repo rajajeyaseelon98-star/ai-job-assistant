@@ -5,6 +5,7 @@ import { checkAndLogUsage } from "@/lib/usage";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { isValidUUID, validateTextLength } from "@/lib/validation";
 import { runAtsAnalysisFromText } from "@/lib/ats-resume-analysis";
+import { CREDITS_EXHAUSTED_CODE, isCreditsExhaustedError } from "@/lib/aiCreditError";
 
 /**
  * POST /api/recruiter/resumes/[resumeId]/analyze
@@ -72,8 +73,17 @@ export async function POST(
 
   let data;
   try {
-    data = await runAtsAnalysisFromText(textValidation.text);
+    data = await runAtsAnalysisFromText(textValidation.text, { userId: user.id });
   } catch (e) {
+    if (isCreditsExhaustedError(e)) {
+      return NextResponse.json(
+        {
+          error: CREDITS_EXHAUSTED_CODE,
+          message: "You have reached your AI credit limit. Please upgrade.",
+        },
+        { status: 402 }
+      );
+    }
     const message = e instanceof Error ? e.message : "Unknown error";
     console.error("[recruiter/resumes/analyze]", e);
     return NextResponse.json(

@@ -16,7 +16,8 @@ import {
   useSalaryIntelligenceSearch,
   type SalaryInsight,
 } from "@/hooks/mutations/use-salary-intelligence";
-import { formatApiFetchThrownError } from "@/lib/api-error";
+import { toAiUiError } from "@/lib/client-ai-error";
+import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
 
 function formatSalary(amount: number): string {
   if (amount >= 10000000) return `${(amount / 10000000).toFixed(1)}Cr`;
@@ -32,6 +33,7 @@ export default function SalaryInsightsPage() {
   const [experience, setExperience] = useState("");
   const [insight, setInsight] = useState<SalaryInsight | null>(null);
   const [searchError, setSearchError] = useState("");
+  const [isCreditError, setIsCreditError] = useState(false);
   const [searched, setSearched] = useState(false);
   const loading = searchMut.isPending;
 
@@ -41,6 +43,7 @@ export default function SalaryInsightsPage() {
 
     setSearched(true);
     setSearchError("");
+    setIsCreditError(false);
     try {
       const data = await searchMut.mutateAsync({
         title: jobTitle,
@@ -50,7 +53,9 @@ export default function SalaryInsightsPage() {
       setInsight(data);
     } catch (e) {
       setInsight(null);
-      setSearchError(formatApiFetchThrownError(e));
+      const ui = toAiUiError(e);
+      setSearchError(ui.message);
+      setIsCreditError(ui.isCreditsExhausted);
     }
   }
 
@@ -131,7 +136,11 @@ export default function SalaryInsightsPage() {
       </form>
 
       {searchError ? (
-        <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{searchError}</p>
+        isCreditError ? (
+          <AICreditExhaustedAlert message={searchError} pricingHref="/pricing" />
+        ) : (
+          <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{searchError}</p>
+        )
       ) : null}
 
       {/* Results */}

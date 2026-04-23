@@ -6,6 +6,7 @@ import { checkRateLimit } from "@/lib/rateLimit";
 import { recordDailyActivity } from "@/lib/streakSystem";
 import { validateTextLength } from "@/lib/validation";
 import { runAtsAnalysisFromText } from "@/lib/ats-resume-analysis";
+import { CREDITS_EXHAUSTED_CODE, isCreditsExhaustedError } from "@/lib/aiCreditError";
 
 export async function POST(request: Request) {
   const user = await getUser();
@@ -52,10 +53,20 @@ export async function POST(request: Request) {
   let data;
   try {
     data = await runAtsAnalysisFromText(text, {
+      userId: user.id,
       recheckAfterImprovement: !!recheckAfterImprovement,
       previousAnalysis,
     });
   } catch (e) {
+    if (isCreditsExhaustedError(e)) {
+      return NextResponse.json(
+        {
+          error: CREDITS_EXHAUSTED_CODE,
+          message: "You have reached your AI credit limit. Please upgrade.",
+        },
+        { status: 402 }
+      );
+    }
     const message = e instanceof Error ? e.message : "Unknown error";
     console.error("Analyze resume error:", e);
     return NextResponse.json(

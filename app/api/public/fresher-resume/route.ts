@@ -63,6 +63,7 @@ Projects / internships (optional): ${projects.text || "None provided"}`;
     const raw = await cachedAiGenerate(SYSTEM, userContent, {
       jsonMode: true,
       cacheFeature: "fresher_resume_public",
+      featureName: "fresher_resume_public",
     });
 
     let parsed: { resumeText?: string; atsScore?: number };

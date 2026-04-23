@@ -6,13 +6,15 @@ import {
   useRecruiterSalaryEstimate,
   type RecruiterSalaryEstimateResult,
 } from "@/hooks/queries/use-recruiter";
-import { formatApiFetchThrownError } from "@/lib/api-error";
+import { toAiUiError } from "@/lib/client-ai-error";
+import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
 
 export default function SalaryEstimatorPage() {
   const estimateMut = useRecruiterSalaryEstimate();
   const loading = estimateMut.isPending;
   const [result, setResult] = useState<RecruiterSalaryEstimateResult | null>(null);
   const [error, setError] = useState("");
+  const [isCreditError, setIsCreditError] = useState(false);
   const [title, setTitle] = useState("");
   const [skills, setSkills] = useState("");
   const [experience, setExperience] = useState("3");
@@ -23,9 +25,11 @@ export default function SalaryEstimatorPage() {
     e.preventDefault();
     if (!title.trim()) {
       setError("Job title is required");
+      setIsCreditError(false);
       return;
     }
     setError("");
+    setIsCreditError(false);
     try {
       const data = await estimateMut.mutateAsync({
         title: title.trim(),
@@ -36,7 +40,9 @@ export default function SalaryEstimatorPage() {
       });
       setResult(data);
     } catch (e) {
-      setError(formatApiFetchThrownError(e) || "Something went wrong");
+      const ui = toAiUiError(e);
+      setError(ui.message || "Something went wrong");
+      setIsCreditError(ui.isCreditsExhausted);
     }
   }
 
@@ -86,7 +92,13 @@ export default function SalaryEstimatorPage() {
           </div>
         </div>
 
-        {error && <p className="rounded-xl bg-rose-50 border border-rose-100 px-4 py-3 text-sm text-rose-700">{error}</p>}
+        {error && (
+          isCreditError ? (
+            <AICreditExhaustedAlert message={error} pricingHref="/recruiter/pricing" />
+          ) : (
+            <p className="rounded-xl bg-rose-50 border border-rose-100 px-4 py-3 text-sm text-rose-700">{error}</p>
+          )
+        )}
 
         <button type="submit" disabled={loading}
           className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 rounded-xl px-8 py-3.5 font-medium disabled:opacity-50 w-full md:w-auto">

@@ -15,6 +15,7 @@ export function humanizeImproveResumeError(raw: string | undefined): string {
   }
   const t = raw.trim();
   if (/pro feature|upgrade/i.test(t)) return t;
+  if (/CREDITS_EXHAUSTED/i.test(t)) return "You have reached your AI credit limit. Please upgrade to continue.";
   if (/too many requests|429/i.test(t)) return "Too many requests — wait a minute and try again.";
   if (/unauthorized|401/i.test(t)) return "Your session expired. Sign in again and retry.";
   return t;
@@ -40,6 +41,7 @@ export function humanizeCoverLetterError(raw: string | undefined): string {
   if (!raw) return humanizeUnknownError();
   const t = raw.trim();
   if (/free limit|upgrade to pro/i.test(t)) return t;
+  if (/CREDITS_EXHAUSTED/i.test(t)) return "You have reached your AI credit limit. Please upgrade to continue.";
   if (/too many requests|429/i.test(t)) {
     return "Too many requests — wait a minute and try again.";
   }
@@ -53,6 +55,7 @@ export function humanizeSmartApplyError(raw: string | undefined): string {
   if (!raw) return humanizeUnknownError();
   const t = raw.trim();
   if (/pro feature|upgrade/i.test(t)) return t;
+  if (/CREDITS_EXHAUSTED/i.test(t)) return "You have reached your AI credit limit. Please upgrade to continue.";
   if (/resume not found/i.test(t)) return "We couldn’t find that resume. Upload one again from Resume Analyzer.";
   if (/invalid json/i.test(t)) return "That request couldn’t be sent. Refresh the page and try again.";
   return t;

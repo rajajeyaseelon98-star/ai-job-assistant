@@ -75,6 +75,7 @@ const navGroups: NavGroup[] = [
       { href: "/analytics", label: "Career Analytics", icon: BarChart3 },
       { href: "/resume-performance", label: "Resume Performance", icon: Award },
       { href: "/activity", label: "Activity Feed", icon: Activity },
+      { href: "/usage", label: "AI Usage", icon: BarChart3 },
       { href: "/salary-insights", label: "Salary Insights", icon: IndianRupee },
       { href: "/skill-demand", label: "Skill Demand", icon: TrendingUp },
       { href: "/streak-rewards", label: "Streak Rewards", icon: Gift },

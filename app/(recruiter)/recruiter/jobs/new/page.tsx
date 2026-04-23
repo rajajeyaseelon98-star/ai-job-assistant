@@ -8,7 +8,8 @@ import {
   useCreateRecruiterJob,
   useGenerateJobDescription,
 } from "@/hooks/queries/use-recruiter";
-import { formatApiFetchThrownError } from "@/lib/api-error";
+import { toAiUiError } from "@/lib/client-ai-error";
+import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
 
 export default function NewJobPage() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function NewJobPage() {
   const loading = createMut.isPending;
   const aiLoading = generateMut.isPending;
   const [error, setError] = useState("");
+  const [isCreditError, setIsCreditError] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [requirements, setRequirements] = useState("");
@@ -33,9 +35,11 @@ export default function NewJobPage() {
   async function generateDescription() {
     if (!title.trim()) {
       setError("Enter a job title first");
+      setIsCreditError(false);
       return;
     }
     setError("");
+    setIsCreditError(false);
     try {
       const data = await generateMut.mutateAsync({
         title,
@@ -52,7 +56,9 @@ export default function NewJobPage() {
         setSkills(data.skills_required.join(", "));
       }
     } catch (e) {
-      setError(formatApiFetchThrownError(e) || "Failed to generate description");
+      const ui = toAiUiError(e);
+      setError(ui.message || "Failed to generate description");
+      setIsCreditError(ui.isCreditsExhausted);
     }
   }
 
@@ -60,10 +66,12 @@ export default function NewJobPage() {
     e.preventDefault();
     if (!title.trim() || !description.trim()) {
       setError("Title and description are required");
+      setIsCreditError(false);
       return;
     }
 
     setError("");
+    setIsCreditError(false);
     try {
       await createMut.mutateAsync({
         title,
@@ -82,7 +90,9 @@ export default function NewJobPage() {
       });
       router.push("/recruiter/jobs");
     } catch (e) {
-      setError(formatApiFetchThrownError(e) || "Failed to create job");
+      const ui = toAiUiError(e);
+      setError(ui.message || "Failed to create job");
+      setIsCreditError(ui.isCreditsExhausted);
     }
   }
 
@@ -193,7 +203,13 @@ export default function NewJobPage() {
           </div>
         </div>
 
-        {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+        {error && (
+          isCreditError ? (
+            <AICreditExhaustedAlert message={error} pricingHref="/recruiter/pricing" />
+          ) : (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+          )
+        )}
 
         <div className="flex items-center gap-4 pt-8 border-t border-slate-100">
           <button type="button" onClick={(e) => handleSubmit(e, "active")} disabled={loading}

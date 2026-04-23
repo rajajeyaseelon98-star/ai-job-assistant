@@ -5,7 +5,8 @@ import { use } from "react";
 import { Loader2, Wand2, ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useOptimizeRecruiterJob, usePatchRecruiterJob } from "@/hooks/queries/use-recruiter";
-import { formatApiFetchThrownError } from "@/lib/api-error";
+import { toAiUiError } from "@/lib/client-ai-error";
+import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
 
 interface OptimizeResult {
   suggestions: string[];
@@ -23,20 +24,25 @@ export default function OptimizeJobPage({ params }: { params: Promise<{ id: stri
   const applying = patchMut.isPending;
   const [result, setResult] = useState<OptimizeResult | null>(null);
   const [error, setError] = useState("");
+  const [isCreditError, setIsCreditError] = useState(false);
 
   async function handleOptimize() {
     setError("");
+    setIsCreditError(false);
     try {
       const data = await optimizeMut.mutateAsync(id);
       setResult(data);
     } catch (e) {
-      setError(formatApiFetchThrownError(e) || "Something went wrong");
+      const ui = toAiUiError(e);
+      setError(ui.message || "Something went wrong");
+      setIsCreditError(ui.isCreditsExhausted);
     }
   }
 
   async function applyOptimizations() {
     if (!result) return;
     setError("");
+    setIsCreditError(false);
     try {
       const updates: Record<string, string> = {};
       if (result.optimized_title) updates.title = result.optimized_title;
@@ -45,7 +51,9 @@ export default function OptimizeJobPage({ params }: { params: Promise<{ id: stri
       await patchMut.mutateAsync({ id, body: updates });
       router.push(`/recruiter/jobs/${id}`);
     } catch (e) {
-      setError(formatApiFetchThrownError(e) || "Failed to apply changes");
+      const ui = toAiUiError(e);
+      setError(ui.message || "Failed to apply changes");
+      setIsCreditError(ui.isCreditsExhausted);
     }
   }
 
@@ -66,7 +74,13 @@ export default function OptimizeJobPage({ params }: { params: Promise<{ id: stri
         </button>
       )}
 
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+      {error && (
+        isCreditError ? (
+          <AICreditExhaustedAlert message={error} pricingHref="/recruiter/pricing" />
+        ) : (
+          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+        )
+      )}
 
       {result && (
         <div className="space-y-6">

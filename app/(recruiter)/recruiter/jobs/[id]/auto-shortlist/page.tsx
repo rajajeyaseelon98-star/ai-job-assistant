@@ -5,7 +5,8 @@ import { use } from "react";
 import { Loader2, Zap, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAutoShortlistRecruiterJob } from "@/hooks/queries/use-recruiter";
-import { formatApiFetchThrownError } from "@/lib/api-error";
+import { toAiUiError } from "@/lib/client-ai-error";
+import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
 
 export default function AutoShortlistPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -14,14 +15,18 @@ export default function AutoShortlistPage({ params }: { params: Promise<{ id: st
   const loading = shortlistMut.isPending;
   const [result, setResult] = useState<{ shortlisted: number; total_screened: number } | null>(null);
   const [error, setError] = useState("");
+  const [isCreditError, setIsCreditError] = useState(false);
 
   async function handleAutoShortlist() {
     setError("");
+    setIsCreditError(false);
     try {
       const data = await shortlistMut.mutateAsync(id);
       setResult(data);
     } catch (e) {
-      setError(formatApiFetchThrownError(e) || "Something went wrong");
+      const ui = toAiUiError(e);
+      setError(ui.message || "Something went wrong");
+      setIsCreditError(ui.isCreditsExhausted);
     }
   }
 
@@ -45,7 +50,13 @@ export default function AutoShortlistPage({ params }: { params: Promise<{ id: st
         </button>
       )}
 
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+      {error && (
+        isCreditError ? (
+          <AICreditExhaustedAlert message={error} pricingHref="/recruiter/pricing" />
+        ) : (
+          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+        )
+      )}
 
       {result && (
         <div className="rounded-xl border border-green-200 bg-green-50 p-4 sm:p-6 text-center">

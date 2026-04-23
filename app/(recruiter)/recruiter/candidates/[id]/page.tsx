@@ -26,6 +26,8 @@ import {
   useRecruiterResumeSignedUrl,
 } from "@/hooks/queries/use-recruiter";
 import { formatApiFetchThrownError } from "@/lib/api-error";
+import { toAiUiError } from "@/lib/client-ai-error";
+import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
 
 type ResumeAnalysisRow = {
   id: string;
@@ -103,6 +105,7 @@ export default function CandidateProfilePage() {
   const [previewResumeId, setPreviewResumeId] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [analyzeMessage, setAnalyzeMessage] = useState<string | null>(null);
+  const [analyzeCreditError, setAnalyzeCreditError] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
 
   async function downloadResume(resumeId: string) {
@@ -134,12 +137,15 @@ export default function CandidateProfilePage() {
 
   async function runRecruiterAts(resumeId: string) {
     setAnalyzeMessage(null);
+    setAnalyzeCreditError(false);
     try {
       await analyzeMut.mutateAsync({ resumeId, candidateId: id });
       setAnalyzeMessage("Analysis saved.");
       setTimeout(() => setAnalyzeMessage(null), 4000);
     } catch (e) {
-      setAnalyzeMessage(formatApiFetchThrownError(e) || "Request failed.");
+      const ui = toAiUiError(e);
+      setAnalyzeMessage(ui.message || "Request failed.");
+      setAnalyzeCreditError(ui.isCreditsExhausted);
     }
   }
 
@@ -194,16 +200,25 @@ export default function CandidateProfilePage() {
       </Link>
 
       {analyzeMessage && (
-        <p
-          className={`mb-4 rounded-xl border px-4 py-3 text-sm ${
-            analyzeMessage.startsWith("Analysis saved")
-              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-              : "border-amber-200 bg-amber-50 text-amber-900"
-          }`}
-          role="status"
-        >
-          {analyzeMessage}
-        </p>
+        analyzeMessage.startsWith("Analysis saved") ? (
+          <p
+            className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900"
+            role="status"
+          >
+            {analyzeMessage}
+          </p>
+        ) : analyzeCreditError ? (
+          <div className="mb-4">
+            <AICreditExhaustedAlert message={analyzeMessage} pricingHref="/recruiter/pricing" />
+          </div>
+        ) : (
+          <p
+            className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+            role="status"
+          >
+            {analyzeMessage}
+          </p>
+        )
       )}
 
       {/* Header */}

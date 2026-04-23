@@ -12,6 +12,8 @@ import {
   usePatchRecruiterJob,
 } from "@/hooks/queries/use-recruiter";
 import { formatApiFetchThrownError } from "@/lib/api-error";
+import { toAiUiError } from "@/lib/client-ai-error";
+import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
 
 export default function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -23,6 +25,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   const saving = patchMut.isPending;
   const aiLoading = generateMut.isPending;
   const [error, setError] = useState("");
+  const [isCreditError, setIsCreditError] = useState(false);
   const [success, setSuccess] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -62,6 +65,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   async function generateDescription() {
     if (!title.trim()) { setError("Enter a job title first"); return; }
     setError("");
+    setIsCreditError(false);
     try {
       const data = await generateMut.mutateAsync({
         title,
@@ -78,13 +82,16 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
         setSkills(data.skills_required.join(", "));
       }
     } catch (e) {
-      setError(formatApiFetchThrownError(e) || "Failed to generate description");
+      const ui = toAiUiError(e);
+      setError(ui.message || "Failed to generate description");
+      setIsCreditError(ui.isCreditsExhausted);
     }
   }
 
   async function handleSave() {
     if (!title.trim() || !description.trim()) { setError("Title and description are required"); return; }
     setError("");
+    setIsCreditError(false);
     try {
       await patchMut.mutateAsync({
         id,
@@ -229,7 +236,13 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
 
-        {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+        {error && (
+          isCreditError ? (
+            <AICreditExhaustedAlert message={error} pricingHref="/recruiter/pricing" />
+          ) : (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+          )
+        )}
         {success && <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-600">{success}</p>}
 
         <div className="flex items-center gap-4 pt-8 border-t border-slate-100">

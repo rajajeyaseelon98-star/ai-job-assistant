@@ -100,6 +100,7 @@ export interface AIScreening {
   ats_score: number;
   recommendation: "strong_yes" | "yes" | "maybe" | "no";
   summary: string;
+  confidence: number;
 }
 
 export interface Message {

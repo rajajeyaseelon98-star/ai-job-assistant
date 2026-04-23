@@ -6,10 +6,13 @@ import { Zap, Loader2, Clock, TrendingUp, Settings2 } from "lucide-react";
 import { useSmartApplyRules, useResumes, useUsage, useSaveSmartApplyRule, useToggleSmartApplyRule } from "@/hooks/queries/use-smart-apply";
 import type { SmartApplyRule } from "@/types/autoApply";
 import { humanizeSmartApplyError, humanizeNetworkError } from "@/lib/friendlyApiError";
+import { toAiUiError } from "@/lib/client-ai-error";
+import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
 
 export default function SmartApplyPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [isCreditError, setIsCreditError] = useState(false);
   const [success, setSuccess] = useState("");
 
   // Form state
@@ -58,6 +61,7 @@ export default function SmartApplyPage() {
     e.preventDefault();
     setSaving(true);
     setError("");
+    setIsCreditError(false);
     setSuccess("");
     try {
       await saveMutation.mutateAsync({
@@ -74,7 +78,13 @@ export default function SmartApplyPage() {
       });
       setSuccess("Smart Auto-Apply rules saved and activated!");
     } catch (err) {
-      setError(err instanceof Error ? humanizeSmartApplyError(err.message) : humanizeNetworkError());
+      if (err instanceof Error) {
+        const ui = toAiUiError(err);
+        setError(humanizeSmartApplyError(ui.message));
+        setIsCreditError(ui.isCreditsExhausted);
+      } else {
+        setError(humanizeNetworkError());
+      }
     } finally {
       setSaving(false);
     }
@@ -128,7 +138,13 @@ export default function SmartApplyPage() {
         )}
       </div>
 
-      {error && <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>}
+      {error && (
+        isCreditError ? (
+          <AICreditExhaustedAlert message={error} pricingHref="/pricing" />
+        ) : (
+          <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+        )
+      )}
       {success && (
         <div className="mb-6 flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 text-sm font-medium shadow-sm">
           <Settings2 className="h-4 w-4 text-emerald-600" />

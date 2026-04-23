@@ -3,6 +3,7 @@ export interface JobMatchResult {
   matched_skills: string[];
   missing_skills: string[];
   resume_improvements: string[];
+  confidence: number;
 }
 
 export interface JobMatchRecord {
