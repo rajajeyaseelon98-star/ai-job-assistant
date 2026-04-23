@@ -1,5 +1,25 @@
 # Project Analysis Report
 
+## 0. Post-Implementation Update (2026-04-23)
+
+- **AI usage and credit system added end-to-end**:
+  - DB: `public.ai_usage` table + `users.total_credits` / `users.used_credits`
+  - API: `/api/usage/summary`, `/api/usage/history`, `/api/usage/feature-breakdown`
+  - UI: `/(dashboard)/usage` page + sidebar navigation entry `AI Usage` -> `/usage`
+  - Server tracking: `lib/ai.ts` now logs tokens/credits/cost per AI call through `lib/aiUsage.ts`
+- **Credit enforcement behavior**:
+  - Pre-call guard in AI layer checks remaining credits when `AI_CREDITS_ENFORCEMENT_ENABLED=true`
+  - Standardized API responses for exhaustion: HTTP `402`, `error: "CREDITS_EXHAUSTED"`, upgrade message
+  - Structured client handling via `lib/client-ai-error.ts` (`toAiUiError`) and CTA UI `components/ui/AICreditExhaustedAlert.tsx`
+- **Operational hardening completed**:
+  - Added migration `20260423183000_ai_usage_grants.sql` to fix `permission denied for table ai_usage` by granting `SELECT, INSERT` to `authenticated`
+  - Usage query APIs now fail-loud with `detail` on underlying DB/query errors
+  - AI usage tracking now emits warning logs on failures for observability
+- **Affected implementation areas**:
+  - Core AI: `lib/ai.ts`, `lib/aiRollout.ts`, `lib/aiUsage.ts`, `lib/aiUsageQueries.ts`, `lib/aiCreditError.ts`
+  - Job seeker pages: resume analyzer, interview prep, smart apply, salary insights, usage dashboard
+  - Recruiter pages: job generate/optimize/auto-shortlist, salary estimator, skill-gap, candidate ATS analyze
+
 ## 1. Project Overview
 
 - **What this application does:** AI-powered job platform with two product surfaces:

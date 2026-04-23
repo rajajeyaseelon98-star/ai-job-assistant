@@ -1,5 +1,27 @@
 # AI Features & Prompt Analysis Report
 
+## Post-Implementation Update (2026-04-23)
+
+- **AI usage instrumentation is now live across major LLM call-sites** via `lib/ai.ts` wrappers:
+  - Tracks prompt/completion token estimates, credits, cache hit/miss, model/provider, latency, and estimated cost
+  - Persists to `public.ai_usage` with feature tagging (`feature_name`)
+- **Credit model implemented**:
+  - `1 credit = ceil(total_tokens / 1000)` in `lib/aiUsage.ts`
+  - Optional enforcement gate (`AI_CREDITS_ENFORCEMENT_ENABLED`) checks remaining credits before AI calls
+- **Exhaustion response contract standardized**:
+  - API returns HTTP `402` with `error: "CREDITS_EXHAUSTED"` and upgrade message
+  - UI normalizes with `toAiUiError` and renders upgrade CTA (`AICreditExhaustedAlert`)
+- **Usage analytics APIs/pages added**:
+  - `GET /api/usage/summary`
+  - `GET /api/usage/history`
+  - `GET /api/usage/feature-breakdown`
+  - Dashboard page: `/(dashboard)/usage`
+- **DB operations/risk fix**:
+  - Added grants migration `20260423183000_ai_usage_grants.sql` after observed runtime error `permission denied for table ai_usage`
+- **Diagnostics hardening**:
+  - Usage query APIs now return 500 + `detail` on DB/query failures
+  - AI usage write path now logs warnings on insert/update/read failures instead of silent swallow
+
 ---
 
 ## 1. AI Feature Inventory

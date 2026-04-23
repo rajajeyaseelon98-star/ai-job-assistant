@@ -2,7 +2,7 @@
 
 **Purpose:** In-depth test cases for every feature flow. Covers happy paths, edge cases, error handling, and integration scenarios.
 
-**Last updated:** 2026-04-08 (**Section 30:** **`GET /api/messages`** returns pagination fields (**`has_more`**, **`next_before`**, **`partial`**); **`GET /api/messages/thread`**, **`GET /api/messages/unread-summary`**, **`POST /api/messages/attachment`**; **`mark-read`** sets **`read_at`**; optional message attachments + read receipts in UI. Recruiter **`/recruiter`** dashboard unread total uses **`unread-summary`** (not first page of **`GET /api/messages?unread=true`**). **Earlier 2026-04-05 — Section 30 / TC-30.1:** recipient **`notifications`** row on send when **`SUPABASE_SERVICE_ROLE_KEY`** is set; bell realtime filtered by **`user_id`**. Earlier 2026-04-02: role switch `PATCH /api/user/role`; cron trigger includes DB cleanups; new cases for `/api/dashboard`, `/api/history`, `/api/jobs/applied`, public extract/fresher routes. **Component ↔ API mapping** for manual QA: `docs/KNOWLEDGE_TRANSFER.md` §6.1–§6.3.)
+**Last updated:** 2026-04-23 (Added AI usage/credit system QA coverage in **Section 50**, including DB migrations/grants validation, usage APIs, credit enforcement (`CREDITS_EXHAUSTED`), usage dashboard assertions, and observability checks. Previous updates retained below.)
 
 ---
 
@@ -47,6 +47,7 @@
 37. [Security & Authorization](#37-security--authorization)
 38. [Database Integrity](#38-database-integrity)
 49. [Dashboard, history, jobs applied, and public APIs](#49-dashboard-history-jobs-applied-and-public-apis)
+50. [AI Usage Tracking & Credits](#50-ai-usage-tracking--credits)
 
 ---
 
@@ -1810,3 +1811,80 @@ Shared inbox UI (**`MessagesInbox`**) for recruiters at **`/recruiter/messages`*
 - **Precondition:** Authenticated user (uses `supabase.auth.getUser()` in route)
 - **Steps:** POST `/api/opportunity-alerts/scan`
 - **Expected:** 200 JSON `{ scanned: true, alertsCreated: <number> }`. 401 without session.
+
+---
+
+## 50. AI Usage Tracking & Credits
+
+### TC-50.1: Migration applied (schema)
+- **Steps:**
+  1. Verify `public.ai_usage` exists
+  2. Verify `users.total_credits`, `users.used_credits` exist
+- **Expected:** Table/columns available and queryable.
+
+### TC-50.2: Grants + RLS baseline
+- **Steps:**
+  1. As authenticated app user, call `/api/usage/summary`
+  2. Confirm no `permission denied` error
+- **Expected:** Authenticated role can `SELECT`/`INSERT` on `ai_usage` (with RLS row scoping).
+
+### TC-50.3: Usage insert on ATS analyze
+- **Steps:**
+  1. Run `POST /api/analyze-resume` successfully
+  2. Check `/api/usage/history?limit=10`
+- **Expected:** New row appears with `feature_name = resume_analysis`, non-negative token/credit values.
+
+### TC-50.4: Usage insert on improve resume
+- **Steps:**
+  1. Run `POST /api/improve-resume`
+  2. Check `/api/usage/feature-breakdown`
+- **Expected:** `resume_improve` (or relevant feature key) increases in calls/tokens/credits.
+
+### TC-50.5: Cover letter generation diagnostics
+- **Steps:**
+  1. Trigger cover letter generation failure
+  2. Inspect API JSON
+- **Expected:** 500 payload includes `detail` (no generic-only error), enabling root-cause debugging.
+
+### TC-50.6: Summary aggregation correctness
+- **Steps:**
+  1. Perform 2-3 distinct AI actions
+  2. Compare totals in `/api/usage/summary` with `/api/usage/history`
+- **Expected:** `totalTokens` and `totalCredits` reflect sum of history rows for current user.
+
+### TC-50.7: Credit enforcement OFF
+- **Precondition:** `AI_CREDITS_ENFORCEMENT_ENABLED=false`
+- **Steps:**
+  1. Set `used_credits >= total_credits`
+  2. Run an AI endpoint
+- **Expected:** Request still executes (tracking continues), no `CREDITS_EXHAUSTED`.
+
+### TC-50.8: Credit enforcement ON
+- **Precondition:** `AI_CREDITS_ENFORCEMENT_ENABLED=true`
+- **Steps:**
+  1. Set `used_credits >= total_credits`
+  2. Run ATS / improve / recruiter AI endpoint
+- **Expected:** API returns HTTP 402 with `{ error: "CREDITS_EXHAUSTED", message: ... }`.
+
+### TC-50.9: UI exhaustion handling
+- **Steps:**
+  1. Trigger `CREDITS_EXHAUSTED` on jobseeker and recruiter pages
+- **Expected:** UI renders `AICreditExhaustedAlert` upgrade CTA; no raw code/error dumps.
+
+### TC-50.10: Usage dashboard navigation and rendering
+- **Steps:**
+  1. Open sidebar and click `AI Usage`
+  2. Verify `/usage` page loads
+- **Expected:** Summary cards, breakdown, and history sections render; non-empty after AI actions.
+
+### TC-50.11: Usage API failure observability
+- **Steps:**
+  1. Temporarily break usage query path (e.g., permission/table issue in test env)
+  2. Call `/api/usage/summary`
+- **Expected:** API returns 500 with `detail`; server logs include `[usage-summary]` (or related tag).
+
+### TC-50.12: Tracking write failure observability
+- **Steps:**
+  1. Force insert failure scenario in test env
+  2. Execute AI call
+- **Expected:** Server warning log appears (`[ai-usage] ... failed`), not silent drop.
