@@ -2,7 +2,6 @@
 
 import { AiUsageDashboard } from "@/components/usage/AiUsageDashboard";
 
-export default function AiUsagePage() {
+export default function RecruiterUsagePage() {
   return <AiUsageDashboard />;
 }
-

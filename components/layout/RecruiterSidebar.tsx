@@ -35,6 +35,7 @@ const nav = [
   { href: "/recruiter/templates", label: "Templates", icon: FileText },
   { href: "/recruiter/company", label: "Company Profile", icon: Building2 },
   { href: "/recruiter/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/recruiter/usage", label: "AI Usage", icon: BarChart3 },
   { href: "/recruiter/salary-estimator", label: "Salary Estimator", icon: IndianRupee },
   { href: "/recruiter/skill-gap", label: "Skill Gap Report", icon: GitCompare },
   { href: "/recruiter/instant-shortlist", label: "Instant Shortlist", icon: Zap },
