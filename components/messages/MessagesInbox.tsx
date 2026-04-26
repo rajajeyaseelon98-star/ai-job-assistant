@@ -17,6 +17,9 @@ import { RecipientPicker } from "@/components/messages/RecipientPicker";
 import { recruiterKeys } from "@/hooks/queries/recruiter-keys";
 import { useMessagingTyping } from "@/hooks/use-messaging-typing";
 import { useMessagingReadSync } from "@/hooks/use-messaging-read-sync";
+import { MessageDeliveryState } from "@/components/messages/MessageDeliveryState";
+import { RealtimeHealthBadge } from "@/components/messages/RealtimeHealthBadge";
+import { InlineRetryCard } from "@/components/ui/InlineRetryCard";
 
 function peerIdForMessage(m: Message, myId: string): string {
   return m.sender_id === myId ? m.receiver_id : m.sender_id;
@@ -146,6 +149,9 @@ export function MessagesInbox() {
   } | null>(null);
   const [uploadingComposeFile, setUploadingComposeFile] = useState(false);
   const [uploadingReplyFile, setUploadingReplyFile] = useState(false);
+  const [deliveryState, setDeliveryState] = useState<"sending" | "sent" | "read" | "failed" | null>(null);
+  const [deliveryDetail, setDeliveryDetail] = useState<string>("");
+  const [realtimeConnected, setRealtimeConnected] = useState<boolean | null>(null);
   const composeFileRef = useRef<HTMLInputElement>(null);
   const replyFileRef = useRef<HTMLInputElement>(null);
 
@@ -347,6 +353,8 @@ export function MessagesInbox() {
       return;
     }
     setSending(true);
+    setDeliveryState("sending");
+    setDeliveryDetail("Sending your message...");
     setError("");
     try {
       await sendMutation.mutateAsync({
@@ -367,8 +375,12 @@ export function MessagesInbox() {
       setComposeAttachment(null);
       setShowCompose(false);
       clearQueryParams();
+      setDeliveryState("sent");
+      setDeliveryDetail("Message sent successfully.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send");
+      setDeliveryState("failed");
+      setDeliveryDetail("Message failed to send.");
     } finally {
       setSending(false);
     }
@@ -378,6 +390,8 @@ export function MessagesInbox() {
     e.preventDefault();
     if (!selectedPeerId || (!replyContent.trim() && !replyAttachment)) return;
     setReplying(true);
+    setDeliveryState("sending");
+    setDeliveryDetail("Sending your reply...");
     setError("");
     try {
       await sendMutation.mutateAsync({
@@ -397,8 +411,12 @@ export function MessagesInbox() {
       setHasNewBelow(false);
       setNearBottom(true);
       scrollToBottom("smooth");
+      setDeliveryState("sent");
+      setDeliveryDetail("Reply sent.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send");
+      setDeliveryState("failed");
+      setDeliveryDetail("Reply failed to send.");
     } finally {
       setReplying(false);
     }
@@ -409,6 +427,27 @@ export function MessagesInbox() {
     setSelectedPeerId(null);
     router.replace(`${pathname}?compose=1`, { scroll: false });
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setRealtimeConnected(navigator.onLine);
+    const online = () => setRealtimeConnected(true);
+    const offline = () => setRealtimeConnected(false);
+    window.addEventListener("online", online);
+    window.addEventListener("offline", offline);
+    return () => {
+      window.removeEventListener("online", online);
+      window.removeEventListener("offline", offline);
+    };
+  }, []);
+
+  useEffect(() => {
+    const readByPeer = threadMessages.some((m) => m.sender_id === myId && !!m.read_at);
+    if (readByPeer) {
+      setDeliveryState("read");
+      setDeliveryDetail("Recipient has read your recent message.");
+    }
+  }, [threadMessages, myId]);
 
   return (
     <div className="w-full lg:max-w-6xl lg:mx-auto lg:py-8 lg:px-6 min-h-[calc(100dvh-140px)]">
@@ -427,6 +466,10 @@ export function MessagesInbox() {
                 </p>
               ) : null}
             </div>
+            <RealtimeHealthBadge
+              connected={realtimeConnected}
+              delayed={threadQuery.isLoading || threadQuery.isFetchingNextPage}
+            />
             <button
               type="button"
               onClick={() => openCompose()}
@@ -587,7 +630,10 @@ export function MessagesInbox() {
                     Attach file
                   </button>
                 </div>
-                {error && showCompose && <p className="text-sm text-rose-600">{error}</p>}
+                {error && showCompose ? (
+                  <InlineRetryCard message={error} onRetry={() => setError("")} retryLabel="Dismiss" />
+                ) : null}
+                {deliveryState ? <MessageDeliveryState state={deliveryState} detail={deliveryDetail} /> : null}
                 <button
                   type="submit"
                   disabled={sending || uploadingComposeFile}
@@ -795,7 +841,10 @@ export function MessagesInbox() {
                     </button>
                   </div>
                 ) : null}
-                {error && !showCompose && <p className="text-sm text-rose-600">{error}</p>}
+                {error && !showCompose ? (
+                  <InlineRetryCard message={error} onRetry={() => setError("")} retryLabel="Dismiss" />
+                ) : null}
+                {deliveryState ? <MessageDeliveryState state={deliveryState} detail={deliveryDetail} /> : null}
                 <div className="flex gap-2 items-end">
                   <textarea
                     value={replyContent}

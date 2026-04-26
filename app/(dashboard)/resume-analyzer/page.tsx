@@ -6,7 +6,6 @@ import {
   useResumeAnalysisById,
   useImprovedResumeById,
 } from "@/hooks/queries/use-jobseeker-persisted";
-import Link from "next/link";
 import { AIProgressIndicator } from "@/components/ui/AIProgressIndicator";
 import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
 import { SectionSkeleton } from "@/components/ui/SectionSkeleton";
@@ -18,6 +17,10 @@ import { useAnalyzeResume } from "@/hooks/mutations/use-analyze-resume";
 import { useImproveResume } from "@/hooks/mutations/use-improve-resume";
 import { toAiUiError } from "@/lib/client-ai-error";
 import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
+import { InlineRetryCard } from "@/components/ui/InlineRetryCard";
+import { ActionReceiptCard } from "@/components/ui/ActionReceiptCard";
+import { ActionStatusBanner } from "@/components/ui/ActionStatusBanner";
+import { toUiFeedback } from "@/lib/ui-feedback";
 
 const ResumeUpload = lazy(() =>
   import("@/components/resume/ResumeUpload").then((m) => ({ default: m.ResumeUpload }))
@@ -42,6 +45,8 @@ function ResumeAnalyzerContent() {
   const [error, setError] = useState<string | null>(null);
   const [isAnalyzeCreditError, setIsAnalyzeCreditError] = useState(false);
   const [isImproveCreditError, setIsImproveCreditError] = useState(false);
+  const [analysisStage, setAnalysisStage] = useState<"idle" | "uploading" | "analyzing" | "saving">("idle");
+  const [analysisRequestId, setAnalysisRequestId] = useState<string | undefined>(undefined);
   const analyzeMut = useAnalyzeResume();
   const improveMut = useImproveResume();
   
@@ -185,18 +190,25 @@ function ResumeAnalyzerContent() {
     }
     setError(null);
     setIsAnalyzeCreditError(false);
+    setAnalysisStage(resumeInputMode === "upload" ? "uploading" : "analyzing");
     try {
+      setAnalysisStage("analyzing");
       const data = await analyzeMut.mutateAsync({
         resumeText,
         resumeId: resumeId || undefined,
       });
+      setAnalysisStage("saving");
       const { _usage, ...analysisData } = data;
       setAnalysis(analysisData as ATSAnalysisResult);
+      setAnalysisStage("idle");
       if (_usage) {
         setUsageInfo({ used: _usage.used, limit: _usage.limit });
       }
     } catch (e) {
+      setAnalysisStage("idle");
+      const normalized = toUiFeedback(e);
       const ui = toAiUiError(e);
+      setAnalysisRequestId(normalized.requestId);
       setError(
         e instanceof Error ? humanizeImproveResumeError(ui.message) : humanizeImproveResumeError(undefined)
       );
@@ -315,12 +327,33 @@ function ResumeAnalyzerContent() {
             </button>
           </div>
           {analyzing && <div className="mt-3"><AIProgressIndicator message="Analyzing your resume…" /></div>}
+          {analysisStage !== "idle" && (
+            <div className="mt-3">
+              <ActionStatusBanner
+                kind="warning"
+                message={
+                  analysisStage === "uploading"
+                    ? "Preparing your resume text..."
+                    : analysisStage === "analyzing"
+                      ? "Analyzing resume with AI..."
+                      : "Saving analysis to your history..."
+                }
+                requestId={analysisRequestId}
+              />
+            </div>
+          )}
           {error && (
             <div className="mt-2">
               {isAnalyzeCreditError ? (
                 <AICreditExhaustedAlert message={error} pricingHref="/pricing" />
               ) : (
-                <p className="text-sm text-red-600">{error}</p>
+                <InlineRetryCard
+                  message={error}
+                  onRetry={() => void runAnalysis()}
+                  retryLabel="Retry analysis"
+                  alternateHref="/history?tab=resume-analysis"
+                  alternateLabel="Open history"
+                />
               )}
             </div>
           )}
@@ -333,12 +366,23 @@ function ResumeAnalyzerContent() {
           <Suspense fallback={<SectionSkeleton height="h-64" />}>
             <ResumeAnalysisResult data={analysis} />
           </Suspense>
+          <div className="mt-4">
+            <ActionReceiptCard
+              title="Analysis saved to history"
+              description="Your ATS analysis is available now and persisted for later review."
+              primaryHref="/history?tab=resume-analysis"
+              primaryLabel="View history"
+              secondaryHref="#improve-resume"
+              secondaryLabel="Improve resume next"
+            />
+          </div>
           <div className="relative mt-10 overflow-hidden rounded-3xl bg-indigo-900 p-8 text-center shadow-xl">
             <div
               className="pointer-events-none absolute left-1/2 top-0 h-48 w-48 -translate-x-1/2 rounded-full bg-indigo-500/30 blur-3xl"
               aria-hidden
             />
             <div className="relative flex flex-col gap-3">
+            <span id="improve-resume" />
             <p className="font-display text-2xl font-bold text-white mb-2">Tailor & Improve with AI</p>
             <p className="text-indigo-200">Optional: add target role context for stronger output.</p>
             {(improveJobTitle.trim() || improveJobDescription.trim()) && (
@@ -397,12 +441,13 @@ function ResumeAnalyzerContent() {
               isImproveCreditError ? (
                 <AICreditExhaustedAlert message={improveError} pricingHref="/pricing" />
               ) : (
-                <p className="text-sm text-rose-200">
-                  {improveError}
-                  {improveError.includes("Pro") && (
-                    <> <Link href="/pricing" className="font-medium text-primary hover:underline">Upgrade to Pro</Link></>
-                  )}
-                </p>
+                <InlineRetryCard
+                  message={improveError}
+                  onRetry={() => void handleImproveResume()}
+                  retryLabel="Retry improve"
+                  alternateHref={improveError.includes("Pro") ? "/pricing" : "/history?tab=resume-analysis"}
+                  alternateLabel={improveError.includes("Pro") ? "Upgrade to Pro" : "Open history"}
+                />
               )
             )}
             </div>

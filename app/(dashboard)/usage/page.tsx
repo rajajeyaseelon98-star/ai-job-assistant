@@ -2,6 +2,8 @@
 
 import { useMemo } from "react";
 import { useAiFeatureBreakdown, useAiUsageHistory, useAiUsageSummary } from "@/hooks/queries/use-ai-usage";
+import { UsageHealthChip } from "@/components/usage/UsageHealthChip";
+import { InlineRetryCard } from "@/components/ui/InlineRetryCard";
 
 function formatNumber(n: number): string {
   return new Intl.NumberFormat().format(Math.max(0, Math.round(n)));
@@ -22,12 +24,39 @@ export default function AiUsagePage() {
     return Math.min(100, Math.round(((summary.data?.usedCredits ?? 0) / total) * 100));
   }, [summary.data?.totalCreditsAvailable, summary.data?.usedCredits]);
 
+  const hasAnyError = !!(summary.error || history.error || breakdown.error);
+  const generatedAt =
+    summary.data?.meta?.generatedAt || history.data?.meta?.generatedAt || breakdown.data?.meta?.generatedAt;
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <header>
         <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900">AI Usage Dashboard</h1>
         <p className="mt-1 text-sm text-slate-500">Token, credit, and feature-level AI usage for your account.</p>
+        <div className="mt-2 flex flex-wrap items-center gap-3">
+          <UsageHealthChip healthy={!hasAnyError} detail={generatedAt ? `Generated ${new Date(generatedAt).toLocaleString()}` : "Waiting for data"} />
+          {generatedAt ? <span className="text-xs text-slate-500">Last refresh: {new Date(generatedAt).toLocaleTimeString()}</span> : null}
+        </div>
       </header>
+
+      {hasAnyError ? (
+        <InlineRetryCard
+          message={`Usage metrics load failed: ${
+            (summary.error as Error | undefined)?.message ||
+            (history.error as Error | undefined)?.message ||
+            (breakdown.error as Error | undefined)?.message ||
+            "Unknown error"
+          }`}
+          onRetry={() => {
+            void summary.refetch();
+            void history.refetch();
+            void breakdown.refetch();
+          }}
+          retryLabel="Retry usage fetch"
+          alternateHref="/pricing"
+          alternateLabel="Open pricing"
+        />
+      ) : null}
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border bg-white p-4">

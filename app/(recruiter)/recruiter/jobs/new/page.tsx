@@ -10,6 +10,8 @@ import {
 } from "@/hooks/queries/use-recruiter";
 import { toAiUiError } from "@/lib/client-ai-error";
 import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
+import { InlineRetryCard } from "@/components/ui/InlineRetryCard";
+import { ActionReceiptCard } from "@/components/ui/ActionReceiptCard";
 
 export default function NewJobPage() {
   const router = useRouter();
@@ -31,6 +33,8 @@ export default function NewJobPage() {
   const [location, setLocation] = useState("");
   const [workType, setWorkType] = useState<WorkType>("onsite");
   const [employmentType, setEmploymentType] = useState<EmploymentType>("full_time");
+  const [savedReceipt, setSavedReceipt] = useState<{ status: "draft" | "active" } | null>(null);
+  const [lastSubmitIntent, setLastSubmitIntent] = useState<"draft" | "active">("active");
 
   async function generateDescription() {
     if (!title.trim()) {
@@ -62,8 +66,7 @@ export default function NewJobPage() {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent, status: "draft" | "active") {
-    e.preventDefault();
+  async function submitJob(status: "draft" | "active") {
     if (!title.trim() || !description.trim()) {
       setError("Title and description are required");
       setIsCreditError(false);
@@ -72,6 +75,8 @@ export default function NewJobPage() {
 
     setError("");
     setIsCreditError(false);
+    setSavedReceipt(null);
+    setLastSubmitIntent(status);
     try {
       await createMut.mutateAsync({
         title,
@@ -88,12 +93,20 @@ export default function NewJobPage() {
         employment_type: employmentType,
         status,
       });
-      router.push("/recruiter/jobs");
+      setSavedReceipt({ status });
+      setTimeout(() => {
+        router.push("/recruiter/jobs");
+      }, 900);
     } catch (e) {
       const ui = toAiUiError(e);
       setError(ui.message || "Failed to create job");
       setIsCreditError(ui.isCreditsExhausted);
     }
+  }
+
+  async function handleSubmit(e: React.FormEvent, status: "draft" | "active") {
+    e.preventDefault();
+    await submitJob(status);
   }
 
   return (
@@ -207,9 +220,27 @@ export default function NewJobPage() {
           isCreditError ? (
             <AICreditExhaustedAlert message={error} pricingHref="/recruiter/pricing" />
           ) : (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+            <InlineRetryCard
+              message={error}
+              onRetry={() => void submitJob(lastSubmitIntent)}
+              retryLabel={lastSubmitIntent === "active" ? "Retry publish" : "Retry save draft"}
+              alternateHref="/recruiter/jobs"
+              alternateLabel="Back to jobs"
+            />
           )
         )}
+        {savedReceipt ? (
+          <ActionReceiptCard
+            title={savedReceipt.status === "active" ? "Job published" : "Draft saved"}
+            description={
+              savedReceipt.status === "active"
+                ? "Your job is live and discoverable to candidates."
+                : "Your draft is saved and can be published anytime."
+            }
+            primaryHref="/recruiter/jobs"
+            primaryLabel="Open jobs"
+          />
+        ) : null}
 
         <div className="flex items-center gap-4 pt-8 border-t border-slate-100">
           <button type="button" onClick={(e) => handleSubmit(e, "active")} disabled={loading}

@@ -32,6 +32,7 @@ export interface AutoApplyJobResult {
   interview_probability?: InterviewProbability;
   selected: boolean;
   applied: boolean;
+  error_message?: string;
 }
 
 export interface SmartApplyRules {
@@ -55,6 +56,12 @@ export interface SmartApplyRule {
   next_run_at: string | null;
   total_runs: number;
   total_applied: number;
+  last_outcome_reason?: string | null;
+  last_execution_meta?: {
+    lastRunAt: string | null;
+    nextRunAt: string | null;
+    reasonCode: string;
+  };
   created_at: string;
   updated_at: string;
 }
@@ -72,4 +79,8 @@ export interface AutoApplyRun {
   error_message: string | null;
   created_at: string;
   updated_at: string;
+  currentStep?: "queued" | "finding_jobs" | "matching" | "ready" | "applied" | string;
+  processedCount?: number;
+  failedCount?: number;
+  failedItems?: Array<{ jobId: string; title: string; reason: string }>;
 }

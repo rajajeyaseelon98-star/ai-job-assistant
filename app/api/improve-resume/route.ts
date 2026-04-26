@@ -82,19 +82,25 @@ const COMPACT_EXTRACT_PROMPT = buildStructuredPrompt({
 });
 
 export async function POST(request: Request) {
+  const requestId = crypto.randomUUID();
   const user = await getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized", requestId, retryable: false }, { status: 401 });
   }
 
   const rl = await checkRateLimit(user.id);
-  if (!rl.allowed) return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429 });
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Try again shortly.", requestId, retryable: true, nextAction: "Retry shortly" },
+      { status: 429 }
+    );
+  }
 
   let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON body", requestId, retryable: false }, { status: 400 });
   }
   const resumeText = body?.resumeText ?? body?.resume_text;
   const resumeId = body?.resumeId;
@@ -110,7 +116,7 @@ export async function POST(request: Request) {
   // Validate input size
   const textVal = validateTextLength(resumeText as string | undefined, 50000, "resumeText");
   if (!textVal.valid) {
-    return NextResponse.json({ error: textVal.error }, { status: 400 });
+    return NextResponse.json({ error: textVal.error, requestId, retryable: false }, { status: 400 });
   }
 
   // Atomic usage check + log
@@ -222,6 +228,9 @@ export async function POST(request: Request) {
         {
           error: CREDITS_EXHAUSTED_CODE,
           message: "You have reached your AI credit limit. Please upgrade.",
+          requestId,
+          retryable: false,
+          nextAction: "Upgrade plan",
         },
         { status: 402 }
       );
@@ -231,6 +240,9 @@ export async function POST(request: Request) {
       {
         error:
           "We couldn’t format your improved resume. Try again, or shorten your resume text and ensure your PDF pasted cleanly.",
+        requestId,
+        retryable: true,
+        nextAction: "Retry improve",
       },
       { status: 500 }
     );
@@ -273,7 +285,13 @@ export async function POST(request: Request) {
   ).catch(() => {});
 
   return NextResponse.json({
+    ok: true,
+    message: "Improved resume generated.",
     ...content,
     improvedResumeId: inserted?.id ?? undefined,
+    meta: {
+      requestId,
+      nextStep: "Review improved resume and re-check ATS score",
+    },
   });
 }

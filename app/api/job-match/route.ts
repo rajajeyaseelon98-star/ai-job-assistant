@@ -24,19 +24,25 @@ const SYSTEM_PROMPT = buildStructuredPrompt({
 });
 
 export async function POST(request: Request) {
+  const requestId = crypto.randomUUID();
   const user = await getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized", requestId, retryable: false }, { status: 401 });
   }
 
   const rl = await checkRateLimit(user.id);
-  if (!rl.allowed) return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429 });
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Try again shortly.", requestId, retryable: true, nextAction: "Retry shortly" },
+      { status: 429 }
+    );
+  }
 
   let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON body", requestId, retryable: false }, { status: 400 });
   }
   const { resumeText, jobDescription, resumeId, jobTitle } = body as {
     resumeText?: string;
@@ -48,11 +54,11 @@ export async function POST(request: Request) {
   // Validate input sizes to prevent memory exhaustion
   const resumeValidation = validateTextLength(resumeText, 50000, "resumeText");
   if (!resumeValidation.valid) {
-    return NextResponse.json({ error: resumeValidation.error }, { status: 400 });
+    return NextResponse.json({ error: resumeValidation.error, requestId, retryable: false }, { status: 400 });
   }
   const jobValidation = validateTextLength(jobDescription, 30000, "jobDescription");
   if (!jobValidation.valid) {
-    return NextResponse.json({ error: jobValidation.error }, { status: 400 });
+    return NextResponse.json({ error: jobValidation.error, requestId, retryable: false }, { status: 400 });
   }
 
   // Atomic usage check + log (BUG-002 fix)
@@ -100,13 +106,16 @@ export async function POST(request: Request) {
         {
           error: CREDITS_EXHAUSTED_CODE,
           message: "You have reached your AI credit limit. Please upgrade.",
+          requestId,
+          retryable: false,
+          nextAction: "Upgrade plan",
         },
         { status: 402 }
       );
     }
     console.error("Job match error:", e);
     return NextResponse.json(
-      { error: "Match failed" },
+      { error: "Match failed", requestId, retryable: true, nextAction: "Retry job match" },
       { status: 500 }
     );
   }
@@ -135,5 +144,13 @@ export async function POST(request: Request) {
     analysis: result,
   });
 
-  return NextResponse.json(result);
+  return NextResponse.json({
+    ok: true,
+    message: "Job match generated.",
+    ...result,
+    meta: {
+      requestId,
+      nextStep: "Review missing skills and improve resume",
+    },
+  });
 }

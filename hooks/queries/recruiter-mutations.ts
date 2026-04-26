@@ -308,7 +308,7 @@ export function useCreateRecruiterJob() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: Record<string, unknown>) =>
-      apiFetch<unknown>("/api/recruiter/jobs", {
+      apiFetch<{ id?: string; ok?: boolean; message?: string; meta?: Record<string, unknown> }>("/api/recruiter/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -323,7 +323,7 @@ export function usePatchRecruiterJob() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: Record<string, unknown> }) =>
-      apiFetch<unknown>(`/api/recruiter/jobs/${id}`, {
+      apiFetch<{ ok?: boolean; message?: string; meta?: Record<string, unknown> }>(`/api/recruiter/jobs/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -339,6 +339,9 @@ export function useOptimizeRecruiterJob() {
   return useMutation({
     mutationFn: (jobId: string) =>
       apiFetch<{
+        ok?: boolean;
+        message?: string;
+        meta?: Record<string, unknown>;
         suggestions: string[];
         optimized_title?: string;
         optimized_description?: string;
@@ -351,7 +354,18 @@ export function useAutoShortlistRecruiterJob() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (jobId: string) =>
-      apiFetch<{ shortlisted: number; total_screened: number }>(
+      apiFetch<{
+        ok?: boolean;
+        message?: string;
+        meta?: Record<string, unknown>;
+        shortlisted: number;
+        total_screened: number;
+        itemized?: Array<{
+          application_id: string;
+          status: "success" | "skipped" | "failed";
+          reason: string;
+        }>;
+      }>(
         `/api/recruiter/jobs/${jobId}/auto-shortlist`,
         { method: "POST" }
       ),

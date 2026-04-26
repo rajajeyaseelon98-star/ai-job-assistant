@@ -89,16 +89,24 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const user = await getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const requestId = crypto.randomUUID();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized", requestId, retryable: false }, { status: 401 });
+  }
 
   const rl = await checkRateLimit(user.id);
-  if (!rl.allowed) return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests.", requestId, retryable: true, nextAction: "Retry in a moment" },
+      { status: 429 }
+    );
+  }
 
   let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON body", requestId, retryable: false }, { status: 400 });
   }
 
   const { receiver_id, job_id, subject, content, template_name, attachment_path, attachment_name, attachment_mime } =
@@ -114,11 +122,11 @@ export async function POST(request: NextRequest) {
     };
 
   if (!receiver_id) {
-    return NextResponse.json({ error: "receiver_id is required" }, { status: 400 });
+    return NextResponse.json({ error: "receiver_id is required", requestId, retryable: false }, { status: 400 });
   }
 
   if (!isValidUUID(receiver_id)) {
-    return NextResponse.json({ error: "Invalid receiver_id" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid receiver_id", requestId, retryable: false }, { status: 400 });
   }
 
   const rawContent = typeof content === "string" ? content : "";
@@ -128,17 +136,22 @@ export async function POST(request: NextRequest) {
   let contentText: string;
   if (!hasAttachment) {
     const contentVal = validateTextLength(content, 5000, "content");
-    if (!contentVal.valid) return NextResponse.json({ error: contentVal.error }, { status: 400 });
+    if (!contentVal.valid) {
+      return NextResponse.json({ error: contentVal.error, requestId, retryable: false }, { status: 400 });
+    }
     contentText = contentVal.text;
     if (!contentText) {
-      return NextResponse.json({ error: "content is required" }, { status: 400 });
+      return NextResponse.json({ error: "content is required", requestId, retryable: false }, { status: 400 });
     }
   } else {
     if (rawContent.length > 5000) {
-      return NextResponse.json({ error: "content exceeds maximum length of 5000 characters" }, { status: 400 });
+      return NextResponse.json(
+        { error: "content exceeds maximum length of 5000 characters", requestId, retryable: false },
+        { status: 400 }
+      );
     }
     if (!isAttachmentPathOwnedBySender(pathTrim, user.id)) {
-      return NextResponse.json({ error: "Invalid attachment_path" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid attachment_path", requestId, retryable: false }, { status: 400 });
     }
     contentText = rawContent.trim().slice(0, 5000);
   }
@@ -155,12 +168,12 @@ export async function POST(request: NextRequest) {
   if (recvErr) {
     console.error("user_role_for_id:", recvErr);
     return NextResponse.json(
-      { error: "Failed to validate recipient" },
+      { error: "Failed to validate recipient", requestId, retryable: true, nextAction: "Retry send" },
       { status: 500 }
     );
   }
   if (receiverRoleRaw == null || receiverRoleRaw === "") {
-    return NextResponse.json({ error: "Recipient not found" }, { status: 404 });
+    return NextResponse.json({ error: "Recipient not found", requestId, retryable: false }, { status: 404 });
   }
 
   const senderRole = user.profile?.role ?? "job_seeker";
@@ -168,13 +181,17 @@ export async function POST(request: NextRequest) {
 
   if (senderRole === "recruiter" && receiverRole !== "job_seeker") {
     return NextResponse.json(
-      { error: "Recruiters can only message job seeker accounts." },
+      {
+        error: "Recruiters can only message job seeker accounts.",
+        requestId,
+        retryable: false,
+      },
       { status: 403 }
     );
   }
   if (senderRole === "job_seeker" && receiverRole !== "recruiter") {
     return NextResponse.json(
-      { error: "You can only message recruiter accounts." },
+      { error: "You can only message recruiter accounts.", requestId, retryable: false },
       { status: 403 }
     );
   }
@@ -206,7 +223,10 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     console.error("Send message error:", error);
-    return NextResponse.json({ error: "Failed to send message" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to send message", requestId, retryable: true, nextAction: "Retry send" },
+      { status: 500 }
+    );
   }
 
   const senderLabel =
@@ -217,7 +237,7 @@ export async function POST(request: NextRequest) {
   const title = subj ? subj.slice(0, 200) : `New message from ${senderLabel}`;
 
   const previewBody = contentText || (hasAttachment ? "(attachment)" : "");
-  await createNotificationForUser(
+  const notificationQueued = await createNotificationForUser(
     receiver_id,
     "message",
     title,
@@ -230,5 +250,19 @@ export async function POST(request: NextRequest) {
   );
 
   const [enriched] = await messagesWithSignedAttachmentUrls(supabase, [data]);
-  return NextResponse.json(enriched, { status: 201 });
+  return NextResponse.json(
+    {
+      ...enriched,
+      ok: true,
+      message: "Message sent",
+      messageId: data.id,
+      sentAt: data.created_at,
+      meta: {
+        requestId,
+        nextStep: "Monitor delivery state in this thread",
+      },
+      notificationQueued,
+    },
+    { status: 201 }
+  );
 }

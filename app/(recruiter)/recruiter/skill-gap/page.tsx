@@ -8,6 +8,8 @@ import {
 } from "@/hooks/queries/use-recruiter";
 import { toAiUiError } from "@/lib/client-ai-error";
 import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
+import { InlineRetryCard } from "@/components/ui/InlineRetryCard";
+import { ActionReceiptCard } from "@/components/ui/ActionReceiptCard";
 
 export default function SkillGapPage() {
   const skillGapMut = useRecruiterSkillGap();
@@ -20,8 +22,7 @@ export default function SkillGapPage() {
   const [applicationId, setApplicationId] = useState("");
   const [mode, setMode] = useState<"application" | "manual">("application");
 
-  async function handleAnalyze(e: React.FormEvent) {
-    e.preventDefault();
+  async function runAnalyze() {
     setError("");
     setIsCreditError(false);
     const body =
@@ -48,6 +49,11 @@ export default function SkillGapPage() {
       setError(ui.message || "Something went wrong");
       setIsCreditError(ui.isCreditsExhausted);
     }
+  }
+
+  async function handleAnalyze(e: React.FormEvent) {
+    e.preventDefault();
+    await runAnalyze();
   }
 
   return (
@@ -96,7 +102,13 @@ export default function SkillGapPage() {
           isCreditError ? (
             <AICreditExhaustedAlert message={error} pricingHref="/recruiter/pricing" />
           ) : (
-            <p className="rounded-xl bg-rose-50 border border-rose-100 px-4 py-3 text-sm text-rose-700">{error}</p>
+          <InlineRetryCard
+            message={error}
+            onRetry={() => void runAnalyze()}
+            retryLabel="Retry skill-gap analysis"
+            alternateHref="/recruiter/applications"
+            alternateLabel="Open applications"
+          />
           )
         )}
 
@@ -109,6 +121,14 @@ export default function SkillGapPage() {
 
       {result && (
         <div className="space-y-3 sm:space-y-4">
+          <ActionReceiptCard
+            title="Skill-gap report generated"
+            description="Review missing skills and recommendations below before making a hiring decision."
+            primaryHref="/recruiter/applications"
+            primaryLabel="Review applications"
+            secondaryHref="/recruiter/candidates"
+            secondaryLabel="View candidates"
+          />
           <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-4 rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5">
             <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white ${
               result.gap_score >= 80 ? "bg-green-500" : result.gap_score >= 50 ? "bg-yellow-500" : "bg-red-500"

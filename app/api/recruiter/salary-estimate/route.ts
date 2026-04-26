@@ -29,24 +29,28 @@ Rules:
 - Be realistic and data-informed based on Indian market standards`;
 
 export async function POST(request: Request) {
+  const requestId = crypto.randomUUID();
   const user = await getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized", requestId, retryable: false }, { status: 401 });
   }
   if (user.profile?.role !== "recruiter") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "Forbidden", requestId, retryable: false }, { status: 403 });
   }
 
   const rl = await checkRateLimit(user.id);
   if (!rl.allowed) {
-    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+    return NextResponse.json(
+      { error: "Too many requests.", requestId, retryable: true, nextAction: "Retry in a moment" },
+      { status: 429 }
+    );
   }
 
   let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON body", requestId, retryable: false }, { status: 400 });
   }
 
   const { title, skills, experience_years, location, work_type } = body as {
@@ -59,17 +63,17 @@ export async function POST(request: Request) {
 
   const titleVal = validateTextLength(title, 200, "title");
   if (!titleVal.valid) {
-    return NextResponse.json({ error: titleVal.error }, { status: 400 });
+    return NextResponse.json({ error: titleVal.error, requestId, retryable: false }, { status: 400 });
   }
   if (!Array.isArray(skills) || skills.length === 0) {
-    return NextResponse.json({ error: "skills array is required and must not be empty" }, { status: 400 });
+    return NextResponse.json({ error: "skills array is required and must not be empty", requestId, retryable: false }, { status: 400 });
   }
   if (typeof experience_years !== "number" || experience_years < 0) {
-    return NextResponse.json({ error: "experience_years must be a non-negative number" }, { status: 400 });
+    return NextResponse.json({ error: "experience_years must be a non-negative number", requestId, retryable: false }, { status: 400 });
   }
   const locationVal = validateTextLength(location, 200, "location");
   if (!locationVal.valid) {
-    return NextResponse.json({ error: locationVal.error }, { status: 400 });
+    return NextResponse.json({ error: locationVal.error, requestId, retryable: false }, { status: 400 });
   }
 
   const sanitize = (val: string) => val.replace(/[<>{}]/g, "").trim().slice(0, 200);
@@ -118,12 +122,18 @@ Work Type: ${workTypeVal}`;
     const median = typeof result.median === "number" ? Math.round(result.median) : Math.round((min + max) / 2);
 
     return NextResponse.json({
+      ok: true,
+      message: "Salary estimate generated.",
       min,
       max,
       median,
       currency: "INR",
       factors: Array.isArray(result.factors) ? result.factors.slice(0, 8) : [],
       market_insight: typeof result.market_insight === "string" ? result.market_insight.slice(0, 1000) : "",
+      meta: {
+        requestId,
+        nextStep: "Use estimate to adjust salary band before publishing",
+      },
     });
   } catch (e) {
     if (isCreditsExhaustedError(e)) {
@@ -131,11 +141,17 @@ Work Type: ${workTypeVal}`;
         {
           error: CREDITS_EXHAUSTED_CODE,
           message: "You have reached your AI credit limit. Please upgrade.",
+          requestId,
+          retryable: false,
+          nextAction: "Upgrade plan",
         },
         { status: 402 }
       );
     }
     console.error("AI salary estimation error:", e);
-    return NextResponse.json({ error: "Salary estimation failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Salary estimation failed", requestId, retryable: true, nextAction: "Retry estimate" },
+      { status: 500 }
+    );
   }
 }

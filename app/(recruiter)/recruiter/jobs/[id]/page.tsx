@@ -14,6 +14,8 @@ import {
 import { formatApiFetchThrownError } from "@/lib/api-error";
 import { toAiUiError } from "@/lib/client-ai-error";
 import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
+import { InlineRetryCard } from "@/components/ui/InlineRetryCard";
+import { ActionReceiptCard } from "@/components/ui/ActionReceiptCard";
 
 export default function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -41,6 +43,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   const [employmentType, setEmploymentType] = useState<EmploymentType>("full_time");
   const [status, setStatus] = useState<JobStatus>("draft");
   const [applicationCount, setApplicationCount] = useState(0);
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
 
   useEffect(() => {
     if (loadError) { setError("Failed to load job"); return; }
@@ -107,6 +110,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
         },
       });
       setSuccess("Job updated!");
+      setLastSavedAt(new Date().toISOString());
       setTimeout(() => setSuccess(""), 3000);
     } catch (e) {
       setError(formatApiFetchThrownError(e) || "Something went wrong");
@@ -240,10 +244,23 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
           isCreditError ? (
             <AICreditExhaustedAlert message={error} pricingHref="/recruiter/pricing" />
           ) : (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+            <InlineRetryCard
+              message={error}
+              onRetry={() => void handleSave()}
+              retryLabel="Retry save"
+              alternateHref={`/recruiter/jobs/${id}/optimize`}
+              alternateLabel="Open optimize"
+            />
           )
         )}
-        {success && <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-600">{success}</p>}
+        {success && <ActionReceiptCard
+          title="Job changes saved"
+          description={`Saved successfully${lastSavedAt ? ` at ${new Date(lastSavedAt).toLocaleTimeString()}` : ""}.`}
+          primaryHref="/recruiter/jobs"
+          primaryLabel="Back to jobs"
+          secondaryHref={`/recruiter/jobs/${id}/optimize`}
+          secondaryLabel="Optimize post"
+        />}
 
         <div className="flex items-center gap-4 pt-8 border-t border-slate-100">
           <button type="button" onClick={handleSave} disabled={saving}

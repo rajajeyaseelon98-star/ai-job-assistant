@@ -5,8 +5,10 @@ import { Rocket, History } from "lucide-react";
 import { AutoApplyForm } from "@/components/auto-apply/AutoApplyForm";
 import { AutoApplyProgress } from "@/components/auto-apply/AutoApplyProgress";
 import { AutoApplyResults } from "@/components/auto-apply/AutoApplyResults";
+import { AutoApplyRunTimeline } from "@/components/auto-apply/AutoApplyRunTimeline";
 import { usePastRuns, useStartAutoApply, useAutoApplyRun } from "@/hooks/queries/use-auto-apply";
 import type { AutoApplyRun } from "@/types/autoApply";
+import { ActionStatusBanner } from "@/components/ui/ActionStatusBanner";
 
 export default function AutoApplyPage() {
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
@@ -73,18 +75,21 @@ export default function AutoApplyPage() {
       </div>
 
       {error && (
-        <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+        <ActionStatusBanner kind="error" message={error} />
       )}
 
       {showForm && <AutoApplyForm onStart={handleStart} loading={starting} />}
 
       {showProgress && currentRun && (
-        <AutoApplyProgress
-          status={currentRun.status}
-          jobsFound={currentRun.jobs_found || 0}
-          jobsMatched={currentRun.jobs_matched || 0}
-          error={currentRun.error_message}
-        />
+        <div className="space-y-3">
+          <AutoApplyRunTimeline currentStep={currentRun.currentStep ?? currentRun.status} />
+          <AutoApplyProgress
+            status={currentRun.status}
+            jobsFound={currentRun.jobs_found || 0}
+            jobsMatched={currentRun.jobs_matched || 0}
+            error={currentRun.error_message}
+          />
+        </div>
       )}
 
       {(showResults || showCompleted) && currentRun && (

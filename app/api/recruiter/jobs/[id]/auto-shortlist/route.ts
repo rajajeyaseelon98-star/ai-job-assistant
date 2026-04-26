@@ -29,22 +29,26 @@ export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const requestId = crypto.randomUUID();
   const user = await getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized", requestId, retryable: false }, { status: 401 });
   }
   if (user.profile?.role !== "recruiter") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "Forbidden", requestId, retryable: false }, { status: 403 });
   }
 
   const rl = await checkRateLimit(user.id);
   if (!rl.allowed) {
-    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+    return NextResponse.json(
+      { error: "Too many requests.", requestId, retryable: true, nextAction: "Retry shortly" },
+      { status: 429 }
+    );
   }
 
   const { id } = await params;
   if (!isValidUUID(id)) {
-    return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid ID", requestId, retryable: false }, { status: 400 });
   }
 
   const supabase = await createClient();
@@ -58,7 +62,7 @@ export async function POST(
     .single();
 
   if (jobError || !job) {
-    return NextResponse.json({ error: "Job posting not found" }, { status: 404 });
+    return NextResponse.json({ error: "Job posting not found", requestId, retryable: false }, { status: 404 });
   }
 
   // Fetch all applications at "applied" stage with resume text and candidate info
@@ -70,11 +74,20 @@ export async function POST(
     .not("resume_text", "is", null);
 
   if (appError) {
-    return NextResponse.json({ error: "Failed to fetch applications" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch applications", requestId, retryable: true, nextAction: "Retry shortlist run" },
+      { status: 500 }
+    );
   }
 
   if (!applications || applications.length === 0) {
-    return NextResponse.json({ shortlisted: 0, total_screened: 0 });
+    return NextResponse.json({
+      ok: true,
+      message: "No applications available for screening.",
+      shortlisted: 0,
+      total_screened: 0,
+      meta: { requestId, nextStep: "Wait for new applications then rerun" },
+    });
   }
 
   const jobContext = `Job Title: ${job.title}
@@ -85,6 +98,11 @@ Experience: ${job.experience_min || 0}-${job.experience_max || "any"} years`;
 
   let totalShortlisted = 0;
   let totalScreened = 0;
+  const itemized: Array<{
+    application_id: string;
+    status: "success" | "skipped" | "failed";
+    reason: string;
+  }> = [];
 
   // Process in batches
   for (let i = 0; i < applications.length; i += BATCH_SIZE) {
@@ -145,7 +163,16 @@ ${candidatesList}`;
         retries: 1,
       });
 
-      if (!Array.isArray(result.candidates)) continue;
+      if (!Array.isArray(result.candidates)) {
+        for (const app of batch) {
+          itemized.push({
+            application_id: app.id as string,
+            status: "failed",
+            reason: "AI response missing candidate entries",
+          });
+        }
+        continue;
+      }
 
       // Update each application with score and potentially shortlist
       for (const candidate of result.candidates) {
@@ -167,13 +194,25 @@ ${candidatesList}`;
           totalShortlisted++;
         }
 
-        await supabase
+        const { error: updateError } = await supabase
           .from("job_applications")
           .update(updates)
           .eq("id", candidate.application_id)
           .eq("job_id", id);
-
+        if (updateError) {
+          itemized.push({
+            application_id: candidate.application_id,
+            status: "failed",
+            reason: updateError.message || "Failed to update application",
+          });
+          continue;
+        }
         totalScreened++;
+        itemized.push({
+          application_id: candidate.application_id,
+          status: shouldShortlist ? "success" : "skipped",
+          reason: shouldShortlist ? "Shortlisted by AI score >= 70" : "Not shortlisted by AI score",
+        });
       }
     } catch (e) {
       if (isCreditsExhaustedError(e)) {
@@ -181,17 +220,34 @@ ${candidatesList}`;
           {
             error: CREDITS_EXHAUSTED_CODE,
             message: "You have reached your AI credit limit. Please upgrade.",
+          requestId,
+          retryable: false,
+          nextAction: "Upgrade plan",
           },
           { status: 402 }
         );
       }
       console.error("AI auto-shortlist batch error:", e);
+      for (const app of batch) {
+        itemized.push({
+          application_id: app.id as string,
+          status: "failed",
+          reason: "Batch processing failed",
+        });
+      }
       // Continue with next batch even if one fails
     }
   }
 
   return NextResponse.json({
+    ok: true,
+    message: "Auto-shortlist run completed.",
     shortlisted: totalShortlisted,
     total_screened: totalScreened,
+    itemized,
+    meta: {
+      requestId,
+      nextStep: "Review batch report and retry failed items if needed",
+    },
   });
 }

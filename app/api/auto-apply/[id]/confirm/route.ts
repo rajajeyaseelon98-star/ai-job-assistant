@@ -36,6 +36,7 @@ export async function POST(
 
   // Create application records for selected jobs (unified for internal + external)
   let appliedCount = 0;
+  const failedItems: Array<{ jobId: string; title: string; reason: string }> = [];
   const today = new Date().toISOString().split("T")[0];
   for (const job of selectedJobs) {
     const { error } = await supabase.from("applications").insert({
@@ -47,8 +48,18 @@ export async function POST(
       notes: `Auto-applied via AI Auto-Apply (${job.source}).\nMatch score: ${job.match_score}%\n${job.match_reason}`,
       applied_date: today,
     });
-    if (!error) appliedCount++;
-    job.applied = true;
+    if (!error) {
+      appliedCount++;
+      job.applied = true;
+    }
+    if (error) {
+      failedItems.push({
+        jobId: job.job_id,
+        title: job.title,
+        reason: error.message,
+      });
+      job.applied = false;
+    }
   }
 
   // Update run
@@ -76,5 +87,7 @@ export async function POST(
     success: true,
     applied_count: appliedCount,
     total_selected: selectedJobs.length,
+    failed_count: failedItems.length,
+    failed_items: failedItems,
   });
 }

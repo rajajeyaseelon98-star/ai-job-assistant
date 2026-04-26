@@ -9,19 +9,25 @@ import { runAtsAnalysisFromText } from "@/lib/ats-resume-analysis";
 import { CREDITS_EXHAUSTED_CODE, isCreditsExhaustedError } from "@/lib/aiCreditError";
 
 export async function POST(request: Request) {
+  const requestId = crypto.randomUUID();
   const user = await getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized", requestId, retryable: false }, { status: 401 });
   }
 
   const rl = await checkRateLimit(user.id);
-  if (!rl.allowed) return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429 });
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Try again shortly.", requestId, retryable: true, nextAction: "Retry in a moment" },
+      { status: 429 }
+    );
+  }
 
   let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON body", requestId, retryable: false }, { status: 400 });
   }
   const {
     resumeText,
@@ -37,7 +43,7 @@ export async function POST(request: Request) {
 
   const textValidation = validateTextLength(resumeText, 50000, "resumeText");
   if (!textValidation.valid) {
-    return NextResponse.json({ error: textValidation.error }, { status: 400 });
+    return NextResponse.json({ error: textValidation.error, requestId, retryable: false }, { status: 400 });
   }
 
   const planType = user.profile?.plan_type ?? "free";
@@ -63,6 +69,9 @@ export async function POST(request: Request) {
         {
           error: CREDITS_EXHAUSTED_CODE,
           message: "You have reached your AI credit limit. Please upgrade.",
+          requestId,
+          retryable: false,
+          nextAction: "Upgrade plan",
         },
         { status: 402 }
       );
@@ -73,6 +82,9 @@ export async function POST(request: Request) {
       {
         error: "Analysis failed",
         detail: process.env.NODE_ENV === "development" ? message : undefined,
+        requestId,
+        retryable: true,
+        nextAction: "Retry analysis",
       },
       { status: 500 }
     );
@@ -97,5 +109,14 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ ...data, _usage: { used, limit } });
+  return NextResponse.json({
+    ok: true,
+    message: "Resume analysis generated.",
+    ...data,
+    _usage: { used, limit },
+    meta: {
+      requestId,
+      nextStep: "Review results and optionally improve resume",
+    },
+  });
 }

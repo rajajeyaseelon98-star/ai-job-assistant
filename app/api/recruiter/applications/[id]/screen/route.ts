@@ -38,17 +38,23 @@ export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const requestId = crypto.randomUUID();
   const user = await getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "Unauthorized", requestId, retryable: false }, { status: 401 });
   if (user.profile?.role !== "recruiter") {
-    return NextResponse.json({ error: "Recruiter access required" }, { status: 403 });
+    return NextResponse.json({ error: "Recruiter access required", requestId, retryable: false }, { status: 403 });
   }
 
   const rl = await checkRateLimit(user.id);
-  if (!rl.allowed) return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests.", requestId, retryable: true, nextAction: "Retry shortly" },
+      { status: 429 }
+    );
+  }
 
   const { id } = await params;
-  if (!isValidUUID(id)) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+  if (!isValidUUID(id)) return NextResponse.json({ error: "Invalid ID", requestId, retryable: false }, { status: 400 });
 
   const supabase = await createClient();
 
@@ -63,11 +69,14 @@ export async function POST(
     .eq("recruiter_id", user.id)
     .single();
 
-  if (error || !app) return NextResponse.json({ error: "Application not found" }, { status: 404 });
+  if (error || !app) return NextResponse.json({ error: "Application not found", requestId, retryable: false }, { status: 404 });
 
   const job = app.job as unknown as Record<string, unknown>;
   if (!app.resume_text) {
-    return NextResponse.json({ error: "No resume text available for screening" }, { status: 400 });
+    return NextResponse.json(
+      { error: "No resume text available for screening", requestId, retryable: false },
+      { status: 400 }
+    );
   }
 
   const content = `Job Title: ${String(job.title || "")}
@@ -115,12 +124,18 @@ ${sanitizeResumeForAi(app.resume_text as string, 6000)}`;
         {
           error: CREDITS_EXHAUSTED_CODE,
           message: "You have reached your AI credit limit. Please upgrade.",
+          requestId,
+          retryable: false,
+          nextAction: "Upgrade plan",
         },
         { status: 402 }
       );
     }
     console.error("AI screening error:", e);
-    return NextResponse.json({ error: "Screening failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Screening failed", requestId, retryable: true, nextAction: "Retry screening" },
+      { status: 500 }
+    );
   }
 
   // Save screening results to the application
@@ -135,5 +150,13 @@ ${sanitizeResumeForAi(app.resume_text as string, 6000)}`;
     .eq("id", id)
     .eq("recruiter_id", user.id);
 
-  return NextResponse.json(screening);
+  return NextResponse.json({
+    ok: true,
+    message: "Candidate screening completed.",
+    ...screening,
+    meta: {
+      requestId,
+      nextStep: "Review strengths/weaknesses and move candidate stage",
+    },
+  });
 }

@@ -7,13 +7,24 @@ import { useRouter } from "next/navigation";
 import { useAutoShortlistRecruiterJob } from "@/hooks/queries/use-recruiter";
 import { toAiUiError } from "@/lib/client-ai-error";
 import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
+import { InlineRetryCard } from "@/components/ui/InlineRetryCard";
+import { ActionReceiptCard } from "@/components/ui/ActionReceiptCard";
+import { BatchScreeningReport } from "@/components/recruiter/BatchScreeningReport";
 
 export default function AutoShortlistPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const shortlistMut = useAutoShortlistRecruiterJob();
   const loading = shortlistMut.isPending;
-  const [result, setResult] = useState<{ shortlisted: number; total_screened: number } | null>(null);
+  const [result, setResult] = useState<{
+    shortlisted: number;
+    total_screened: number;
+    itemized?: Array<{
+      application_id: string;
+      status: "success" | "skipped" | "failed";
+      reason: string;
+    }>;
+  } | null>(null);
   const [error, setError] = useState("");
   const [isCreditError, setIsCreditError] = useState(false);
 
@@ -54,25 +65,44 @@ export default function AutoShortlistPage({ params }: { params: Promise<{ id: st
         isCreditError ? (
           <AICreditExhaustedAlert message={error} pricingHref="/recruiter/pricing" />
         ) : (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+          <InlineRetryCard
+            message={error}
+            onRetry={() => void handleAutoShortlist()}
+            retryLabel="Retry screening"
+            alternateHref="/recruiter/applications"
+            alternateLabel="View applications"
+          />
         )
       )}
 
       {result && (
-        <div className="rounded-xl border border-green-200 bg-green-50 p-4 sm:p-6 text-center">
-          <Zap className="mx-auto h-8 w-8 text-green-600" />
-          <p className="mt-3 text-lg font-semibold text-green-800">Screening Complete!</p>
-          <p className="mt-1 text-sm text-green-700">
-            Screened <strong>{result.total_screened}</strong> application{result.total_screened !== 1 ? "s" : ""}
-            {" "}&mdash; <strong>{result.shortlisted}</strong> shortlisted
-          </p>
-          <div className="mt-4 flex flex-col sm:flex-row justify-center gap-3">
-            <button onClick={() => router.push("/recruiter/applications")}
-              className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 active:bg-green-800 min-h-[44px] w-full sm:w-auto">
-              View Applications
-            </button>
-            <button onClick={() => { setResult(null); setError(""); }}
-              className="rounded-lg border border-green-300 px-4 py-2 text-sm text-green-700 hover:bg-green-100 active:bg-green-200 min-h-[44px] w-full sm:w-auto">
+        <div className="space-y-4">
+          <ActionReceiptCard
+            title="Auto-shortlist run complete"
+            description={`Screened ${result.total_screened} application${result.total_screened !== 1 ? "s" : ""}; shortlisted ${result.shortlisted}.`}
+            primaryHref="/recruiter/applications"
+            primaryLabel="View applications"
+            secondaryHref={`/recruiter/jobs/${id}`}
+            secondaryLabel="Back to job"
+          />
+          {result.itemized && result.itemized.length > 0 ? (
+            <BatchScreeningReport
+              items={result.itemized.map((item) => ({
+                applicationId: item.application_id,
+                status: item.status,
+                reason: item.reason,
+              }))}
+              onRetryFailed={() => {
+                setResult(null);
+                void handleAutoShortlist();
+              }}
+            />
+          ) : null}
+          <div className="flex justify-center">
+            <button
+              onClick={() => { setResult(null); setError(""); }}
+              className="rounded-lg border border-green-300 px-4 py-2 text-sm text-green-700 hover:bg-green-100 active:bg-green-200 min-h-[44px] w-full sm:w-auto"
+            >
               Run Again
             </button>
           </div>

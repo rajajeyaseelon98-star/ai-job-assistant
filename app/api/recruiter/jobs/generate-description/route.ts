@@ -46,24 +46,28 @@ function parseJobGenerationJson(raw: string): {
 }
 
 export async function POST(request: Request) {
+  const requestId = crypto.randomUUID();
   const user = await getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized", requestId, retryable: false }, { status: 401 });
   }
   if (user.profile?.role !== "recruiter") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "Forbidden", requestId, retryable: false }, { status: 403 });
   }
 
   const rl = await checkRateLimit(user.id);
   if (!rl.allowed) {
-    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+    return NextResponse.json(
+      { error: "Too many requests.", requestId, retryable: true, nextAction: "Retry in a moment" },
+      { status: 429 }
+    );
   }
 
   let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON body", requestId, retryable: false }, { status: 400 });
   }
 
   const { title, skills, experience_level, work_type, experience_min, experience_max } =
@@ -79,7 +83,7 @@ export async function POST(request: Request) {
   // Validate title input size
   const titleVal = validateTextLength(title, 200, "title");
   if (!titleVal.valid) {
-    return NextResponse.json({ error: titleVal.error }, { status: 400 });
+    return NextResponse.json({ error: titleVal.error, requestId, retryable: false }, { status: 400 });
   }
 
   // Sanitize inputs to prevent prompt injection
@@ -142,14 +146,25 @@ export async function POST(request: Request) {
     const parsed = parseJobGenerationJson(raw);
     if (!parsed.description) {
       return NextResponse.json(
-        { error: "AI returned an empty description" },
+        {
+          error: "AI returned an empty description",
+          requestId,
+          retryable: true,
+          nextAction: "Retry AI generation",
+        },
         { status: 500 }
       );
     }
     return NextResponse.json({
+      ok: true,
+      message: "AI job description generated.",
       description: parsed.description,
       requirements: parsed.requirements,
       skills_required: parsed.skills_required,
+      meta: {
+        requestId,
+        nextStep: "Review fields and publish or save draft",
+      },
     });
   } catch (err) {
     if (isCreditsExhaustedError(err)) {
@@ -157,13 +172,21 @@ export async function POST(request: Request) {
         {
           error: CREDITS_EXHAUSTED_CODE,
           message: "You have reached your AI credit limit. Please upgrade.",
+          requestId,
+          retryable: false,
+          nextAction: "Upgrade plan",
         },
         { status: 402 }
       );
     }
     console.error("AI job description generation error:", err);
     return NextResponse.json(
-      { error: "Failed to generate job description" },
+      {
+        error: "Failed to generate job description",
+        requestId,
+        retryable: true,
+        nextAction: "Retry AI generation",
+      },
       { status: 500 }
     );
   }

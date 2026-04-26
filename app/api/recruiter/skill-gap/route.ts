@@ -30,24 +30,28 @@ const SKILL_GAP_PROMPT = buildStructuredPrompt({
 });
 
 export async function POST(request: Request) {
+  const requestId = crypto.randomUUID();
   const user = await getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized", requestId, retryable: false }, { status: 401 });
   }
   if (user.profile?.role !== "recruiter") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "Forbidden", requestId, retryable: false }, { status: 403 });
   }
 
   const rl = await checkRateLimit(user.id);
   if (!rl.allowed) {
-    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+    return NextResponse.json(
+      { error: "Too many requests.", requestId, retryable: true, nextAction: "Retry shortly" },
+      { status: 429 }
+    );
   }
 
   let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON body", requestId, retryable: false }, { status: 400 });
   }
 
   const supabase = await createClient();
@@ -61,7 +65,7 @@ export async function POST(request: Request) {
   if (typeof body.application_id === "string" && body.application_id.trim()) {
     // Mode 1: Fetch from application_id
     if (!isValidUUID(body.application_id)) {
-      return NextResponse.json({ error: "Invalid application_id" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid application_id", requestId, retryable: false }, { status: 400 });
     }
 
     const { data: app, error } = await supabase
@@ -75,10 +79,10 @@ export async function POST(request: Request) {
       .single();
 
     if (error || !app) {
-      return NextResponse.json({ error: "Application not found" }, { status: 404 });
+      return NextResponse.json({ error: "Application not found", requestId, retryable: false }, { status: 404 });
     }
     if (!app.resume_text) {
-      return NextResponse.json({ error: "No resume text available" }, { status: 400 });
+      return NextResponse.json({ error: "No resume text available", requestId, retryable: false }, { status: 400 });
     }
 
     const job = app.job as unknown as Record<string, unknown>;
@@ -91,10 +95,10 @@ export async function POST(request: Request) {
     // Mode 2: Direct resume_text + job_id
     const resumeVal = validateTextLength(body.resume_text as string, 50000, "resume_text");
     if (!resumeVal.valid) {
-      return NextResponse.json({ error: resumeVal.error }, { status: 400 });
+      return NextResponse.json({ error: resumeVal.error, requestId, retryable: false }, { status: 400 });
     }
     if (!isValidUUID(body.job_id)) {
-      return NextResponse.json({ error: "Invalid job_id" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid job_id", requestId, retryable: false }, { status: 400 });
     }
 
     const { data: job, error } = await supabase
@@ -105,7 +109,7 @@ export async function POST(request: Request) {
       .single();
 
     if (error || !job) {
-      return NextResponse.json({ error: "Job posting not found" }, { status: 404 });
+      return NextResponse.json({ error: "Job posting not found", requestId, retryable: false }, { status: 404 });
     }
 
     resumeText = resumeVal.text;
@@ -115,7 +119,7 @@ export async function POST(request: Request) {
     jobSkills = (job.skills_required as string[]) || [];
   } else {
     return NextResponse.json(
-      { error: "Provide either application_id or both resume_text and job_id" },
+      { error: "Provide either application_id or both resume_text and job_id", requestId, retryable: false },
       { status: 400 }
     );
   }
@@ -163,6 +167,8 @@ ${sanitizeResumeForAi(resumeText, 6000)}`;
     });
 
     return NextResponse.json({
+      ok: true,
+      message: "Skill gap report generated.",
       matching_skills: Array.isArray(result.matching_skills) ? result.matching_skills.slice(0, 20) : [],
       missing_skills: Array.isArray(result.missing_skills) ? result.missing_skills.slice(0, 15) : [],
       transferable_skills: Array.isArray(result.transferable_skills) ? result.transferable_skills.slice(0, 10) : [],
@@ -173,6 +179,10 @@ ${sanitizeResumeForAi(resumeText, 6000)}`;
       confidence: typeof result.confidence === "number"
         ? Math.min(100, Math.max(0, Math.round(result.confidence)))
         : 0,
+      meta: {
+        requestId,
+        nextStep: "Review missing skills and decide shortlist action",
+      },
     });
   } catch (e) {
     if (isCreditsExhaustedError(e)) {
@@ -180,11 +190,17 @@ ${sanitizeResumeForAi(resumeText, 6000)}`;
         {
           error: CREDITS_EXHAUSTED_CODE,
           message: "You have reached your AI credit limit. Please upgrade.",
+          requestId,
+          retryable: false,
+          nextAction: "Upgrade plan",
         },
         { status: 402 }
       );
     }
     console.error("AI skill gap analysis error:", e);
-    return NextResponse.json({ error: "Skill gap analysis failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Skill gap analysis failed", requestId, retryable: true, nextAction: "Retry analysis" },
+      { status: 500 }
+    );
   }
 }

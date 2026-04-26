@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { AIProgressIndicator } from "@/components/ui/AIProgressIndicator";
 import { Loader2 } from "lucide-react";
 import { useGenerateCoverLetter } from "@/hooks/mutations/use-generate-cover-letter";
+import { InlineRetryCard } from "@/components/ui/InlineRetryCard";
+import { ActionReceiptCard } from "@/components/ui/ActionReceiptCard";
+import { toUiFeedback } from "@/lib/ui-feedback";
 
 export interface CoverLetterGenerated {
   id: string;
@@ -34,7 +37,11 @@ export function CoverLetterForm({
   const [role, setRole] = useState(defaultRole);
   const [jobDescription, setJobDescription] = useState(defaultJobDescription);
   const [resumeText, setResumeText] = useState(defaultResumeText);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ReturnType<typeof toUiFeedback> | null>(null);
+  const [generatedMeta, setGeneratedMeta] = useState<{
+    savedAt?: string;
+    requestId?: string;
+  } | null>(null);
   const generateMut = useGenerateCoverLetter();
 
   useEffect(() => {
@@ -44,13 +51,17 @@ export function CoverLetterForm({
     if (defaultResumeText !== undefined) setResumeText(defaultResumeText);
   }, [defaultCompanyName, defaultRole, defaultJobDescription, defaultResumeText]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function generateCoverLetter() {
     if (!resumeText.trim() || !jobDescription.trim()) {
-      setError("Resume text and job description are required.");
+      setError({
+        message: "Resume text and job description are required.",
+        retryable: false,
+        isCreditsExhausted: false,
+      });
       return;
     }
     setError(null);
+    setGeneratedMeta(null);
     try {
       const data = await generateMut.mutateAsync({
         resumeText: resumeText.trim(),
@@ -65,15 +76,31 @@ export function CoverLetterForm({
         jobTitle: data.jobTitle ?? null,
         createdAt: data.createdAt ?? new Date().toISOString(),
       });
+      setGeneratedMeta({
+        savedAt: data.meta?.savedAt ?? data.createdAt,
+        requestId: data.meta?.requestId,
+      });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Generation failed");
+      setError(toUiFeedback(e));
     }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    await generateCoverLetter();
   }
 
   const loading = generateMut.isPending;
 
+  const sourceLabel = defaultResumeText?.trim()
+    ? "Using pasted resume text"
+    : "Using uploaded or improved resume";
+
   return (
     <form onSubmit={handleSubmit} className="space-y-0">
+      <div className="mb-4 inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
+        {sourceLabel}
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <div>
           <label className="text-sm font-semibold text-slate-700 mb-2 block">Company name</label>
@@ -116,7 +143,30 @@ export function CoverLetterForm({
           placeholder="Paste your resume…"
         />
       </div>
-      {error && <p className="text-xs sm:text-sm text-red-600">{error}</p>}
+      {error ? (
+        <InlineRetryCard
+          message={error.message}
+          onRetry={() => void generateCoverLetter()}
+          alternateHref="/history?tab=cover-letters"
+          alternateLabel="Open history"
+          nextAction={error.nextAction}
+        />
+      ) : null}
+      {generatedMeta ? (
+        <div className="mb-4">
+          <ActionReceiptCard
+            title="Cover letter saved"
+            description={`Your cover letter is ready${generatedMeta.savedAt ? ` (saved ${new Date(generatedMeta.savedAt).toLocaleString()})` : ""}.`}
+            primaryHref="/history?tab=cover-letters"
+            primaryLabel="Open history"
+            secondaryHref="/usage"
+            secondaryLabel="View AI usage"
+          />
+          {generatedMeta.requestId ? (
+            <p className="mt-2 text-xs text-slate-500">Request ID: {generatedMeta.requestId}</p>
+          ) : null}
+        </div>
+      ) : null}
       <button
         type="submit"
         disabled={loading}

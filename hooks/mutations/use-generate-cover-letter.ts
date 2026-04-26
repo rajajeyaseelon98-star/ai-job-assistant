@@ -23,6 +23,12 @@ export type GenerateCoverLetterResult = {
   companyName: string | null;
   jobTitle: string | null;
   createdAt: string;
+  meta?: {
+    savedId?: string;
+    savedAt?: string;
+    nextStep?: string;
+    requestId?: string;
+  };
 };
 
 async function postGenerateCoverLetter(
@@ -50,6 +56,10 @@ async function postGenerateCoverLetter(
     companyName: (d.companyName as string | null | undefined) ?? null,
     jobTitle: (d.jobTitle as string | null | undefined) ?? null,
     createdAt: String(d.createdAt ?? new Date().toISOString()),
+    meta:
+      d.meta && typeof d.meta === "object"
+        ? (d.meta as GenerateCoverLetterResult["meta"])
+        : undefined,
   };
 }
 

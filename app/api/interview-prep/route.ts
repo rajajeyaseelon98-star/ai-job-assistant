@@ -22,13 +22,19 @@ Return ONLY valid JSON:
 }`;
 
 export async function POST(request: Request) {
+  const requestId = crypto.randomUUID();
   const user = await getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized", requestId, retryable: false }, { status: 401 });
   }
 
   const rl = await checkRateLimit(user.id);
-  if (!rl.allowed) return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429 });
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Try again shortly.", requestId, retryable: true, nextAction: "Retry shortly" },
+      { status: 429 }
+    );
+  }
 
   // Atomic usage check + log
   const planType = user.profile?.plan_type ?? "free";
@@ -44,13 +50,13 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON body", requestId, retryable: false }, { status: 400 });
   }
   const role = (body?.role ?? body?.jobRole ?? "Software Developer") as string;
   const experienceLevel = (body?.experienceLevel ?? body?.experience_level ?? "") as string;
   if (!role || typeof role !== "string") {
     return NextResponse.json(
-      { error: "role is required" },
+      { error: "role is required", requestId, retryable: false },
       { status: 400 }
     );
   }
@@ -80,20 +86,31 @@ export async function POST(request: Request) {
       content_json: result,
     });
 
-    return NextResponse.json(result);
+    return NextResponse.json({
+      ok: true,
+      message: "Interview prep generated.",
+      ...result,
+      meta: {
+        requestId,
+        nextStep: "Practice technical and behavioral questions",
+      },
+    });
   } catch (e) {
     if (isCreditsExhaustedError(e)) {
       return NextResponse.json(
         {
           error: CREDITS_EXHAUSTED_CODE,
           message: "You have reached your AI credit limit. Please upgrade.",
+          requestId,
+          retryable: false,
+          nextAction: "Upgrade plan",
         },
         { status: 402 }
       );
     }
     console.error("Interview prep error:", e);
     return NextResponse.json(
-      { error: "Failed to generate questions" },
+      { error: "Failed to generate questions", requestId, retryable: true, nextAction: "Retry generation" },
       { status: 500 }
     );
   }

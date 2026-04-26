@@ -9,6 +9,8 @@ import {
   useConfirmAutoApply,
 } from "@/hooks/queries/use-auto-apply";
 import { formatApiFetchThrownError } from "@/lib/api-error";
+import { AutoApplyRunReceipt } from "@/components/auto-apply/AutoApplyRunReceipt";
+import { InlineRetryCard } from "@/components/ui/InlineRetryCard";
 
 interface AutoApplyResultsProps {
   runId: string;
@@ -21,6 +23,7 @@ export function AutoApplyResults({ runId, results, status, onComplete }: AutoApp
   const [jobs, setJobs] = useState<AutoApplyJobResult[]>(results);
   const [actionError, setActionError] = useState("");
   const [appliedCount, setAppliedCount] = useState<number | null>(null);
+  const [failedItems, setFailedItems] = useState<Array<{ jobId: string; title: string; reason: string }>>([]);
   const [confirmApplyActive, setConfirmApplyActive] = useState(false);
   const patchMut = usePatchAutoApplySelections();
   const confirmMut = useConfirmAutoApply();
@@ -69,6 +72,7 @@ export function AutoApplyResults({ runId, results, status, onComplete }: AutoApp
       const data = await confirmMut.mutateAsync(runId);
       setJobs((prev) => prev.map((j) => (j.selected ? { ...j, applied: true } : j)));
       setAppliedCount(data.applied_count);
+      setFailedItems(data.failed_items ?? []);
       setConfirmed(true);
       onComplete();
     } catch (e) {
@@ -76,6 +80,19 @@ export function AutoApplyResults({ runId, results, status, onComplete }: AutoApp
     } finally {
       setConfirmApplyActive(false);
     }
+  }
+
+  function handleRetryFailedSubset() {
+    if (failedItems.length === 0) return;
+    const failedSet = new Set(failedItems.map((item) => item.jobId));
+    setJobs((prev) =>
+      prev.map((job) => ({
+        ...job,
+        selected: failedSet.has(job.job_id),
+        applied: failedSet.has(job.job_id) ? false : job.applied,
+      }))
+    );
+    setConfirmed(false);
   }
 
   if (jobs.length === 0) {
@@ -139,21 +156,50 @@ export function AutoApplyResults({ runId, results, status, onComplete }: AutoApp
               </button>
             </div>
             {actionError ? (
-              <p className="w-full text-center text-xs text-red-600 sm:text-right">{actionError}</p>
+              <div className="w-full sm:max-w-md">
+                <InlineRetryCard
+                  message={actionError}
+                  onRetry={() => void handleSaveSelections()}
+                  retryLabel="Retry save"
+                  alternateHref="/applications"
+                  alternateLabel="View applications"
+                />
+              </div>
             ) : null}
           </div>
         </div>
       )}
 
       {confirmed && (
-        <div className="flex items-start sm:items-center gap-2 rounded-xl border border-green-200 bg-green-50 p-3 sm:p-4">
-          <CheckCircle className="h-5 w-5 shrink-0 text-green-600" />
-          <p className="text-xs sm:text-sm font-medium text-green-800">
-            {appliedCount != null
-              ? `Successfully applied to ${appliedCount} job${appliedCount !== 1 ? "s" : ""}. `
-              : null}
-            Check your Applications page for tracking.
-          </p>
+        <div className="space-y-3">
+          <div className="flex items-start sm:items-center gap-2 rounded-xl border border-green-200 bg-green-50 p-3 sm:p-4">
+            <CheckCircle className="h-5 w-5 shrink-0 text-green-600" />
+            <p className="text-xs sm:text-sm font-medium text-green-800">
+              {appliedCount != null
+                ? `Successfully applied to ${appliedCount} job${appliedCount !== 1 ? "s" : ""}. `
+                : null}
+              Check your Applications page for tracking.
+            </p>
+          </div>
+          <AutoApplyRunReceipt
+            appliedCount={appliedCount ?? 0}
+            skippedCount={Math.max(0, jobs.filter((job) => !job.selected).length)}
+            failedCount={failedItems.length}
+          />
+          {failedItems.length > 0 ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+              <p className="text-sm font-medium text-amber-800">
+                {failedItems.length} job application{failedItems.length === 1 ? "" : "s"} failed.
+              </p>
+              <button
+                type="button"
+                onClick={handleRetryFailedSubset}
+                className="mt-2 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
+              >
+                Retry failed subset
+              </button>
+            </div>
+          ) : null}
         </div>
       )}
     </div>

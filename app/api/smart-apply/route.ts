@@ -31,7 +31,27 @@ export async function GET() {
     return NextResponse.json({ error: "Failed to load rules" }, { status: 500 });
   }
 
-  return NextResponse.json(data || []);
+  const enriched = (data || []).map((rule) => {
+    const reasonCode =
+      rule.enabled === false
+        ? "RULE_DISABLED"
+        : !rule.last_run_at
+          ? "NOT_RUN_YET"
+          : Number(rule.total_applied || 0) === 0
+            ? "NO_MATCHING_JOBS"
+            : "APPLIED_SUCCESS";
+    return {
+      ...rule,
+      last_outcome_reason: reasonCode,
+      last_execution_meta: {
+        lastRunAt: rule.last_run_at,
+        nextRunAt: rule.next_run_at,
+        reasonCode,
+      },
+    };
+  });
+
+  return NextResponse.json(enriched);
 }
 
 /** POST: Create or update smart apply rule */

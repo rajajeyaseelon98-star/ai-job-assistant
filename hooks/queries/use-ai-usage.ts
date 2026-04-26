@@ -12,6 +12,10 @@ export interface AiUsageSummaryResponse {
   totalCreditsAvailable: number;
   usedCredits: number;
   remainingCredits: number;
+  meta?: {
+    generatedAt: string;
+    requestId: string;
+  };
 }
 
 export interface AiUsageHistoryRow {
@@ -54,7 +58,10 @@ export function useAiUsageSummary() {
 export function useAiUsageHistory(limit = 50) {
   return useQuery({
     queryKey: aiUsageKeys.history(limit),
-    queryFn: () => apiFetch<{ rows: AiUsageHistoryRow[] }>(`/api/usage/history?limit=${limit}`),
+    queryFn: () =>
+      apiFetch<{ rows: AiUsageHistoryRow[]; meta?: { generatedAt: string; requestId: string } }>(
+        `/api/usage/history?limit=${limit}`
+      ),
     staleTime: 60 * 1000,
   });
 }
@@ -62,7 +69,10 @@ export function useAiUsageHistory(limit = 50) {
 export function useAiFeatureBreakdown() {
   return useQuery({
     queryKey: aiUsageKeys.featureBreakdown(),
-    queryFn: () => apiFetch<{ rows: AiFeatureBreakdownRow[] }>("/api/usage/feature-breakdown"),
+    queryFn: () =>
+      apiFetch<{ rows: AiFeatureBreakdownRow[]; meta?: { generatedAt: string; requestId: string } }>(
+        "/api/usage/feature-breakdown"
+      ),
     staleTime: 60 * 1000,
   });
 }

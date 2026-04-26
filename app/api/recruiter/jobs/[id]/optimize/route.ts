@@ -35,22 +35,26 @@ export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const requestId = crypto.randomUUID();
   const user = await getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized", requestId, retryable: false }, { status: 401 });
   }
   if (user.profile?.role !== "recruiter") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "Forbidden", requestId, retryable: false }, { status: 403 });
   }
 
   const rl = await checkRateLimit(user.id);
   if (!rl.allowed) {
-    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+    return NextResponse.json(
+      { error: "Too many requests.", requestId, retryable: true, nextAction: "Retry in a moment" },
+      { status: 429 }
+    );
   }
 
   const { id } = await params;
   if (!isValidUUID(id)) {
-    return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid ID", requestId, retryable: false }, { status: 400 });
   }
 
   const supabase = await createClient();
@@ -63,7 +67,7 @@ export async function POST(
     .single();
 
   if (error || !job) {
-    return NextResponse.json({ error: "Job posting not found" }, { status: 404 });
+    return NextResponse.json({ error: "Job posting not found", requestId, retryable: false }, { status: 404 });
   }
 
   const content = `Job Title: ${job.title || ""}
@@ -94,10 +98,16 @@ Employment Type: ${job.employment_type || "Not specified"}`;
     };
 
     return NextResponse.json({
+      ok: true,
+      message: "Optimization analysis generated.",
       suggestions: Array.isArray(result.suggestions) ? result.suggestions.slice(0, 10) : [],
       optimized_title: typeof result.optimized_title === "string" ? result.optimized_title : undefined,
       optimized_description: typeof result.optimized_description === "string" ? result.optimized_description : undefined,
       score: typeof result.score === "number" ? Math.min(100, Math.max(0, Math.round(result.score))) : 50,
+      meta: {
+        requestId,
+        nextStep: "Review before/after and apply selected optimizations",
+      },
     });
   } catch (e) {
     if (isCreditsExhaustedError(e)) {
@@ -105,11 +115,17 @@ Employment Type: ${job.employment_type || "Not specified"}`;
         {
           error: CREDITS_EXHAUSTED_CODE,
           message: "You have reached your AI credit limit. Please upgrade.",
+          requestId,
+          retryable: false,
+          nextAction: "Upgrade plan",
         },
         { status: 402 }
       );
     }
     console.error("AI job optimization error:", e);
-    return NextResponse.json({ error: "Optimization analysis failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Optimization analysis failed", requestId, retryable: true, nextAction: "Retry optimization" },
+      { status: 500 }
+    );
   }
 }

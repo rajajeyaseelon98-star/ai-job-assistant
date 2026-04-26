@@ -72,7 +72,13 @@ export function useConfirmAutoApply() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (runId: string) =>
-      apiFetch<{ success?: boolean; applied_count: number; total_selected?: number }>(
+      apiFetch<{
+        success?: boolean;
+        applied_count: number;
+        total_selected?: number;
+        failed_count?: number;
+        failed_items?: Array<{ jobId: string; title: string; reason: string }>;
+      }>(
         `/api/auto-apply/${runId}/confirm`,
         { method: "POST" }
       ),

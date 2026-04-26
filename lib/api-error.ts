@@ -6,6 +6,9 @@ export type ApiErrorFields = {
   error?: string;
   detail?: string;
   message?: string;
+  requestId?: string;
+  nextAction?: string;
+  retryable?: boolean;
 };
 
 /** Read body once; safe if server returned non-JSON. */
@@ -18,6 +21,19 @@ export async function parseApiErrorJson(res: Response): Promise<ApiErrorFields> 
       error: typeof j.error === "string" ? j.error : undefined,
       detail: typeof j.detail === "string" ? j.detail : undefined,
       message: typeof j.message === "string" ? j.message : undefined,
+      requestId:
+        typeof j.requestId === "string"
+          ? j.requestId
+          : typeof (j.meta as Record<string, unknown> | undefined)?.requestId === "string"
+            ? ((j.meta as Record<string, unknown>).requestId as string)
+            : undefined,
+      nextAction:
+        typeof j.nextAction === "string"
+          ? j.nextAction
+          : typeof (j.meta as Record<string, unknown> | undefined)?.nextStep === "string"
+            ? ((j.meta as Record<string, unknown>).nextStep as string)
+            : undefined,
+      retryable: typeof j.retryable === "boolean" ? j.retryable : undefined,
     };
   } catch {
     return { error: text.slice(0, 300) };
@@ -31,6 +47,9 @@ export function parseErrorFieldsFromJson(body: unknown): ApiErrorFields {
     error: typeof o.error === "string" ? o.error : undefined,
     detail: typeof o.detail === "string" ? o.detail : undefined,
     message: typeof o.message === "string" ? o.message : undefined,
+    requestId: typeof o.requestId === "string" ? o.requestId : undefined,
+    nextAction: typeof o.nextAction === "string" ? o.nextAction : undefined,
+    retryable: typeof o.retryable === "boolean" ? o.retryable : undefined,
   };
 }
 

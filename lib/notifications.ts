@@ -35,28 +35,38 @@ export async function createNotificationForUser(
   title: string,
   message: string,
   data?: Record<string, unknown>
-): Promise<void> {
+): Promise<boolean> {
   const admin = createServiceRoleClient();
   if (!admin) {
     // Stable prefix for log alerts — delivery is skipped without service role (RLS blocks cross-user inserts).
     console.warn(
       `[notifications] notification_delivery_skipped reason=no_service_role_client targetUserId=${targetUserId} type=${type}`
     );
-    return;
+    return false;
   }
   try {
-    await admin.from("notifications").insert({
+    const { error } = await admin.from("notifications").insert({
       user_id: targetUserId,
       type,
       title,
       message,
       data: data || {},
     });
+    if (error) {
+      console.warn("[notifications] notification_insert_failed", {
+        targetUserId,
+        type,
+        error: error.message,
+      });
+      return false;
+    }
+    return true;
   } catch (e) {
     console.warn("[notifications] notification_insert_failed", {
       targetUserId,
       type,
       error: e instanceof Error ? e.message : String(e),
     });
+    return false;
   }
 }

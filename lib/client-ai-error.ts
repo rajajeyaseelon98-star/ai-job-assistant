@@ -5,6 +5,9 @@ type ErrorWithCode = Error & { code?: string };
 export type AiUiError = {
   message: string;
   isCreditsExhausted: boolean;
+  retryable?: boolean;
+  requestId?: string;
+  nextAction?: string;
 };
 
 export function isAiCreditsExhaustedMessage(message: string | null | undefined): boolean {
@@ -32,12 +35,18 @@ export function toAiUiError(error: unknown): AiUiError {
       return {
         message,
         isCreditsExhausted: fields.error === "CREDITS_EXHAUSTED" || isAiCreditsExhaustedMessage(message),
+        retryable: fields.retryable,
+        requestId: fields.requestId,
+        nextAction: fields.nextAction,
       };
     } catch {
       const message = formatApiFetchThrownError(error);
       return {
         message,
         isCreditsExhausted: isAiCreditsExhaustedMessage(message),
+        retryable: undefined,
+        requestId: undefined,
+        nextAction: undefined,
       };
     }
   }
@@ -45,6 +54,9 @@ export function toAiUiError(error: unknown): AiUiError {
   return {
     message: "Something went wrong",
     isCreditsExhausted: false,
+    retryable: undefined,
+    requestId: undefined,
+    nextAction: undefined,
   };
 }
 

@@ -28,6 +28,8 @@ import {
 import { formatApiFetchThrownError } from "@/lib/api-error";
 import { toAiUiError } from "@/lib/client-ai-error";
 import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
+import { InlineRetryCard } from "@/components/ui/InlineRetryCard";
+import { ActionStatusBanner } from "@/components/ui/ActionStatusBanner";
 
 type ResumeAnalysisRow = {
   id: string;
@@ -106,14 +108,16 @@ export default function CandidateProfilePage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [analyzeMessage, setAnalyzeMessage] = useState<string | null>(null);
   const [analyzeCreditError, setAnalyzeCreditError] = useState(false);
+  const [resumeActionError, setResumeActionError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState(false);
 
   async function downloadResume(resumeId: string) {
+    setResumeActionError(null);
     try {
       const { url } = await downloadUrlMut.mutateAsync(resumeId);
       if (url) window.open(url, "_blank", "noopener,noreferrer");
-    } catch {
-      /* optional: silent, same as before */
+    } catch (e) {
+      setResumeActionError(formatApiFetchThrownError(e));
     }
   }
 
@@ -124,14 +128,15 @@ export default function CandidateProfilePage() {
       return;
     }
     setPreviewUrl(null);
+    setResumeActionError(null);
     try {
       const { url } = await previewUrlMut.mutateAsync(resumeId);
       if (url) {
         setPreviewResumeId(resumeId);
         setPreviewUrl(url);
       }
-    } catch {
-      /* silent */
+    } catch (e) {
+      setResumeActionError(formatApiFetchThrownError(e));
     }
   }
 
@@ -220,6 +225,17 @@ export default function CandidateProfilePage() {
           </p>
         )
       )}
+      {resumeActionError ? (
+        <div className="mb-4">
+          <InlineRetryCard
+            message={resumeActionError}
+            onRetry={() => setResumeActionError(null)}
+            retryLabel="Dismiss"
+            alternateHref={`/recruiter/messages?compose=1&receiver_id=${encodeURIComponent(data.id)}`}
+            alternateLabel="Message candidate"
+          />
+        </div>
+      ) : null}
 
       {/* Header */}
       <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
@@ -396,6 +412,11 @@ export default function CandidateProfilePage() {
                       )}
                     </div>
                   </div>
+                  {analyzingId === resume.id ? (
+                    <div className="mt-3">
+                      <ActionStatusBanner kind="warning" message="Running ATS analysis and saving report..." />
+                    </div>
+                  ) : null}
 
                   {previewResumeId === resume.id && previewUrl && (
                     <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">

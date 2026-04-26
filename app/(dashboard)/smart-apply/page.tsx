@@ -8,6 +8,8 @@ import type { SmartApplyRule } from "@/types/autoApply";
 import { humanizeSmartApplyError, humanizeNetworkError } from "@/lib/friendlyApiError";
 import { toAiUiError } from "@/lib/client-ai-error";
 import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
+import { SmartApplyRunHealthCard } from "@/components/smart-apply/SmartApplyRunHealthCard";
+import { ActionStatusBanner } from "@/components/ui/ActionStatusBanner";
 
 export default function SmartApplyPage() {
   const [saving, setSaving] = useState(false);
@@ -142,14 +144,11 @@ export default function SmartApplyPage() {
         isCreditError ? (
           <AICreditExhaustedAlert message={error} pricingHref="/pricing" />
         ) : (
-          <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+          <ActionStatusBanner kind="error" message={error} />
         )
       )}
       {success && (
-        <div className="mb-6 flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 text-sm font-medium shadow-sm">
-          <Settings2 className="h-4 w-4 text-emerald-600" />
-          <span>{success}</span>
-        </div>
+        <ActionStatusBanner kind="success" message={success} />
       )}
 
       {/* Active Rules Status */}
@@ -194,6 +193,11 @@ export default function SmartApplyPage() {
                       <span className="text-sm">Last: {new Date(rule.last_run_at).toLocaleDateString()}</span>
                     )}
                   </div>
+                  {rule.total_runs > 0 && rule.total_applied === 0 ? (
+                    <p className="mt-2 text-xs text-amber-700">
+                      0 jobs applied so far. Check minimum match score, role/location filters, and salary constraints.
+                    </p>
+                  ) : null}
                 </div>
                 <button
                   onClick={() => handleToggle(rule.id, !rule.enabled)}
@@ -203,6 +207,13 @@ export default function SmartApplyPage() {
                 >
                   {rule.enabled ? "Pause" : "Enable"}
                 </button>
+              </div>
+              <div className="w-full sm:w-auto">
+                <SmartApplyRunHealthCard
+                  lastRunAt={rule.last_execution_meta?.lastRunAt ?? rule.last_run_at}
+                  nextRunAt={rule.last_execution_meta?.nextRunAt ?? rule.next_run_at}
+                  reasonCode={rule.last_execution_meta?.reasonCode ?? rule.last_outcome_reason}
+                />
               </div>
             </div>
           ))}
@@ -351,6 +362,12 @@ export default function SmartApplyPage() {
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
           {saving ? "Saving..." : rules.length > 0 ? "Update & Activate" : "Activate Smart Auto-Apply"}
         </button>
+        <Link
+          href="/auto-apply"
+          className="ml-0 mt-2 inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 sm:ml-2 sm:mt-0 sm:w-auto"
+        >
+          Run now with AI Auto-Apply
+        </Link>
       </form>
 
       {/* How it works */}
