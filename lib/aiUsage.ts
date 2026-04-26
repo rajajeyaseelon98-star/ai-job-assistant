@@ -117,13 +117,14 @@ export async function getUserCreditBalance(userId: string): Promise<{
     .from("users")
     .select("total_credits, used_credits")
     .eq("id", userId)
-    .single();
-  if (error || !data) {
+    .limit(1);
+  const row = data?.[0] ?? null;
+  if (error || !row) {
     console.warn("[ai-usage] failed to load credit balance", error?.message);
     return null;
   }
-  const totalCredits = Math.max(0, Number(data.total_credits) || 0);
-  const usedCredits = Math.max(0, Number(data.used_credits) || 0);
+  const totalCredits = Math.max(0, Number(row.total_credits) || 0);
+  const usedCredits = Math.max(0, Number(row.used_credits) || 0);
   return {
     totalCredits,
     usedCredits,
@@ -142,12 +143,13 @@ export async function incrementUsedCredits(userId: string, creditsUsed: number):
     .from("users")
     .select("used_credits")
     .eq("id", userId)
-    .single();
-  if (readErr) {
-    console.warn("[ai-usage] failed reading current used_credits", readErr.message);
+    .limit(1);
+  const row = data?.[0] ?? null;
+  if (readErr || !row) {
+    console.warn("[ai-usage] failed reading current used_credits", readErr?.message);
     return;
   }
-  const currentUsed = Math.max(0, Number(data?.used_credits) || 0);
+  const currentUsed = Math.max(0, Number(row.used_credits) || 0);
   const { error: updateErr } = await supabase
     .from("users")
     .update({ used_credits: currentUsed + creditsUsed })

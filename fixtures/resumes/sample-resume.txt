@@ -1,0 +1,22 @@
+John Doe
+Frontend Engineer
+Email: john.doe@example.com
+
+Summary
+Frontend engineer with 4+ years building React and Next.js products.
+
+Skills
+React, Next.js, TypeScript, JavaScript, Tailwind CSS, REST APIs, Jest, Playwright, Git
+
+Experience
+Senior Frontend Engineer, Acme Corp (2022 - Present)
+- Built recruiter workflows in React and TypeScript.
+- Improved performance by 28% with route-level code splitting.
+- Collaborated with backend team on API reliability and retries.
+
+Frontend Engineer, Beta Labs (2020 - 2022)
+- Developed dashboard and profile management modules.
+- Added API error handling and telemetry for critical flows.
+
+Education
+B.Tech Computer Science

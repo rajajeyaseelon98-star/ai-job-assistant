@@ -48,6 +48,7 @@
 38. [Database Integrity](#38-database-integrity)
 49. [Dashboard, history, jobs applied, and public APIs](#49-dashboard-history-jobs-applied-and-public-apis)
 50. [AI Usage Tracking & Credits](#50-ai-usage-tracking--credits)
+51. [Automated QA Regression Suite](#51-automated-qa-regression-suite)
 
 ---
 
@@ -1888,3 +1889,39 @@ Shared inbox UI (**`MessagesInbox`**) for recruiters at **`/recruiter/messages`*
   1. Force insert failure scenario in test env
   2. Execute AI call
 - **Expected:** Server warning log appears (`[ai-usage] ... failed`), not silent drop.
+
+---
+
+## 51. Automated QA Regression Suite
+
+### TC-51.1: Run critical job seeker E2E suite
+- **Precondition:** Playwright Chromium installed, app starts on `PLAYWRIGHT_PORT`
+- **Steps:**
+  1. Run `npm run test:e2e:critical`
+  2. Inspect `e2e/resume-flow.spec.ts` and `e2e/auto-apply.spec.ts` results
+- **Expected:** Resume analyze/improve/re-analyze, auto-apply full/partial/retry, and credits exhaustion UX assertions pass.
+
+### TC-51.2: Run critical recruiter E2E suite
+- **Steps:**
+  1. Run `npx playwright test e2e/recruiter-flow.spec.ts`
+  2. Verify create/publish job, AI description generation, ATS analyze, shortlist partial, and messaging retry scenarios
+- **Expected:** Recruiter reliability checkpoints pass with deterministic route mocks.
+
+### TC-51.3: API contract suite
+- **Steps:**
+  1. Run `npm run test:api`
+  2. Review `api-tests/contracts.api.spec.ts`
+- **Expected:** Validation errors expose structured metadata (`requestId`, `retryable`, `nextAction` when applicable); success paths include meta envelope when available.
+
+### TC-51.4: API data-integrity suite
+- **Steps:**
+  1. Run `npx playwright test api-tests/data-integrity.api.spec.ts`
+  2. Check idempotent behavior around mark-read and auto-apply confirm contracts
+- **Expected:** No server crash; idempotent semantics hold in seeded/non-seeded test envs.
+
+### TC-51.5: Fixture and seeding determinism
+- **Steps:**
+  1. Run `node scripts/test/seed-fixtures.mjs`
+  2. Apply generated SQL in test DB
+  3. Re-run E2E/API suites
+- **Expected:** Stable deterministic data across repeated CI/local test runs.

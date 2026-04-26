@@ -42,14 +42,15 @@ export async function getAiUsageSummary(userId: string): Promise<AiUsageSummary>
   if (usageError) {
     throw new Error(`Failed to query ai_usage summary: ${usageError.message}`);
   }
-  const { data: userCredits, error: userCreditsError } = await supabase
+  const { data: userCreditsRows, error: userCreditsError } = await supabase
     .from("users")
     .select("total_credits,used_credits")
     .eq("id", userId)
-    .single();
+    .limit(1);
   if (userCreditsError) {
     throw new Error(`Failed to query users credit balance: ${userCreditsError.message}`);
   }
+  const userCredits = userCreditsRows?.[0] ?? null;
 
   const rows = usageRows || [];
   const byFeature = new Map<string, { calls: number; tokens: number }>();

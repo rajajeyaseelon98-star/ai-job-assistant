@@ -8,6 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "test:e2e": "playwright test",
+    "test:e2e:critical": "playwright test e2e/resume-flow.spec.ts e2e/auto-apply.spec.ts e2e/recruiter-flow.spec.ts",
+    "test:api": "playwright test -c playwright.api.config.ts",
+    "test:all:qa": "npm run test:e2e:critical && npm run test:api",
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {

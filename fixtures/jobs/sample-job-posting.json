@@ -1,0 +1,14 @@
+{
+  "id": "job-e2e-001",
+  "title": "Senior Frontend Developer",
+  "description": "Build scalable frontend applications with React and Next.js.",
+  "requirements": "4+ years React, strong TypeScript, testing experience.",
+  "skills_required": ["React", "Next.js", "TypeScript", "Testing"],
+  "location": "Remote",
+  "work_type": "remote",
+  "employment_type": "full_time",
+  "salary_min": 1200000,
+  "salary_max": 2200000,
+  "salary_currency": "INR",
+  "status": "active"
+}

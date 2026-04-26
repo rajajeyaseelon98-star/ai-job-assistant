@@ -1,0 +1,14 @@
+{
+  "jobSeeker": {
+    "id": "00000000-0000-4000-8000-00000000aa01",
+    "email": "jobseeker.e2e@example.com",
+    "name": "E2E Job Seeker",
+    "role": "job_seeker"
+  },
+  "recruiter": {
+    "id": "00000000-0000-4000-8000-00000000bb01",
+    "email": "recruiter.e2e@example.com",
+    "name": "E2E Recruiter",
+    "role": "recruiter"
+  }
+}
