@@ -50,19 +50,49 @@ function LoginForm() {
   async function handleGoogleLogin() {
     setGoogleLoading(true);
     setMessage(null);
-    const supabase = createClient();
-    const next = searchParams.get("next") || "/dashboard";
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-      },
-    });
-    if (error) {
-      const msg = error.message.toLowerCase().includes("provider")
-        ? "Google sign-in is not configured yet. Please use email login instead."
-        : error.message;
-      setMessage({ type: "error", text: msg });
+    try {
+      const supabase = createClient();
+      const next = searchParams.get("next") || "/dashboard";
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error) {
+        const msg = error.message.toLowerCase().includes("provider")
+          ? "Google sign-in is not configured yet. Please use email login instead."
+          : error.message;
+        setMessage({ type: "error", text: msg });
+        setGoogleLoading(false);
+        return;
+      }
+
+      if (!data?.url) {
+        setMessage({
+          type: "error",
+          text: "Unable to start Google sign-in. Please retry or continue with email.",
+        });
+        setGoogleLoading(false);
+        return;
+      }
+
+      // In standalone PWA mode, explicit navigation is more reliable than implicit SDK redirects.
+      window.location.assign(data.url);
+
+      // If navigation does not happen (popup blockers/webview constraints), recover gracefully.
+      window.setTimeout(() => {
+        setGoogleLoading(false);
+        setMessage({
+          type: "error",
+          text: "Google sign-in did not open. Tap again, or open this app URL in Chrome and retry.",
+        });
+      }, 8000);
+    } catch (error) {
+      const text = error instanceof Error ? error.message : "Failed to start Google sign-in";
+      setMessage({ type: "error", text });
       setGoogleLoading(false);
     }
   }

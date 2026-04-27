@@ -4,32 +4,8 @@ import { readE2eMockRoleFromCookies } from "@/lib/e2e-auth";
 import { updateSession } from "@/lib/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
-  const { response, user, supabase } = await updateSession(request);
   const { pathname } = request.nextUrl;
-
-  // Authenticated users: skip marketing landing and auth entry (standard SaaS behavior).
-  if (user) {
-    const isMarketingOrAuthEntry =
-      pathname === "/" ||
-      pathname === "/login" ||
-      pathname.startsWith("/login/") ||
-      pathname === "/signup" ||
-      pathname.startsWith("/signup/");
-    if (isMarketingOrAuthEntry) {
-      if (!user.email_confirmed_at) {
-        if (pathname.startsWith("/login")) {
-          return response;
-        }
-        return redirectWithSessionCookies(
-          response,
-          new URL("/login?error=verify", request.url)
-        );
-      }
-      const e2e = readE2eMockRoleFromCookies(request.cookies);
-      const dest = await getDefaultAppPath(supabase, user.id, e2e);
-      return redirectWithSessionCookies(response, new URL(dest, request.url));
-    }
-  }
+  const isApiRoute = pathname.startsWith("/api/");
 
   const isProtected =
     pathname.startsWith("/dashboard") ||
@@ -59,16 +35,25 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/history") ||
     pathname.startsWith("/pricing") ||
     pathname.startsWith("/settings") ||
-    (pathname.startsWith("/api/") &&
+    (isApiRoute &&
       !pathname.startsWith("/api/auth") &&
       !pathname.startsWith("/api/platform-stats") &&
       !pathname.startsWith("/api/public/") &&
       !pathname.startsWith("/api/share-result") &&
       !pathname.startsWith("/api/share/"));
 
-  if (isProtected) {
-    if (!user) {
-      if (pathname.startsWith("/api/")) {
+  let response: NextResponse;
+  let user: Awaited<ReturnType<typeof updateSession>>["user"];
+  let supabase: Awaited<ReturnType<typeof updateSession>>["supabase"];
+
+  try {
+    ({ response, user, supabase } = await updateSession(request));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown middleware error";
+    console.error("[middleware] session bootstrap failed:", message);
+
+    if (isProtected) {
+      if (isApiRoute) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
       const loginUrl = new URL("/login", request.url);
@@ -76,14 +61,52 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    if (!pathname.startsWith("/api/") && !user.email_confirmed_at) {
+    // For unprotected routes, fail open instead of taking down the whole app.
+    return NextResponse.next();
+  }
+
+  // Authenticated users: skip marketing landing and auth entry (standard SaaS behavior).
+  if (user) {
+    const isMarketingOrAuthEntry =
+      pathname === "/" ||
+      pathname === "/login" ||
+      pathname.startsWith("/login/") ||
+      pathname === "/signup" ||
+      pathname.startsWith("/signup/");
+    if (isMarketingOrAuthEntry) {
+      if (!user.email_confirmed_at) {
+        if (pathname.startsWith("/login")) {
+          return response;
+        }
+        return redirectWithSessionCookies(
+          response,
+          new URL("/login?error=verify", request.url)
+        );
+      }
+      const e2e = readE2eMockRoleFromCookies(request.cookies);
+      const dest = await getDefaultAppPath(supabase, user.id, e2e);
+      return redirectWithSessionCookies(response, new URL(dest, request.url));
+    }
+  }
+
+  if (isProtected) {
+    if (!user) {
+      if (isApiRoute) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    if (!isApiRoute && !user.email_confirmed_at) {
       const verifyUrl = new URL("/login", request.url);
       verifyUrl.searchParams.set("error", "verify");
       return NextResponse.redirect(verifyUrl);
     }
 
     // Recruiter routes: require current profile role (defense in depth; layouts also guard).
-    if (!pathname.startsWith("/api/") && pathname.startsWith("/recruiter")) {
+    if (!isApiRoute && pathname.startsWith("/recruiter")) {
       const e2e = readE2eMockRoleFromCookies(request.cookies);
       if (e2e) {
         if (e2e !== "recruiter") {
