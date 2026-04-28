@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, Zap, Crown, Building2 } from "lucide-react";
+import { apiFetch } from "@/lib/api-fetcher";
 
 interface Plan {
   name: string;
@@ -88,11 +89,66 @@ const PLANS: Plan[] = [
   },
 ];
 
+type PlanTier = "starter" | "pro" | "enterprise";
+
+function tierForPlanName(name: string): PlanTier {
+  if (name === "Enterprise") return "enterprise";
+  if (name === "Pro") return "pro";
+  return "starter";
+}
+
 export default function RecruiterPricingPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>("");
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [currentTier, setCurrentTier] = useState<PlanTier | null>(null);
 
-  function handleSelectPlan(planName: string) {
+  const currentPlanName = useMemo(() => {
+    if (currentTier === "enterprise") return "Enterprise";
+    if (currentTier === "pro") return "Pro";
+    if (currentTier === "starter") return "Starter";
+    return null;
+  }, [currentTier]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiFetch<{ company: { id: string; plan_tier?: string } }>(
+          "/api/recruiter/entitlements"
+        );
+        if (cancelled) return;
+        setCompanyId(res.company.id);
+        const tier = res.company.plan_tier;
+        if (tier === "starter" || tier === "pro" || tier === "enterprise") setCurrentTier(tier);
+      } catch {
+        // Pricing page should still render if entitlements are unavailable.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleSelectPlan(planName: string) {
     setSelectedPlan(planName);
+    setError("");
+    if (!companyId) return;
+    setBusy(true);
+    try {
+      const tier = tierForPlanName(planName);
+      const res = await apiFetch<{ company: { plan_tier: PlanTier } }>("/api/recruiter/entitlements", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ company_id: companyId, plan_tier: tier }),
+      });
+      setCurrentTier(res.company.plan_tier);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to update plan");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -103,6 +159,15 @@ export default function RecruiterPricingPage() {
           Choose the plan that fits your hiring needs. Scale as you grow.
         </p>
       </div>
+
+      {currentPlanName ? (
+        <div className="mb-10 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-center">
+          <p className="text-sm text-slate-700">
+            Current plan: <strong>{currentPlanName}</strong> (simulated). You can switch plans for testing —
+            payments come in Phase 6.
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
         {PLANS.map((plan) => (
@@ -153,26 +218,33 @@ export default function RecruiterPricingPage() {
             </ul>
 
             <button
-              onClick={() => handleSelectPlan(plan.name)}
+              disabled={busy}
+              onClick={() => void handleSelectPlan(plan.name)}
               className={`w-full rounded-2xl py-4 font-bold transition-all ${
-                selectedPlan === plan.name
+                selectedPlan === plan.name || currentPlanName === plan.name
                   ? "bg-green-600 text-white active:bg-green-700"
                   : plan.popular
                     ? "w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-600/20 rounded-2xl py-4 font-bold transition-all"
                     : "w-full bg-slate-50 border border-slate-200 text-slate-700 hover:bg-white hover:border-indigo-600 transition-all rounded-2xl py-4 font-bold"
               }`}
             >
-              {selectedPlan === plan.name ? "Selected" : "Get Started"}
+              {currentPlanName === plan.name ? "Current plan" : selectedPlan === plan.name ? "Selected" : busy ? "Working…" : "Select plan"}
             </button>
           </div>
         ))}
       </div>
 
+      {error ? (
+        <div className="mt-6 rounded-xl border border-rose-200 bg-rose-50 p-3 sm:p-4 text-center">
+          <p className="text-sm text-rose-800">{error}</p>
+        </div>
+      ) : null}
+
       {selectedPlan && (
         <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 sm:p-4 text-center">
           <p className="text-sm text-blue-800">
-            You selected the <strong>{selectedPlan}</strong> plan. Payment integration coming soon.
-            For now, all features are available during the beta period.
+            You selected the <strong>{selectedPlan}</strong> plan. This is a simulated upgrade/downgrade for
+            Phase 5 entitlements testing.
           </p>
         </div>
       )}

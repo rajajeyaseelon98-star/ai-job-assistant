@@ -59,11 +59,32 @@ export async function POST(
 
   const supabase = await createClient();
 
+  const { data: memberships, error: mErr } = await supabase
+    .from("company_memberships")
+    .select("company_id,status")
+    .eq("user_id", user.id)
+    .eq("status", "active");
+  if (mErr) {
+    return NextResponse.json(
+      { error: "Failed to load memberships", requestId, retryable: true, nextAction: "Retry optimization" },
+      { status: 500 }
+    );
+  }
+  const companyIds = (memberships || [])
+    .map((m) => (m as { company_id: string }).company_id)
+    .filter(Boolean);
+  if (!companyIds.length) {
+    return NextResponse.json(
+      { error: "No active company membership", requestId, retryable: false, nextAction: "Complete onboarding" },
+      { status: 403 }
+    );
+  }
+
   const { data: job, error } = await supabase
     .from("job_postings")
-    .select("id, title, description, requirements, skills_required, experience_min, experience_max, location, work_type, employment_type")
+    .select("id, company_id, title, description, requirements, skills_required, experience_min, experience_max, location, work_type, employment_type")
     .eq("id", id)
-    .eq("recruiter_id", user.id)
+    .in("company_id", companyIds)
     .single();
 
   if (error || !job) {

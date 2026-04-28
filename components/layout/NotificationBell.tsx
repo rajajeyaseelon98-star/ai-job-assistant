@@ -115,6 +115,19 @@ export function NotificationBell() {
         return;
       }
     }
+
+    if (n.type === "application" && n.data && typeof n.data === "object") {
+      const applicationId = n.data.application_id;
+      const base = pathname.startsWith("/recruiter") ? "/recruiter/applications" : "/applications";
+      if (typeof applicationId === "string" && applicationId.length > 0) {
+        router.push(`${base}?applicationId=${encodeURIComponent(applicationId)}`);
+        setOpen(false);
+        return;
+      }
+      router.push(base);
+      setOpen(false);
+      return;
+    }
   }
 
   return (

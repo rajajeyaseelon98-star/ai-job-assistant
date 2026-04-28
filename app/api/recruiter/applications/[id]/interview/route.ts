@@ -56,7 +56,6 @@ export async function POST(
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
-    .eq("recruiter_id", user.id)
     .select()
     .single();
 
@@ -120,7 +119,6 @@ export async function PATCH(
     .from("job_applications")
     .update(updates)
     .eq("id", id)
-    .eq("recruiter_id", user.id)
     .select()
     .single();
 
@@ -154,7 +152,6 @@ export async function DELETE(
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
-    .eq("recruiter_id", user.id)
     .select()
     .single();
 

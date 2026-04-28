@@ -21,7 +21,7 @@ export async function DELETE(
     .from("saved_searches")
     .delete()
     .eq("id", id)
-    .eq("recruiter_id", user.id);
+    ;
 
   if (error) return NextResponse.json({ error: "Delete failed" }, { status: 500 });
   return NextResponse.json({ ok: true });
@@ -58,7 +58,6 @@ export async function PATCH(
     .from("saved_searches")
     .update(updates)
     .eq("id", id)
-    .eq("recruiter_id", user.id)
     .select()
     .single();
 

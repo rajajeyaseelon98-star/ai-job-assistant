@@ -56,6 +56,21 @@ export async function POST(request: Request) {
 
   const supabase = await createClient();
 
+  const { data: memberships, error: mErr } = await supabase
+    .from("company_memberships")
+    .select("company_id,status")
+    .eq("user_id", user.id)
+    .eq("status", "active");
+  if (mErr) {
+    return NextResponse.json(
+      { error: "Failed to load memberships", requestId, retryable: true, nextAction: "Retry analysis" },
+      { status: 500 }
+    );
+  }
+  const companyIds = (memberships || [])
+    .map((m) => (m as { company_id: string }).company_id)
+    .filter(Boolean);
+
   let resumeText: string;
   let jobTitle: string;
   let jobDescription: string;
@@ -72,10 +87,9 @@ export async function POST(request: Request) {
       .from("job_applications")
       .select(`
         id, resume_text,
-        job:job_postings!job_applications_job_id_fkey(title, description, requirements, skills_required)
+        job:job_postings!job_applications_job_id_fkey(title, description, requirements, skills_required, company_id)
       `)
       .eq("id", body.application_id)
-      .eq("recruiter_id", user.id)
       .single();
 
     if (error || !app) {
@@ -86,6 +100,10 @@ export async function POST(request: Request) {
     }
 
     const job = app.job as unknown as Record<string, unknown>;
+    const appCompanyId = typeof job.company_id === "string" ? job.company_id : null;
+    if (appCompanyId && companyIds.length && !companyIds.includes(appCompanyId)) {
+      return NextResponse.json({ error: "Application not found", requestId, retryable: false }, { status: 404 });
+    }
     resumeText = app.resume_text as string;
     jobTitle = (job.title as string) || "";
     jobDescription = (job.description as string) || "";
@@ -101,11 +119,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid job_id", requestId, retryable: false }, { status: 400 });
     }
 
+    if (!companyIds.length) {
+      return NextResponse.json(
+        { error: "No active company membership", requestId, retryable: false, nextAction: "Complete onboarding" },
+        { status: 403 }
+      );
+    }
+
     const { data: job, error } = await supabase
       .from("job_postings")
-      .select("title, description, requirements, skills_required")
+      .select("title, description, requirements, skills_required, company_id")
       .eq("id", body.job_id)
-      .eq("recruiter_id", user.id)
+      .in("company_id", companyIds)
       .single();
 
     if (error || !job) {

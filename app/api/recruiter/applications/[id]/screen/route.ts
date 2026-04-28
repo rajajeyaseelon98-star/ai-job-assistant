@@ -66,7 +66,6 @@ export async function POST(
       job:job_postings!job_applications_job_id_fkey(title, description, skills_required, experience_min, experience_max)
     `)
     .eq("id", id)
-    .eq("recruiter_id", user.id)
     .single();
 
   if (error || !app) return NextResponse.json({ error: "Application not found", requestId, retryable: false }, { status: 404 });
@@ -148,7 +147,7 @@ ${sanitizeResumeForAi(app.resume_text as string, 6000)}`;
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
-    .eq("recruiter_id", user.id);
+    ;
 
   return NextResponse.json({
     ok: true,

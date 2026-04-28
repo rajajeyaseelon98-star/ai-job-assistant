@@ -33,7 +33,6 @@ export async function GET(
     .from("message_templates")
     .select("*")
     .eq("id", id)
-    .eq("recruiter_id", user.id)
     .single();
 
   if (error || !data) {
@@ -108,7 +107,6 @@ export async function PATCH(
     .from("message_templates")
     .update(updates)
     .eq("id", id)
-    .eq("recruiter_id", user.id)
     .select()
     .single();
 
@@ -141,7 +139,7 @@ export async function DELETE(
     .from("message_templates")
     .delete()
     .eq("id", id)
-    .eq("recruiter_id", user.id);
+    ;
 
   if (error) {
     return NextResponse.json({ error: "Delete failed" }, { status: 500 });

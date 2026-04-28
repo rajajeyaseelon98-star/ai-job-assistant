@@ -13,10 +13,19 @@ export async function GET() {
   }
 
   const supabase = await createClient();
+  const { data: memberships, error: mErr } = await supabase
+    .from("company_memberships")
+    .select("company_id,status")
+    .eq("user_id", user.id)
+    .eq("status", "active");
+  if (mErr) return NextResponse.json({ error: "Failed to load memberships" }, { status: 500 });
+  const companyIds = (memberships || []).map((m) => (m as { company_id: string }).company_id).filter(Boolean);
+  if (!companyIds.length) return NextResponse.json([]);
+
   const { data, error } = await supabase
     .from("saved_searches")
     .select("*")
-    .eq("recruiter_id", user.id)
+    .in("company_id", companyIds)
     .order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: "Failed to load alerts" }, { status: 500 });
@@ -43,10 +52,21 @@ export async function POST(request: Request) {
   if (!nameVal.valid) return NextResponse.json({ error: nameVal.error }, { status: 400 });
 
   const supabase = await createClient();
+  const { data: memberships, error: mErr } = await supabase
+    .from("company_memberships")
+    .select("company_id,status")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .limit(1);
+  if (mErr) return NextResponse.json({ error: "Failed to resolve company" }, { status: 500 });
+  const companyId = (memberships?.[0] as { company_id: string } | undefined)?.company_id || null;
+  if (!companyId) return NextResponse.json({ error: "No active company membership" }, { status: 403 });
+
   const { data, error } = await supabase
     .from("saved_searches")
     .insert({
       recruiter_id: user.id,
+      company_id: companyId,
       name: nameVal.text.slice(0, 200),
       filters: filters || {},
     })

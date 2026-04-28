@@ -4,6 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { isValidUUID } from "@/lib/validation";
 import { getImprovedResumePlainTextForUser, getResumeForJobApplication } from "@/lib/resume-for-user";
+import { createNotificationForUser } from "@/lib/notifications";
+import { getAppBaseUrl } from "@/lib/appUrl";
+import { sendEmail } from "@/lib/email";
+import { applicationReceivedEmailTemplate } from "@/lib/emailTemplates";
+import { createServiceRoleClient } from "@/lib/supabase/admin";
 
 export async function POST(
   request: Request,
@@ -62,7 +67,7 @@ export async function POST(
   // Fetch the job to confirm it's active and get recruiter_id
   const { data: job, error: jobError } = await supabase
     .from("job_postings")
-    .select("id, recruiter_id, status")
+    .select("id, recruiter_id, company_id, status, title")
     .eq("id", jobId)
     .single();
 
@@ -143,6 +148,99 @@ export async function POST(
       .from("job_postings")
       .update({ application_count: (current?.application_count || 0) + 1 })
       .eq("id", jobId);
+  }
+
+  // Notify company recruiters (best-effort; do not fail the application if notifications can't be delivered).
+  try {
+    const companyId = job.company_id as string | null | undefined;
+    if (companyId) {
+      const { data: members } = await supabase
+        .from("company_memberships")
+        .select("user_id,status")
+        .eq("company_id", companyId)
+        .eq("status", "active");
+      const targets = (members || [])
+        .map((m) => (m as { user_id: string }).user_id)
+        .filter(Boolean);
+      await Promise.all(
+        targets.map((targetUserId) =>
+          createNotificationForUser(
+            targetUserId,
+            "application",
+            "New application received",
+            `${user.email} applied to “${String(job.title || "a job")}”.`,
+            { job_id: jobId, application_id: application.id, candidate_id: user.id }
+          )
+        )
+      );
+
+      // Optional: email recruiters (Phase 6 follow-up, gated).
+      try {
+        const admin = createServiceRoleClient();
+        if (!admin) {
+          // Service role required to resolve recruiter emails; skip silently.
+        } else {
+          const baseUrl = await getAppBaseUrl();
+          const applicationUrl = `${baseUrl}/recruiter/applications?applicationId=${encodeURIComponent(
+            application.id
+          )}`;
+          const { data: companyRow } = await supabase
+            .from("companies")
+            .select("id,name")
+            .eq("id", companyId)
+            .maybeSingle();
+          const companyName = String(
+            (companyRow as { name?: string } | null | undefined)?.name || "your company"
+          );
+
+          // Fetch emails for targets (service role, to avoid RLS issues)
+          const { data: profiles } = await admin
+            .from("users")
+            .select("id,email")
+            .in("id", targets);
+          const emails = (profiles || [])
+            .map((p) => (p as { email?: string }).email)
+            .filter((e): e is string => typeof e === "string" && e.includes("@"));
+
+          const tpl = applicationReceivedEmailTemplate({
+            companyName,
+            jobTitle: String(job.title || "a job"),
+            candidateEmail: user.email,
+            applicationUrl,
+          });
+
+          await Promise.all(
+            emails.map((to) =>
+              sendEmail({
+                to,
+                subject: tpl.subject,
+                html: tpl.html,
+                text: tpl.text,
+                category: "marketplace",
+              })
+            )
+          );
+        }
+      }
+      catch (e) {
+        console.warn("[apply] recruiter email dispatch failed", {
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
+    } else {
+      // Fallback: notify the recruiter_id owner.
+      await createNotificationForUser(
+        job.recruiter_id,
+        "application",
+        "New application received",
+        `${user.email} applied to your job.`,
+        { job_id: jobId, application_id: application.id, candidate_id: user.id }
+      );
+    }
+  } catch (e) {
+    console.warn("[apply] notification dispatch failed", {
+      error: e instanceof Error ? e.message : String(e),
+    });
   }
 
   return NextResponse.json(application, { status: 201 });

@@ -52,11 +52,23 @@ export async function POST(
   }
 
   const supabase = await createClient();
+  const { data: membership, error: mErr } = await supabase
+    .from("company_memberships")
+    .select("role,status")
+    .eq("company_id", companyId)
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+  if (mErr) return NextResponse.json({ error: "Failed to load membership" }, { status: 500 });
+  const role = (membership as { role?: string } | null | undefined)?.role ?? null;
+  if (role !== "owner" && role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const { data: company, error: findErr } = await supabase
     .from("companies")
     .select("id, logo_url")
     .eq("id", companyId)
-    .eq("recruiter_id", user.id)
     .single();
 
   if (findErr || !company) {
@@ -87,7 +99,6 @@ export async function POST(
     .from("companies")
     .update({ logo_url: publicUrl, updated_at: new Date().toISOString() })
     .eq("id", companyId)
-    .eq("recruiter_id", user.id)
     .select()
     .single();
 
@@ -115,11 +126,23 @@ export async function DELETE(
   }
 
   const supabase = await createClient();
+  const { data: membership, error: mErr } = await supabase
+    .from("company_memberships")
+    .select("role,status")
+    .eq("company_id", companyId)
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+  if (mErr) return NextResponse.json({ error: "Failed to load membership" }, { status: 500 });
+  const role = (membership as { role?: string } | null | undefined)?.role ?? null;
+  if (role !== "owner" && role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const { data: company, error: findErr } = await supabase
     .from("companies")
     .select("id, logo_url")
     .eq("id", companyId)
-    .eq("recruiter_id", user.id)
     .single();
 
   if (findErr || !company) {
@@ -135,7 +158,6 @@ export async function DELETE(
     .from("companies")
     .update({ logo_url: null, updated_at: new Date().toISOString() })
     .eq("id", companyId)
-    .eq("recruiter_id", user.id)
     .select()
     .single();
 

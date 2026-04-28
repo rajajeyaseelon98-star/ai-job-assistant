@@ -25,7 +25,6 @@ export async function GET(
     .from("job_postings")
     .select("*")
     .eq("id", id)
-    .eq("recruiter_id", user.id)
     .single();
 
   if (error || !data) {
@@ -98,11 +97,39 @@ export async function PATCH(
   if (body.company_id !== undefined) updates.company_id = body.company_id || null;
 
   const supabase = await createClient();
+
+  // Enforce active job limits when activating an existing job (best-effort; relies on DB values).
+  if (updates.status === "active") {
+    const { data: job } = await supabase
+      .from("job_postings")
+      .select("id,company_id,status")
+      .eq("id", id)
+      .maybeSingle();
+    const companyId = (job as { company_id?: string | null } | null | undefined)?.company_id ?? null;
+    if (companyId) {
+      const [{ data: company }, { count: activeCount }] = await Promise.all([
+        supabase.from("companies").select("id,max_active_jobs").eq("id", companyId).maybeSingle(),
+        supabase
+          .from("job_postings")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", companyId)
+          .eq("status", "active"),
+      ]);
+      const maxActiveJobs = (company as { max_active_jobs?: number } | null | undefined)?.max_active_jobs ?? 3;
+      const alreadyActive = (job as { status?: string } | null | undefined)?.status === "active";
+      if (!alreadyActive && maxActiveJobs !== -1 && (activeCount ?? 0) >= maxActiveJobs) {
+        return NextResponse.json(
+          { error: `Plan limit reached: max ${maxActiveJobs} active job postings.` },
+          { status: 402 }
+        );
+      }
+    }
+  }
+
   const { data, error } = await supabase
     .from("job_postings")
     .update(updates)
     .eq("id", id)
-    .eq("recruiter_id", user.id)
     .select()
     .single();
 
@@ -135,7 +162,7 @@ export async function DELETE(
     .from("job_postings")
     .delete()
     .eq("id", id)
-    .eq("recruiter_id", user.id);
+    ;
 
   if (error) {
     return NextResponse.json({ error: "Delete failed" }, { status: 500 });

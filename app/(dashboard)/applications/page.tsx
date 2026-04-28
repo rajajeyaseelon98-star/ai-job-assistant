@@ -9,6 +9,7 @@ import { useApplications, useDeleteApplication, useUpdateApplicationStatus, appl
 import type { Application, ApplicationStatus } from "@/types/application";
 import { STATUS_LABELS } from "@/types/application";
 import { ListSkeleton, SectionSkeleton } from "@/components/ui/SectionSkeleton";
+import { RecruiterJobApplicationsPanel } from "@/components/applications/RecruiterJobApplicationsPanel";
 
 const ApplicationForm = lazy(() =>
   import("@/components/applications/ApplicationForm").then((m) => ({ default: m.ApplicationForm }))
@@ -176,6 +177,8 @@ export default function ApplicationsPage() {
           />
         </Suspense>
       )}
+
+      <RecruiterJobApplicationsPanel />
     </div>
   );
 }

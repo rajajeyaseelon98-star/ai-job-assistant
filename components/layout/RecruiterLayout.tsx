@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { RecruiterSidebar } from "./RecruiterSidebar";
 import { RecruiterTopbar } from "./RecruiterTopbar";
 import { ProfileCompletionBanner } from "./ProfileCompletionBanner";
-import { useRecruiterUser } from "@/hooks/queries/use-recruiter";
+import { usePathname } from "next/navigation";
+import { useRecruiterCompany, useRecruiterUser } from "@/hooks/queries/use-recruiter";
 import { PageLoading } from "@/components/ui/PageLoading";
 
 export default function RecruiterLayout({
@@ -14,7 +15,9 @@ export default function RecruiterLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { data: userData, isLoading, isFetching } = useRecruiterUser();
+  const companyQuery = useRecruiterCompany();
   const user = userData as Record<string, unknown> | undefined;
   const role = user?.role as string | undefined;
   const userName = (user?.name as string) || (user?.email as string) || "";
@@ -25,8 +28,26 @@ export default function RecruiterLayout({
     if (isLoading || isFetching) return;
     if (!user || role !== "recruiter") {
       router.replace("/select-role?next=/recruiter");
+      return;
     }
-  }, [isLoading, isFetching, user, role, router]);
+
+    // Recruiter without a company: send to onboarding (avoid redirect loop).
+    if (!pathname.startsWith("/recruiter/onboarding")) {
+      const company = companyQuery.data as Record<string, unknown> | null | undefined;
+      if (!companyQuery.isLoading && !company?.id) {
+        router.replace("/recruiter/onboarding");
+      }
+    }
+  }, [
+    isLoading,
+    isFetching,
+    user,
+    role,
+    router,
+    pathname,
+    companyQuery.data,
+    companyQuery.isLoading,
+  ]);
 
   if (isLoading) return <PageLoading titleWidth="w-48" />;
   // Effect waits for !isFetching before redirect so a stale cached role can refresh after switching.
