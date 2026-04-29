@@ -1,8 +1,53 @@
 # AI Job Assistant – Knowledge Transfer Document
 
+> 2026-04-23 update: Added prompt reliability infrastructure (`lib/aiPromptFactory.ts`, `lib/aiJson.ts`, `cachedAiGenerateJsonWithGuard` in `lib/ai.ts`) and migrated ATS analysis + `POST /api/job-match` + `POST /api/improve-resume` to guarded JSON generation. Added input-control layer via `lib/aiInputSanitizer.ts` (normalization + section-prioritized resume sanitization + feature budgets), now applied in ATS analysis, job match, improve-resume, and resume structuring. Added Phase 3 heavy-flow pipeline: 2-step compact extraction -> final generation in `POST /api/improve-resume` and `lib/resumeStructurer.ts`, with dedicated cache features for compact seed/profile steps. Added Phase 4 enum/confidence hardening: ATS + job-match + recruiter AI screening/shortlist/skill-gap now enforce strict enums, bounded scores, and normalized `confidence` outputs via guarded JSON. Added Phase 5 rollout controls: `lib/aiRollout.ts` (`AI_PROMPT_SYSTEM_ENABLED`, `AI_PROMPT_CANARY_PERCENT`, `AI_PROMPT_TELEMETRY_ENABLED`) and telemetry tags/rollout keys wired into guarded AI endpoints for canary and observability.
+> 2026-04-23 update (AI usage tracking): Added migration `20260423150000_ai_usage_credit_tracking.sql` (`ai_usage` table + `users.total_credits/used_credits`), added `lib/aiUsage.ts` + `lib/aiUsageQueries.ts`, extended `lib/ai.ts` to log per-call token/credit/cost usage and optional credit enforcement (`AI_USAGE_TRACKING_ENABLED`, `AI_CREDITS_ENFORCEMENT_ENABLED`), added usage APIs (`/api/usage/summary`, `/api/usage/history`, `/api/usage/feature-breakdown`), and added dashboard page `/(dashboard)/usage` with React Query hook `hooks/queries/use-ai-usage.ts`.
+> 2026-04-23 update (credit exhaustion handling): Added `lib/aiCreditError.ts` and standardized `CREDITS_EXHAUSTED` API responses (HTTP 402 + upgrade message) across core AI endpoints (ATS, improve-resume, job-match, cover-letter, interview-prep, LinkedIn import, job finder extraction, recruiter screening/shortlist/skill-gap/salary/job generation/optimize). `autoApplyEngine` now marks runs failed with explicit credit exhaustion message instead of silent AI fallback when credits are exhausted.
+> 2026-04-23 update (UI error normalization): Extended `lib/api-error.ts` to parse backend `message` fields and normalize `CREDITS_EXHAUSTED` into a user-facing upgrade message in `formatApiError`/`formatApiFetchThrownError`, so recruiter/jobseeker pages using `apiFetch` no longer show raw error codes.
+> 2026-04-23 update (upgrade CTA on credit exhaustion): Added client helper `lib/client-ai-error.ts` (`isAiCreditsExhaustedMessage`) and reusable UI block `components/ui/AICreditExhaustedAlert.tsx`. Wired recruiter AI pages (`/recruiter/jobs/[id]/auto-shortlist`, `/recruiter/jobs/[id]/optimize`, `/recruiter/skill-gap`, `/recruiter/salary-estimator`, `/recruiter/jobs/new` AI generation path) and jobseeker interview prep page to show an explicit upgrade CTA when credits are exhausted. Also switched `hooks/mutations/use-interview-prep.ts` to `apiFetchJsonWithHumanizer` so API errors are consistently humanized.
+> 2026-04-23 update (additional CTA coverage): Extended credit-exhausted upgrade CTA handling to more AI surfaces: jobseeker `/resume-analyzer`, `/salary-insights`, `/smart-apply`, recruiter candidate ATS action at `/recruiter/candidates/[id]`, and recruiter job edit page `/recruiter/jobs/[id]` (AI regenerate path). These now branch on `isAiCreditsExhaustedMessage` and render `AICreditExhaustedAlert` with plan-specific pricing links.
+> 2026-04-23 update (structured UI error normalization): Added `toAiUiError` in `lib/client-ai-error.ts` to normalize unknown thrown errors into `{ message, isCreditsExhausted }` using API error JSON parsing + fallback formatting. Updated key AI pages (interview prep, smart apply, resume analyzer, salary insights, recruiter candidate ATS action, recruiter job edit AI regenerate) to rely on this structured error result instead of pure message-regex checks.
+> 2026-04-23 update (recruiter parity for structured errors): Migrated remaining recruiter AI pages (`/recruiter/jobs/new`, `/recruiter/jobs/[id]/auto-shortlist`, `/recruiter/jobs/[id]/optimize`, `/recruiter/salary-estimator`, `/recruiter/skill-gap`) from direct `formatApiFetchThrownError` + regex branching to `toAiUiError`, with local `isCreditError` state driving `AICreditExhaustedAlert`.
+> 2026-04-23 update (navigation): Added dashboard sidebar navigation entry `AI Usage` -> `/usage` in `components/layout/Sidebar.tsx` under "Track & insights" so users can reach the AI credit usage dashboard without direct URL.
+> 2026-04-23 update (AI usage reliability + diagnostics): Updated `lib/aiUsage.ts` to fall back to request-scoped server Supabase client when service-role client is unavailable, so usage logging and credit balance checks can still function in authenticated API flows without `SUPABASE_SERVICE_ROLE_KEY`. Updated `lib/ai.ts` usage tracking calls to log warnings on tracking failures (instead of silent swallow). Updated `POST /api/generate-cover-letter` to return `detail` in 500 responses for faster diagnosis when AI generation fails.
+> 2026-04-23 update (usage observability hardening): Added explicit Supabase error handling in `lib/aiUsage.ts` (insert/read/update warnings) and strict query error propagation in `lib/aiUsageQueries.ts` so missing schema/RLS/query issues no longer appear as silent zero metrics. Usage APIs now return 500 with `detail` (`/api/usage/summary`, `/api/usage/history`, `/api/usage/feature-breakdown`) when underlying usage queries fail.
+> 2026-04-23 update (DB permissions fix): Added migration `20260423183000_ai_usage_grants.sql` to grant `authenticated` role `SELECT, INSERT` on `public.ai_usage` (with existing RLS policies still enforcing per-user row access) and schema usage grant, resolving `permission denied for table ai_usage` on usage APIs.
+> 2026-04-26 update (audit artifacts): Added `docs/FEATURE_WISE_GAPS_SCENARIOS_DEPENDENCIES.md` with feature-by-feature production readiness gaps, scenario coverage (happy/edge/fail/sec/data/ops), and dependency mapping across UI/API/lib/DB/infra.
+> 2026-04-26 update (UX reliability Phase 1): Added shared feedback primitives `components/ui/ActionStatusBanner.tsx`, `components/ui/InlineRetryCard.tsx`, `components/ui/ActionReceiptCard.tsx` and normalization helper `lib/ui-feedback.ts`; extended `lib/api-error.ts` + `lib/client-ai-error.ts` to parse/pass `requestId`, `retryable`, and next-step metadata. Updated Resume Analyzer, Cover Letter, Auto Apply, and Smart Apply flows to show explicit progress/receipt/retry UX. Added richer run metadata for auto-apply (`currentStep`, `processedCount`, `failedCount`, `failedItems`) in `GET /api/auto-apply/[id]`; `POST /api/auto-apply/[id]/confirm` now returns failed item details; `GET /api/smart-apply` now includes last execution reason metadata; `POST /api/generate-cover-letter` now returns `ok/message/meta.savedId/meta.savedAt/meta.requestId` and structured retryable errors.
+> 2026-04-27 update (UX reliability Phase 2 recruiter flows): Added recruiter-side trust UX improvements for job create/edit/optimize and batch screening flows. New reusable `components/recruiter/BatchScreeningReport.tsx` shows itemized success/skipped/failed outcomes with retry affordance. `POST /api/recruiter/jobs/[id]/auto-shortlist` now returns `itemized` per-application statuses/reasons (alongside totals), and `useAutoShortlistRecruiterJob` types were expanded accordingly. Recruiter pages now use shared retry/receipt patterns (`InlineRetryCard`, `ActionReceiptCard`) in `/recruiter/jobs/new`, `/recruiter/jobs/[id]`, `/recruiter/jobs/[id]/optimize`, `/recruiter/jobs/[id]/auto-shortlist`, `/recruiter/skill-gap`, and candidate profile ATS actions (`/recruiter/candidates/[id]`), including before/after context for optimize output and explicit progress/status messaging.
+> 2026-04-27 update (UX reliability Phase 3 messaging + usage confidence): Added messaging confidence components `components/messages/MessageDeliveryState.tsx` and `components/messages/RealtimeHealthBadge.tsx`; `MessagesInbox` now surfaces explicit send state (`sending/sent/read/failed`), realtime connectivity status, and non-silent inline retry cards for send/upload errors. `POST /api/messages` now returns send metadata (`ok`, `message`, `messageId`, `sentAt`, `notificationQueued`, `meta.requestId`) and structured retryable failures. Added usage confidence component `components/usage/UsageHealthChip.tsx`; usage dashboard now shows health chip, generated/refresh timestamps, and actionable retry diagnostics on API failures. Usage APIs (`/api/usage/summary`, `/api/usage/history`, `/api/usage/feature-breakdown`) now include `meta.generatedAt` + `meta.requestId` on success and structured retry metadata on failures. Cross-cutting response contract hardening applied to key AI mutation endpoints (`/api/analyze-resume`, `/api/improve-resume`, `/api/job-match`, `/api/auto-jobs`, `/api/interview-prep`) with added `ok/message/meta.nextStep/meta.requestId` on success and `retryable/nextAction/requestId` on error responses.
+> 2026-04-27 update (Recruiter AI API contract parity): Applied the same structured response contract to remaining recruiter AI endpoints: `POST /api/recruiter/jobs/generate-description`, `POST /api/recruiter/jobs/[id]/optimize`, `POST /api/recruiter/skill-gap`, `POST /api/recruiter/salary-estimate`, `POST /api/recruiter/applications/[id]/screen`, `POST /api/recruiter/resumes/[resumeId]/analyze`, and `POST /api/recruiter/jobs/[id]/auto-shortlist`. These now include `ok/message/meta.requestId/meta.nextStep` on success and `requestId/retryable/nextAction` on errors (including `CREDITS_EXHAUSTED`), enabling consistent frontend recovery UX and traceability across recruiter AI surfaces.
+> 2026-04-27 update (automation testing system): Added a complete QA automation foundation with deterministic fixtures (`fixtures/users.json`, `fixtures/resumes/sample-resume.txt`, `fixtures/jobs/sample-job-posting.json`), critical Playwright E2E specs (`e2e/resume-flow.spec.ts`, `e2e/auto-apply.spec.ts`, `e2e/recruiter-flow.spec.ts`), API contract/data-integrity suites (`api-tests/contracts.api.spec.ts`, `api-tests/data-integrity.api.spec.ts`), helper modules for fixture loading and network mocking (`e2e/helpers/*`, `api-tests/helpers/auth-context.ts`), and seeded test-data SQL generator (`scripts/test/seed-fixtures.mjs`). Added npm scripts `test:e2e:critical`, `test:api`, and `test:all:qa`; documented execution and mock strategy in `docs/AUTOMATED_TESTING_STRATEGY.md`.
+> 2026-04-27 update (usage credit balance query hardening): Replaced `.single()` credit lookups with `.limit(1)` row selection in `lib/aiUsageQueries.ts` and `lib/aiUsage.ts` to avoid PostgREST "Cannot coerce the result to a single JSON object" noise on sparse/non-seeded environments. Usage summary and credit-balance helpers now treat missing user-credit row as safe defaults instead of emitting false-negative query errors.
+> 2026-04-27 update (messages hydration fix): `MessagesInbox` now initializes realtime connectivity state as `null` and resolves `navigator.onLine` only after mount. `RealtimeHealthBadge` accepts `connected: boolean | null` and renders neutral `Checking…` state pre-hydration, preventing SSR/client text mismatch (`Disconnected` vs `Connected`) on `/messages`.
+> 2026-04-27 update (stability follow-ups): `createNotificationForUser` in `lib/notifications.ts` now returns a boolean delivery result, and `POST /api/messages` returns real `notificationQueued` based on insert outcome (instead of hardcoded true). `app/api/auto-apply/[id]` (`GET`/`PATCH`) now follows structured error metadata contract (`requestId`, `retryable`, `nextAction`) and surfaces update-write failure in PATCH. Added migration `20260427020500_messages_recipient_search_rpc_grant_fix.sql` to re-assert EXECUTE grants for `search_message_recipients(text, int)` to prevent recipient-search 42501 permission regressions.
+> 2026-04-27 update (recruiter usage route parity): Added shared UI component `components/usage/AiUsageDashboard.tsx` and mounted it at both job seeker `/usage` and recruiter `/recruiter/usage`. Updated `components/layout/RecruiterSidebar.tsx` to link `AI Usage` to `/recruiter/usage`, preventing layout switch from recruiter shell to job-seeker shell.
+> 2026-04-27 update (PWA foundation): Added `next-pwa` integration in `next.config.ts` with production-only service worker, conservative runtime caching (network-only for `/api/*`, static asset caching for scripts/images/fonts, network-first for documents), and offline fallback `public/offline.html`. Added web app manifest `public/manifest.json`, app icons under `public/icons/`, Apple touch icon, and root metadata wiring in `app/layout.tsx` (`manifest`, `themeColor`, Apple web app metadata). Added install UX component `components/pwa/InstallAppButton.tsx` (handles `beforeinstallprompt`, install state, and appinstalled).
+> 2026-04-27 update (PWA icon hardening): Added concrete PNG icons for install surfaces (`/public/icons/icon-192.png`, `/public/icons/icon-512.png`, `/public/icons/icon-512-maskable.png`, `/public/apple-touch-icon.png`) and updated `manifest.json` + `app/layout.tsx` metadata to prefer PNG icon assets with explicit maskable entry.
+> 2026-04-27 update (offline UX banner): Added global client-side connectivity indicator `components/pwa/OfflineStatusBanner.tsx` and mounted it in `app/layout.tsx`. Banner appears only when browser is offline and warns users that live AI/API features may be stale until reconnection.
+> 2026-04-27 update (PWA cleanup hardening): Install CTA `components/pwa/InstallAppButton.tsx` is now route-scoped to app shells (`/dashboard`, `/recruiter`, `/messages`, `/applications`, `/usage`) to avoid showing on auth/landing pages. Offline banner is now pointer-events transparent so it cannot block topbar controls. Generated service worker artifacts (`public/sw.js`, `public/workbox-*.js`, `public/fallback-*.js`) are ignored in `.gitignore` and untracked from git to avoid environment-specific churn.
+> 2026-04-28 update (PWA dev-mode stability): Added `components/pwa/DevServiceWorkerReset.tsx` and mounted it in `app/layout.tsx` to automatically unregister legacy service workers and clear Cache Storage in non-production. This prevents stale chunk references and MIME/404 script loading failures during local `next dev` sessions after PWA build iterations.
+> 2026-04-28 update (middleware runtime hardening): Updated `middleware.ts` and `lib/supabase/middleware.ts` so session bootstrap failures at edge runtime no longer crash the entire app (`MIDDLEWARE_INVOCATION_FAILED`). Missing Supabase env now surfaces an explicit server log message, protected routes fail closed (redirect/login or 401 for APIs), and unprotected routes fail open with `NextResponse.next()`.
+> 2026-04-28 update (PWA login reliability): Hardened Google OAuth kickoff in `app/login/page.tsx` by switching to `skipBrowserRedirect: true` + explicit `window.location.assign(data.url)` handling. Added timeout-based recovery messaging so standalone/mobile users no longer stay indefinitely on “Signing you in…” when the provider handoff is blocked or suppressed.
+> 2026-04-28 update (PWA install CTA coverage + asset cleanup): `components/pwa/InstallAppButton.tsx` now hides only on public/auth/legal routes (`/`, `/login`, `/signup`, `/terms`, `/privacy`, `/contact`, `/auth/*`) so install prompt can appear across core in-app flows. Removed unused legacy SVG install icons (`public/icons/icon-192.svg`, `public/icons/icon-512.svg`, `public/apple-touch-icon.svg`) to keep PNG icon assets as the canonical manifest/layout source.
+> 2026-04-29 update (marketplace Phase 1 – company teams + application lifecycle foundation): Added `company_memberships` and `company_invites` (multi-user recruiter teams under a company) and backfilled owner memberships for existing `companies.recruiter_id`. Added `application_events` timeline table and membership-based RLS so any active recruiter member of the company can view/update applications for the company’s jobs and insert timeline events (while candidates still only see their own).
+> 2026-04-29 update (marketplace Phase 2 – recruiter onboarding entry flow): Added `/recruiter/onboarding` page for creating a company profile, and updated `RecruiterLayout` to redirect recruiter users without a company to onboarding (prevents “dead recruiter dashboard” experience). Updated `GET/POST /api/recruiter/company` to be membership-aware and to create an owner membership row on company creation.
+> 2026-04-29 update (marketplace Phase 2 – recruiter invites): Added API endpoints to support multi-user recruiter teams: `GET/POST /api/recruiter/company/invites` (list/create invite tokens) and `POST /api/recruiter/company/invites/accept` (accept invite + create membership). Email delivery is deferred to Phase 6; API returns an invite URL token for now.
+> 2026-04-29 update (marketplace Phase 3 – application lifecycle visibility + timeline): Recruiter application APIs now rely on company-membership RLS (not `recruiter_id` equality), and recruiter status/note updates write `application_events` timeline entries. Added candidate API `GET /api/job-applications` and a dashboard panel in `/applications` to show recruiter-posted job application statuses and recent timeline events.
+> 2026-04-29 update (marketplace Phase 4 – in-app notifications for trust events): Added notification triggers for the marketplace loop: `POST /api/jobs/[id]/apply` now notifies all active `company_memberships` for the job’s `company_id` (fallback to `recruiter_id` if missing), and recruiter `PATCH /api/recruiter/applications/[id]` notifies the candidate when `stage` changes. Delivery is best-effort and requires `SUPABASE_SERVICE_ROLE_KEY` for cross-user inserts; core actions still succeed even if notification delivery is skipped.
+> 2026-04-29 update (marketplace Phase 5 – company entitlements + enforcement foundation): Added `companies.plan_tier`, `companies.max_active_jobs`, and `companies.max_team_members` via migration, plus an API `GET/PATCH /api/recruiter/entitlements` to read/simulate plan changes (owner/admin only). Enforced limits in recruiter job creation/activation (max active jobs) and company invite creation/acceptance (max team members incl. pending invites).
+> 2026-04-29 update (marketplace Phase 6 – email delivery foundation): Added Resend-based email delivery behind `EMAIL_ENABLED=true` + `RESEND_API_KEY` + `EMAIL_FROM`. Company invite creation (`POST /api/recruiter/company/invites`) now best-effort sends an email with an absolute accept link (prefers `NEXT_PUBLIC_APP_URL`, else forwarded host headers) and returns `{ emailQueued }` while keeping invite creation non-blocking if email fails.
+> 2026-04-29 update (marketplace Phase 6 follow-up – marketplace event emails): Added optional Resend emails for (1) candidate apply → recruiters and (2) recruiter stage change → candidate, gated by `EMAIL_MARKETPLACE_EVENTS=true` (still also requires `EMAIL_ENABLED=true`). Uses service-role client to resolve recipient emails; failures never block the core actions.
+> 2026-04-29 update (marketplace hardening – recruiter team access fixes): Updated recruiter job AI routes (`/api/recruiter/jobs/[id]/auto-shortlist` and `/api/recruiter/jobs/[id]/optimize`) to authorize via `company_memberships` + `company_id` instead of `recruiter_id`, so recruiter teammates can run AI actions on company jobs. Updated `GET/PATCH/DELETE /api/recruiter/company/[id]` to be membership-aware (read requires membership; update requires owner/admin; delete requires owner) to match the new multi-user company model and avoid relying on `recruiter_id`.
+> 2026-04-29 update (marketplace hardening – shared recruiter resources): Added `company_id` to `message_templates` and `saved_searches` with membership-based RLS policies so recruiter teams can share templates and candidate search alerts. Updated recruiter APIs under `/api/recruiter/templates*` and `/api/recruiter/alerts*` to query by company membership and insert with `company_id`.
+> 2026-04-29 update (email hardening Phase A/B/C): Added `email_logs` audit table + retry metadata + idempotency index in migration `20260429125000_email_logs_and_retries.sql`. `lib/email.ts` now writes structured email delivery logs (`sent|skipped|failed`), classifies skip reasons, computes retryability/backoff (max 3 attempts), and enforces idempotency dedupe via `idempotency_key`. Added internal replay endpoint `POST /api/internal/email-retry` (guarded by `INTERNAL_CRON_SECRET`) to retry failed retryable emails. Added fan-out cap for apply->recruiters (`EMAIL_MAX_RECIPIENTS_PER_EVENT`, default 25).
+> 2026-04-29 update (email hardening Phase D runbook): Production checks now include: set `EMAIL_ENABLED`, `EMAIL_INVITES`, `EMAIL_MARKETPLACE_EVENTS`, `RESEND_API_KEY`, `EMAIL_FROM`, `NEXT_PUBLIC_APP_URL`, and `INTERNAL_CRON_SECRET`; verify SPF/DKIM/DMARC for sender domain; schedule cron to call `POST /api/internal/email-retry`; monitor `public.email_logs` failed ratio and repeated provider errors.
+> 2026-04-29 update (email delivery lifecycle + Vercel Cron): Added delivery lifecycle fields to `public.email_logs` and a cron heartbeat table `public.email_job_runs` (migration `20260429130000_email_delivery_lifecycle_and_cron_health.sql`). Added Resend webhook endpoint `POST /api/webhooks/resend` with Svix signature verification (`RESEND_WEBHOOK_SECRET`) to update `delivery_status` (`delivered|bounced|complaint`) and timestamps on `email_logs` by `provider_message_id` (`data.email_id`). Switched retry endpoint to support Vercel Cron (`GET /api/internal/email-retry` authorized by `CRON_SECRET`) while keeping `INTERNAL_CRON_SECRET` support for manual calls. Added `vercel.json` cron schedule to run retries every 5 minutes.
+> 2026-04-29 update (AI provider fallback – Groq): Added Groq OpenAI-compatible provider (`lib/groq.ts`) and updated `lib/ai.ts` fallback chain to use **Gemini → Groq → OpenAI** for quota/503/rate-limit failures (Groq enabled via `GROQ_API_KEY`, optional `GROQ_MODEL`).
+
 **Purpose:** Single source of truth for how the app works. Update this doc whenever you change routes, APIs, components, lib, or database.
 
-**Last updated:** 2026-03-07 (Dashboard **Start here** vs **Explore more**, 3-step checklist, product narrative banner + topbar hook, sidebar **Explore more** group, shared `PageLoading`, improved-resume normalization + fixed UI sections, Smart Auto-Apply plan/limit copy, friendly API errors, job finder Phase 2+ roadmap note).
+**Last updated:** 2026-04-23 (**Docs:** **`docs/CODEBASE_AI_ARCH_COST_REPORT.md`** v2 — corrected token/cost model, hidden auto-apply structurer + deep-match math, split input/output pricing; companion **`docs/CODEBASE_AI_ARCH_COST_REPORT_INVESTOR.md`** updated; **`docs/CODEBASE_AI_ARCH_COST_REPORT_APPENDIX.md`** (API ↔ LLM matrix).) **2026-04-09 — Read receipts:** **`hooks/use-messaging-read-sync.ts`** — broadcast after **`POST /api/messages/mark-read`** so the peer invalidates **`useThreadMessages`** / inbox and picks up **`read_at`**; migration **`20260409120000_messages_replica_identity_full.sql`** sets **`REPLICA IDENTITY FULL`** on **`public.messages`** for reliable Realtime **`UPDATE`**. **Earlier 2026-04-08 — Messaging gaps:** **`Topbar`** Messages icon links to **`/recruiter/messages`** when **`pathname`** starts with **`/recruiter`**, else **`/messages`**; **`/recruiter`** home unread stat uses **`useMessageUnreadSummary`** (sum of **`GET /api/messages/unread-summary`** counts, not inbox page size). Migration **`20260408120000_backfill_messages_read_at.sql`** sets **`read_at = created_at`** where **`is_read`** and **`read_at`** was null (approximation for legacy rows). **Earlier 2026-04-02 — Messaging:** **`messages.read_at`** on mark-read; optional **`attachment_path` / `attachment_name` / `attachment_mime`** + Storage bucket **`message-attachments`**; **`POST /api/messages/attachment`** (multipart **`file`**); **`GET /api/messages`** and **`GET /api/messages/thread`** add signed **`attachment_url`** per row; **`search_message_recipients`** ranks exact email → prefix → name prefix → recent thread activity (migration **`20260407120000_messages_read_at_attachments_search_rank.sql`**). **`MessagesInbox`:** attachments (compose + reply), **Sent/Read** on own bubbles, **`useMessagingTyping`** (Realtime broadcast). **Earlier 2026-04-06 — Messaging UX:** **`GET /api/messages/thread`** + **`GET /api/messages/unread-summary`**; **`MessagesInbox`** loads the open thread via **`useThreadMessages`** (not inbox slice only); per-thread unread badges; **`useSendMessage`** optimistic merge into thread cache; job seeker **`Topbar`**: **Messages** icon + **`NotificationBell`**; bell **UPDATE** realtime + **`mark_read`** optimistic cache; message notifications navigate to **`?peer=sender_id`**. **Product consistency:** **`Topbar`** derives plan from **`useUser`** (no layout hardcode **`planType="free"`**); usage chips use **`FREE_PLAN_LIMITS`** fallbacks aligned with **`/api/usage`**; **Upgrade** only when user is loaded and **`plan_type === free`**. Landing **Free** tier bullets use **`FREE_PLAN_LIMITS`**. **`createNotificationForUser`** logs **`notification_delivery_skipped`** / **`notification_insert_failed`** when service role missing or insert fails. **`GET /api/recruiter/candidates`** includes **`search_quality`** describing scan/filter model.) **Earlier 2026-04-02 — P0–P5 hardening:** **`GET /api/dashboard`** joins **`resume_analysis`** to **`resumes!inner(user_id)`** and filters **`resumes.user_id`** to the current user so analyses stay owner-scoped. **`lib/usage`:** **`getUsageSummary`** uses per-feature monthly **`COUNT`** on **`usage_logs`** (exact totals); Pro **`checkAndLogUsage`** returns **`used`** from **`getUsageCount`**. **`GET /api/messages`:** query **`limit`** (default 100, max 200), **`before`** (cursor); JSON **`has_more`**, **`next_before`**, **`partial`**; **`useMessages`** (**`useInfiniteQuery`**) + **Load older** in **`MessagesInbox`**. **`GET /api/recruiter/candidates`:** **`limits`** object + **`resume_preview`** capped at **`resume_preview_chars`**. Landing + **`ProductNarrativeBanner`** copy softened (no hard multipliers). **Earlier 2026-04-05 — Message inbox:** **POST /api/messages** calls **`createNotificationForUser`** for **`receiver_id`** (needs **`SUPABASE_SERVICE_ROLE_KEY`**). **PATCH /api/user** recalculates strength only when **`name`** is updated. **POST /api/generate-cover-letter** picks **`improvedResumeId` > `resumeId` > `resumeText`** if several are sent. **NotificationBell** realtime subscription filters by **`user_id`**. **Later same day:** **`GET /api/recruiter/company`** returns an array — **`useRecruiterCompany`** uses the first row for the company form. **`useSaveCompany`** invalidates **`["user"]`** + **`recruiterKeys.user()`** so **`recruiter_onboarding_complete`** and the sticky banner update. **`POST`/`DELETE /api/recruiter/company/[id]/logo`** → bucket **`company-logos`**; **`lib/image-upload-validate.ts`** shared with avatars. Recruiter **`/recruiter/settings`** profile photo; **`RecruiterTopbar`** + **`Topbar`** show **`UserAvatar`**. **Earlier 2026-04-05:** **Profile:** `GET /api/user` includes `headline`, `bio`, `avatar_url`, `profile_strength`; **`POST`/`DELETE /api/user/avatar`** uploads to Storage bucket **`avatars`** (2MB, JPEG/PNG/WebP) and recomputes strength via **`lib/recalculate-profile-strength.ts`**. **`GET /api/messages`** returns `{ messages, peer_profiles }` using RPC **`messaging_peer_profiles`**. **`ProfileCompletionBanner`** under top bars; **`UserAvatar`** in **`MessagesInbox`** + settings. **PATCH /api/profile** now ends with **`recalculateProfileStrengthForUser`** so strength stays consistent with avatar/skills/ATS.) **Earlier 2026-04-02:** (**Messaging:** canonical **`GET`/`POST /api/messages`**, **`POST /api/messages/mark-read`**, job seeker **`/messages`**, shared **`MessagesInbox`**; **`/api/recruiter/messages`** re-exports. **Query / lib:** `sharedQueryKeys.resumes` in **`hooks/queries/shared-query-keys.ts`** (job-board + smart-apply); **`use-jobseeker-persisted.ts`** — by-id hooks for resume analysis, improved resume, cover letter, job match; **`use-recruiter-intelligence`** → GET **`/api/recruiter/intelligence`** (recruiter analytics UI); **`use-hiring-prediction`** → POST **`/api/hiring-prediction`**; **`use-recruiter.ts`** re-exports **`recruiter-keys`** / **`recruiter-queries`** / **`recruiter-mutations`**; **`apiFetchMultipartJson`** in **`api-fetcher`** for **`usePublicExtractResume`**. **Client API layer:** **`lib/api-fetcher.ts`** — **`apiFetchJsonWithHumanizer`** / **`apiFetchFormJsonWithHumanizer`** dedupe error parsing + friendly messages for resume/cover/upload mutations; **`apiFetchBlob`** for binary (e.g. DOCX). **`use-user.ts`:** **`useDeleteAccount`**. **`use-applications.ts`:** **`useSaveApplication`** (create/update). Mutations: **`use-interview-prep`**, **`use-dev-plan`**, **`use-feedback`**, **`use-public-landing`** (`usePublicExtractResume`, `usePublicFresherResume`). **`/select-role`** uses **`useSwitchRole`**; **`login`** prefetches **`userKeys.me()`** via **`apiFetch`** after password sign-in; settings use **`useUpdateUser`** / **`useDeleteAccount`**; landing flows use public mutations; onboarding uses **`useAnalyzeResume`**. **TanStack (earlier):** **`hooks/mutations/use-cover-letter-crud.ts`** — **`useCoverLetterContent`**, **`usePatchCoverLetter`**, **`useDeleteCoverLetter`** (`GET`/`PATCH`/`DELETE /api/cover-letters/[id]`, invalidates **`dashboardKeys.history`**); **`use-salary-intelligence.ts`** — **`useSalaryIntelligenceSearch`** (`GET /api/salary-intelligence`) for **`/salary-insights`**. **`use-recruiter.ts`:** **`useRecruiterSkillGap`**, **`useRecruiterSalaryEstimate`** for recruiter skill-gap and salary-estimator pages. **TanStack (earlier):** `use-auto-apply.ts` includes **`usePatchAutoApplySelections`** (PATCH `/api/auto-apply/[id]`) and **`useConfirmAutoApply`** (POST `/api/auto-apply/[id]/confirm`, invalidates applications); **`AutoApplyResults`** uses them instead of raw `fetch`. **`use-recruiter.ts`** adds job helpers (**`useGenerateJobDescription`**, **`useCreateRecruiterJob`**, **`usePatchRecruiterJob`**, **`useOptimizeRecruiterJob`**, **`useAutoShortlistRecruiterJob`**) and candidate helpers (**`useRecruiterCandidatesSearch`**, **`useRecruiterCandidateDetail`**, **`useRecruiterResumeSignedUrl`**, **`useRecruiterResumeAnalyze`**) for recruiter job and candidate pages. **`lib/api-error.ts`:** **`formatApiFetchThrownError`** parses JSON bodies from `apiFetch` errors. **`hooks/mutations/index.ts`** re-exports shared mutation hooks. **Resume client flows:** `hooks/mutations/use-upload-resume`, `use-analyze-resume`, `use-improve-resume`, `use-import-linkedin`, `use-auto-jobs`, `use-job-match` — shared by **`ResumeUpload`**, **`/resume-analyzer`**, **`TailorResumeForm`**, **`JobFinderForm`**, **`LinkedInImportForm`**, **`JobMatchForm`**; `humanizeUploadResumeError` in **`lib/friendlyApiError.ts`**. **Cover letter:** `lib/resume-for-user.ts`, `lib/job-posting-text.ts`, `lib/api-error.ts`; **`hooks/mutations/use-generate-cover-letter.ts`** powers **`CoverLetterForm`** and Job Board **Generate with AI**; **POST /api/generate-cover-letter** accepts optional **`resumeId`** (loads `parsed_text` server-side). **POST /api/recruiter/jobs/generate-description** returns JSON `description`, `requirements`, `skills_required` via AI JSON mode; recruiter New/Edit job **AI Regenerate** applies all three fields. Recruiter candidate profile: **Preview** (signed URL in iframe for PDFs), **Run ATS analysis** → **POST /api/recruiter/resumes/[resumeId]/analyze** (recruiter `resume_analysis` usage + `lib/ats-resume-analysis.ts`); apply migration **`20260402170000_recruiter_insert_resume_analysis.sql`** so RLS allows recruiter inserts. Job seeker **POST /api/analyze-resume** uses the same ATS helper. **GET /api/recruiter/candidates/[id]** returns `detail` on Supabase query errors to debug embed/FK issues. Recruiter: `/recruiter/candidates/[id]` + **GET /api/recruiter/resumes/[resumeId]/download**; candidate detail API nests `resume_analysis` under `resumes`. Recruiter candidate search API includes all `job_seeker` rows, not only those with resume text; `has_resume` on each row. Middleware: authenticated users visiting `/`, `/login`, `/signup` redirect to `/dashboard` or `/recruiter` via `lib/auth-landing-path.ts`. `users.last_active_role` synced on `PATCH /api/user/role`; login/callback default `/dashboard` uses `last_active_role` for landing; middleware blocks `/recruiter/*` unless `users.role` is recruiter or E2E mock; job seeker sidebar **Hire talent** CTA when not recruiter-eligible. Role switch: `/select-role` awaits React Query refetch of user + recruiter user queries after `PATCH /api/user/role` before navigating; `useRecruiterUser` uses `refetchOnMount: "always"`; `RecruiterLayout` redirect waits until `!isFetching`. RLS migration for recruiter candidate list (follow-up `20260402150000_fix_users_rls_recursion.sql`: `SECURITY DEFINER` helpers `auth_is_recruiter`, `user_is_job_seeker`, `resume_belongs_to_job_seeker` avoid infinite recursion from subqueries on `users`): recruiters can read job_seeker `users` + `resumes` + `user_preferences` + `resume_analysis`. Recruiter candidate search page loads full list on mount up to API limit. Deeper inventory: §4 supplementary lib rows; §6.1 full component catalog by folder. Docs synced to codebase: middleware public API exceptions, unified cron trigger now includes **rate_limit** + **expired ai_cache** cleanup; new routes `GET /api/dashboard`, `GET /api/history`, `GET /api/upload-resume` (list resumes), `GET /api/jobs/applied`, `POST /api/opportunity-alerts/scan`, `POST /api/public/extract-resume`, `POST /api/public/fresher-resume`; dashboard is a **client** page using `useDashboardStats()` → `GET /api/dashboard`; recruiter candidate search uses resume text + preferences filters. GitHub Actions E2E: **cookie mock auth** in `lib/e2e-auth.ts` in **non-production** when mock cookies + `E2E_MOCK_DEFAULT_SECRET` match; `GET`/`PATCH` `/api/user` and `PATCH` `/api/user/role` short-circuit DB for mock IDs. Optional `SUPABASE_SERVICE_ROLE_KEY` for role updates. See `docs/TEST_PLAN_E2E.md`.)
 
 **Product strategy & UX priorities** (positioning, focus, page-level UX backlog): see **`docs/PRODUCT_STRATEGY_UX.md`**. This KT doc describes *implementation*; that doc describes *what to lead with* and *what to simplify*.
 
@@ -10,7 +55,8 @@
 
 ## 1. Project overview
 
-- **Stack:** Next.js 15 (App Router), React 18, TypeScript, Supabase (Auth + Postgres), Tailwind CSS.
+- **Stack:** Next.js 15 (App Router), React 18, TypeScript, Supabase (Auth + Postgres), Tailwind CSS, TanStack Query (React Query) for client data fetching/mutations. **Lint:** ESLint 9 flat config (`eslint.config.mjs`, extends `next/core-web-vitals`); `next build` runs lint + typecheck. **E2E:** Playwright (`playwright.config.ts`, `e2e/`); route matrix and env vars in `docs/TEST_PLAN_E2E.md`; `npm run test:e2e`. **CI:** `.github/workflows/ci.yml` runs lint, typecheck, build, and E2E (Chromium + cached Playwright browsers).
+- **Client data layer:** `lib/query-provider.tsx` wraps the app with `QueryClientProvider`. Hooks in `hooks/queries/` (each pairs with REST routes): `use-dashboard` (`/api/dashboard`, `/api/history`), `use-applications`, `use-auto-apply`, `use-smart-apply`, `use-job-board`, `use-recruiter`, `use-jobseeker-persisted`, `use-recruiter-intelligence`, `use-activity`, `use-notifications`, `use-opportunity-alerts`, `use-streak`, `use-streak-rewards`, `use-daily-actions`, `use-analytics`, `use-career-coach`, `use-resume-performance`, `use-skill-demand`, `use-user` — all use `apiFetch` (`lib/api-fetcher.ts`). **`shared-query-keys.ts`** exports **`sharedQueryKeys.resumes`** so **`use-job-board`** and **`use-smart-apply`** share the same resume-list cache key. **`hooks/mutations/use-hiring-prediction`** wraps **POST /api/hiring-prediction**. **`hooks/mutations/use-generate-cover-letter.ts`** wraps **POST /api/generate-cover-letter** (invalidates dashboard/history, `dispatchUsageUpdated`). Prefer query hooks + shared mutations over ad-hoc `fetch` in new pages.
 - **AI:** Gemini (primary) and OpenAI (fallback on 429/quota). See `lib/ai.ts`. Cached wrappers (`cachedAiGenerate`, `cachedAiGenerateContent`) in `lib/ai.ts` check `ai_cache` table before calling AI, reducing costs 30-50%.
 - **Main flows:** Resume upload & ATS analysis, **Quick Resume Builder** (`/resume-builder` → draft into Resume Analyzer via `sessionStorage`), resume improve (Pro), job match, cover letter, interview prep, **auto job finder**, **AI auto-apply** (killer feature), **smart auto-apply** (set & forget), **resume tailoring**, **application tracker**, **LinkedIn import**. Usage is tracked per feature; free plan has limits.
 - **Improved resume JSON:** `/api/improve-resume` and LinkedIn import responses are passed through **`normalizeImprovedResumeContent`** (`lib/normalizeImprovedResume.ts`); **`ImprovedResumeView`** always renders five sections (Summary, Skills, Experience, Projects, Education) with recovery copy when empty.
@@ -22,7 +68,7 @@
 - **Daily AI Reports:** Auto-generated notifications summarizing daily activity (jobs found, applied, interviews, responses). Sent via cron alongside smart-apply trigger.
 - **Activity Feed:** Personal and public activity tracking. Logs application submissions, resume improvements, milestones (10/25/50/100/250/500 applications). Public milestones visible in community feed. Social proof.
 - **Platform Social Proof:** Aggregated platform stats (total users, applications, interviews, hires, avg match score). Cached in `platform_stats` table, refreshed via cron. Displayed on activity feed page.
-- **Role system:** Users have a `role` field (`job_seeker` or `recruiter`). Role selection at `/select-role`. Switching via `/api/user/role` PATCH. Route groups: `(dashboard)` for job seekers, `(recruiter)` for recruiters.
+- **Role system:** Users have a `role` field (`job_seeker` or `recruiter`) and `last_active_role` (kept in sync on `PATCH /api/user/role`; used with `role` for default post-login landing). Role selection at `/select-role` (shows API errors if PATCH fails). After a successful role PATCH, the page **awaits** `refetchQueries` for `userKeys.me()` and `recruiterKeys.user()` so `/recruiter` does not read stale cached `job_seeker`. Switching via `/api/user/role` PATCH. Route groups: `(dashboard)` for job seekers, `(recruiter)` for recruiters. **Switch UI gating:** `/api/user` returns `recruiter_onboarding_complete` (derived: user has at least one `companies` row). Job seeker sidebar shows **Switch to Recruiter** only when `recruiter_onboarding_complete`; otherwise **Hire talent (recruiter)** → `/select-role?next=/recruiter/company`. Recruiter sidebar shows **Switch to Job Seeker** whenever `role === recruiter` (so recruiter-only users without a company row can still switch back).
 - **Recruiter platform:** Job posting CRUD, ATS pipeline (Kanban), candidate search, AI screening, messaging, templates, analytics, salary estimator, skill gap reports, auto-shortlisting, job optimization, saved alerts, pricing plans. **Similar candidates** API uses candidate skill graph (Jaccard similarity). **Hiring Intelligence** dashboard with time-to-hire, conversion rates, pipeline health, stale application alerts, recommendations. **Top Candidates** ranking with boost visibility. **Push notifications** to candidates (job invites, interview requests, profile views, shortlisted).
 - **Notifications:** Bell icon with Supabase Realtime subscription for instant updates + toast popup. Fallback polling every 60s. Notifications created on auto-apply completion and smart auto-apply.
 - **Growth features:** Shareable ATS score cards (`/share/[token]`). Public profiles (`/u/[slug]`) with skill badges (Expert/Intermediate/Beginner), ATS score, profile strength meter, signup CTA. DOCX watermark.
@@ -42,25 +88,42 @@
 - **SEO Data Moat Pages:** Public pages exposing platform data for organic traffic. `/skills` — "Top Skills to Get Hired in 2026" (interview-guarantee skills by demand/supply ratio, highest paying, trending, most in-demand). `/salary` — "Highest Paying Tech Roles 2026" (aggregated salary table with ranges, city links). Both pages have SEO metadata, OG tags, signup CTAs with "Get 3x More Interviews" messaging.
 - **Core Hook Refocus:** Landing page rebuilt around single viral hook: "Get 3x More Interviews Using AI". Simplified 3-step process. Social proof metrics (3.2x more interviews, 89% resume pass rate, 5 sec shortlist, ₹0 to start). Interactive score preview card showing factor breakdown. Streak rewards showcase. Recruiter section with "8 Perfect Candidates Found" UI preview. Data moat CTA links (Skills, Salary, Jobs).
 
+### 1.1 Repository layout (where code lives)
+
+| Area | Path | Notes |
+|------|------|--------|
+| Job seeker UI | `app/(dashboard)/` | Route group: dashboard, tools, insights pages; uses `DashboardLayout` + `Sidebar` + `Topbar` + **`ProfileCompletionBanner`**. |
+| Recruiter UI | `app/(recruiter)/` | `RecruiterLayout` + `RecruiterSidebar` + `NotificationBell` + **`ProfileCompletionBanner`**; role guard in layout. |
+| API | `app/api/**` | ~83 `route.ts` files; each folder = REST resource. |
+| Shared UI | `components/` | Feature folders (`dashboard/`, `resume/`, `applications/`, `auto-apply/`, …), `components/layout/`, `components/ui/`. |
+| Server libs | `lib/` | Auth, AI, engines (auto-apply, smart-apply, streak, …), Supabase clients, `buildDocx`, validation. |
+| Client hooks | `hooks/queries/` | TanStack Query wrappers around `apiFetch`. |
+| Types | `types/` | Resume, analysis, recruiter, auto-apply, etc. |
+| E2E | `e2e/` | Playwright specs + mock auth helpers. |
+| DB | `supabase/` | `schema.sql`, `migrations/`, `grants.sql`. |
+| Parsers | `utils/` | `pdfParser.ts`, `docxParser.ts` — server-side text extraction (used by `/api/upload-resume`, `/api/public/extract-resume`). |
+
 ---
 
 ## 2. Entry and auth
 
 ### 2.1 Middleware (`middleware.ts`)
 
-- Runs on every request (except static assets). Calls `updateSession()` from `lib/supabase/middleware.ts` to refresh Supabase session cookies.
-- **Protected paths:** `/dashboard`, `/resume-builder`, `/resume-analyzer`, `/job-match`, `/job-board`, `/job-finder`, `/auto-apply`, `/smart-apply`, `/tailor-resume`, `/cover-letter`, `/interview-prep`, `/import-linkedin`, `/applications`, `/analytics`, `/activity`, `/salary-insights`, `/skill-demand`, `/resume-performance`, `/career-coach`, `/streak-rewards`, `/select-role`, `/recruiter`, `/history`, `/pricing`, `/settings`, and all `/api/*` except `/api/auth`. **Public paths:** `/share/[token]` (shareable score card), `/u/[slug]` (public profile), `/results/[token]` (shareable results), `/jobs` and `/jobs/[slug]` (SEO job pages), `/salary/[slug]` and `/salary` (SEO salary pages), `/skills` (SEO skills page), `/api/platform-stats` (social proof).
-- **Behavior:** If unauthenticated on a protected path: API → 401 JSON; page → redirect to `/login?next=<path>`. If authenticated but email not confirmed (`!user.email_confirmed_at`) on a page → redirect to `/login?error=verify`.
+- Runs on every request (except static assets). Calls `updateSession()` from `lib/supabase/middleware.ts` to refresh Supabase session cookies and returns the same Supabase client for follow-up queries. **E2E mock auth:** in non-production, cookies `e2e-mock-role` + `e2e-mock-secret` matching `E2E_MOCK_DEFAULT_SECRET` supply a synthetic Supabase `User` if real `getUser()` is null (Playwright does not need real Supabase passwords).
+- **Recruiter path guard (non-API):** If the path starts with `/recruiter` and the user is authenticated, middleware checks `public.users.role` (or E2E mock role). If not `recruiter`, redirects to `/select-role?next=<original path>`.
+- **Protected path prefixes:** `/dashboard`, `/resume-builder`, `/resume-analyzer`, `/job-match`, `/job-board`, `/job-finder`, `/auto-apply`, `/smart-apply`, `/tailor-resume`, `/cover-letter`, `/interview-prep`, `/import-linkedin`, `/applications`, **`/messages`**, `/analytics`, `/activity`, `/salary-insights`, `/skill-demand`, `/resume-performance`, `/career-coach`, `/streak-rewards`, `/onboarding`, `/select-role`, `/recruiter`, `/history`, `/pricing`, `/settings`, and **most** `/api/*`. **API exceptions (no session required):** `/api/auth/*`, `/api/platform-stats`, `/api/public/*` (public resume extract / fresher flows), `/api/share-result`, `/api/share/` (paths starting with this prefix — note `POST /api/share` without trailing slash is still protected). **Public pages (not listed above):** `/`, `/login`, `/signup`, `/demo`, `/share/[token]`, `/u/[slug]`, `/results/[token]`, `/jobs`, `/jobs/[slug]`, `/salary`, `/salary/[slug]`, `/skills`, etc.
+- **Behavior:** If unauthenticated on a protected path: API → 401 JSON; page → redirect to `/login?next=<path>`. If authenticated but email not confirmed (`!user.email_confirmed_at`) on a **non-API** page → redirect to `/login?error=verify`.
+- **Authenticated landing:** If the user has a session and visits `/`, `/login`, `/login/*`, `/signup`, or `/signup/*`, middleware redirects to the default app home (`/dashboard` or `/recruiter`) using `lib/auth-landing-path.ts` (`getDefaultAppPath`: `last_active_role` / `role`, or E2E mock role). Session cookies from `updateSession` are copied onto the redirect. Unconfirmed users hitting `/` or `/signup` are sent to `/login?error=verify`; unconfirmed users on `/login` stay on login (so the verify loop does not repeat).
 
 ### 2.2 Auth callback (`app/auth/callback/route.ts`)
 
-- GET: reads `code` and `next` from query. Exchanges `code` for session via `supabase.auth.exchangeCodeForSession`, calls `ensureUserRow(userId, email)`, then redirects to `origin + sanitizeRedirectPath(next)` (or `/login?error=auth` on failure).
+- GET: reads `code` and `next` from query. Exchanges `code` for session via `supabase.auth.exchangeCodeForSession`, calls `ensureUserRow(userId, email)`, optional `role` query updates `users.role` + `last_active_role`, then redirects to `origin + sanitizeRedirectPath(next)` (or `/login?error=auth` on failure). When `next` is default `/dashboard`, may redirect to `/recruiter` if `last_active_role` / `role` is recruiter.
 - `sanitizeRedirectPath`: allows only paths starting with `/`, no `//` or `://` (open-redirect safe).
 
 ### 2.3 Auth lib (`lib/auth.ts`)
 
-- **getUser():** Gets Supabase auth user; loads profile from `public.users` (id, email, name, created_at, plan_type, role). If no profile, calls `ensureUserRow` then re-selects.
-- **ensureUserRow(userId, email):** Upserts into `public.users` with `plan_type: "free"`, `role: "job_seeker"`, `onConflict: "id", ignoreDuplicates: true` so existing rows are not overwritten.
+- **getUser():** If E2E mock cookies are valid (`lib/e2e-auth.ts`), returns fixed mock id/email/profile for `recruiter` or `job_seeker` without hitting Supabase Auth. Otherwise: gets Supabase auth user; loads profile from `public.users` (id, email, name, created_at, plan_type, role, last_active_role). If no profile, calls `ensureUserRow` then re-selects.
+- **ensureUserRow(userId, email):** Upserts into `public.users` with `plan_type: "free"`, `role: "job_seeker"`, `last_active_role: "job_seeker"`, `onConflict: "id", ignoreDuplicates: true` so existing rows are not overwritten.
 - **UserRole:** `"job_seeker" | "recruiter"` type. User profile includes `role` field.
 
 ### 2.4 Google OAuth troubleshooting (400 on `/auth/v1/authorize`)
@@ -101,7 +164,7 @@ When the browser shows **`GET .../auth/v1/authorize?provider=google ... 400 (Bad
 | **companies** | Recruiter company profiles: recruiter_id, name, description, website, logo_url, industry, size, location, culture, benefits. |
 | **job_postings** | Recruiter job posts: recruiter_id, company_id?, title, description, requirements, skills_required (JSONB), experience_min/max, salary_min/max, salary_currency, location, work_type, employment_type, status (draft/active/paused/closed), application_count. |
 | **job_applications** | Candidates applying to recruiter jobs: job_id, candidate_id, recruiter_id, resume_id?, resume_text, cover_letter, stage (applied→shortlisted→interview_scheduled→interviewed→offer_sent→hired/rejected), match_score, ai_summary, ai_screening (JSONB), recruiter_notes, recruiter_rating, interview_date, interview_notes. UNIQUE(job_id, candidate_id). |
-| **messages** | Messages between recruiters and candidates: sender_id, receiver_id, job_id?, subject, content, is_read, template_name. |
+| **messages** | Messages between recruiters and candidates: sender_id, receiver_id, job_id?, subject, content, is_read, **read_at** (when receiver read), template_name; optional **attachment_path** / **attachment_name** / **attachment_mime** (Storage **`message-attachments`**). |
 | **message_templates** | Reusable message templates: recruiter_id, name, subject, content, template_type (general/interview_invite/rejection/offer/follow_up). |
 | **saved_searches** | Recruiter saved candidate search alerts: recruiter_id, name, filters (JSONB). |
 | **ai_cache** | AI response cache: hash (TEXT PK), response (JSONB), feature, expires_at. RLS: authenticated can read/write all rows. TTL varies by feature (7d resume, 1d jobs). |
@@ -124,16 +187,31 @@ When the browser shows **`GET .../auth/v1/authorize?provider=google ... 400 (Bad
 | **users.xp_points** | XP points earned through activities. Multiplied by streak multiplier. |
 | **users.streak_freeze_count** | Number of streak freeze tokens available (preserves streak if 1 day missed). |
 
-**RLS:** All tables have RLS; policies scope by `auth.uid()` (own user or own related row). `resume_analysis` uses `EXISTS (resumes.id = resume_analysis.resume_id AND resumes.user_id = auth.uid())`. Recruiter tables: recruiters manage own rows; candidates can view/insert their own applications; anyone can view active job_postings and companies. Platform stats, salary data, skill demand are publicly readable.
+**RLS:** All tables have RLS; policies scope by `auth.uid()` (own user or own related row). `resume_analysis` uses `EXISTS (resumes.id = resume_analysis.resume_id AND resumes.user_id = auth.uid())`. **Recruiter candidate search:** migration `20260402120000_recruiter_candidate_search_rls.sql` adds policies so authenticated **recruiters** can `SELECT` **job_seeker** rows in `users`, plus related `resumes`, `user_preferences`, and `resume_analysis` for search/detail APIs (otherwise list returned `[]`). **Recruiter-triggered ATS:** `20260402170000_recruiter_insert_resume_analysis.sql` adds `INSERT` on `resume_analysis` for recruiters when the resume belongs to a job seeker (required for **POST /api/recruiter/resumes/[resumeId]/analyze**). **Do not** use raw `EXISTS (SELECT … FROM public.users …)` inside those policies — it causes infinite RLS recursion; `20260402150000_fix_users_rls_recursion.sql` replaces checks with `auth_is_recruiter()` / `user_is_job_seeker(uuid)` / `resume_belongs_to_job_seeker(uuid)`. **Messaging:** job seekers cannot `SELECT` recruiter rows in `users` under RLS, so **POST /api/messages** must not rely on a direct `users` lookup for the recipient — migration **`20260402180000_user_role_for_messaging_rpc.sql`** adds **`user_role_for_id(uuid)`** (`SECURITY DEFINER`, returns `role` or null) for recipient validation. **`search_message_recipients`** ( **`20260404100000_search_message_recipients.sql`**, hardened **`20260404110000_messaging_search_hardening.sql`**) powers name/email recipient search for the compose **To** field. **Realtime:** migration **`20260404130000_realtime_messages_publication.sql`** adds **`public.messages`** to **`supabase_realtime`** so **`useMessages`** can **`postgres_changes`** subscribe (invalidate React Query when the other party inserts/updates a row). Requires valid Supabase browser session (RLS applies). **Peer display:** **`20260405100000_avatars_bucket_and_peer_profiles.sql`** — Storage bucket **`avatars`** (public read; authenticated insert/update/delete only under **`{auth.uid()}/…`**); RPC **`messaging_peer_profiles(p_peer_ids uuid[])`** (**`SECURITY DEFINER`**) returns **`id, name, avatar_url`** for ids that have at least one **`messages`** row with **`auth.uid()`** (used by **`GET /api/messages`**). **Company logos:** **`20260405130000_company_logos_bucket.sql`** — bucket **`company-logos`**, same folder rule (**`{auth.uid()}/…`**). Job seekers and recruiters remain one `users` table distinguished by `role` — no duplicate tables. Recruiter tables: recruiters manage own rows; candidates can view/insert their own applications; anyone can view active job_postings and companies. Platform stats, salary data, skill demand are publicly readable.
 
 ---
 
-## 4. Lib layer (server-side)
+## 4. Lib layer (server-side and shared)
+
+**Supplementary (shared client / helpers)** — used across UI and server:
+
+| File | Role |
+|------|------|
+| **lib/api-fetcher.ts** | `apiFetch<T>` — JSON wrapper; throws on `!res.ok` with body text. **`apiFetchBlob`** — returns `Blob`. **`apiFetchJsonWithHumanizer`** / **`apiFetchFormJsonWithHumanizer`** — parse `{ error, detail }` then run a `humanize*` from **`lib/friendlyApiError.ts`** (used by resume/cover/upload **`hooks/mutations/*`**). **`apiFetchMultipartJson`** — multipart POST, JSON response (e.g. **`usePublicExtractResume`**). For custom flows, **`lib/api-error.ts`**. |
+| **lib/api-error.ts** | Parses JSON error bodies `{ error?, detail? }` from API responses; **`formatApiError`**, **`formatApiFetchThrownError`** (for `Error.message` from **`apiFetch`**) for user-facing strings. |
+| **lib/query-provider.tsx** | App-wide `QueryClientProvider` with sensible defaults (stale time, retry). Wraps client tree in root layout. |
+| **lib/normalizeImprovedResume.ts** | `normalizeImprovedResumeContent(raw)` — coerces AI JSON into consistent `ImprovedResumeContent` (five sections). Used by improve-resume and LinkedIn import paths. |
+| **lib/friendlyApiError.ts** | `humanizeUploadResumeError`, `humanizeImproveResumeError`, `humanizeCoverLetterError`, `humanizeSmartApplyError`, `humanizeNetworkError` — maps API error strings to user-facing copy (401, 429, Pro gates). |
+| **lib/utils/cn.ts** | `cn(...)` — `clsx` + `tailwind-merge` for conditional classNames (used by UI primitives). |
+| **lib/e2e-auth.ts** | Playwright mock auth: validates `e2e-mock-role` / `e2e-mock-secret` cookies vs `E2E_MOCK_DEFAULT_SECRET`; exports mock user ids/emails. Consumed by `lib/auth.ts` and `lib/supabase/middleware.ts`. |
+
+**Domain and infrastructure** (primary server modules):
 
 | File | Role |
 |------|------|
 | **lib/supabase/server.ts** | `createClient()` for server: uses Next `cookies()` (getAll/setAll). Used in Server Components and API routes. |
-| **lib/supabase/middleware.ts** | `updateSession(request)`: creates Supabase client with request/response cookies, calls `getUser()` to refresh session, returns NextResponse. |
+| **lib/supabase/middleware.ts** | `updateSession(request)`: creates Supabase client with request/response cookies, calls `getUser()` to refresh session, returns `{ response, user, supabase }` for follow-up queries (e.g. `public.users.role`). |
+| **lib/auth-landing-path.ts** | `getDefaultAppPath(supabase, userId, e2eRole)` → `/dashboard` or `/recruiter` (same rules as post-login). `redirectWithSessionCookies(sessionResponse, url)` for redirects after session refresh. |
 | **lib/supabase/client.ts** | Browser Supabase client (if used). |
 | **lib/auth.ts** | See §2.3. |
 | **lib/ai.ts** | `aiGenerate(systemPrompt, userContent, { jsonMode? })`, `aiGenerateContent(prompt)`. Prefers Gemini; on 429/quota/rate-limit error falls back to OpenAI if `OPENAI_API_KEY` set. Cached wrappers: `cachedAiGenerate(system, user, { jsonMode?, cacheFeature? })`, `cachedAiGenerateContent(prompt, cacheFeature?)` — check ai_cache first, store on miss. |
@@ -148,7 +226,12 @@ When the browser shows **`GET .../auth/v1/authorize?provider=google ... 400 (Bad
 | **lib/smartApplyEngine.ts** | `getActiveSmartRules()`, `executeSmartRule(rule)`, `runAllSmartRules()` — checks rules, creates auto-apply runs, auto-selects qualifying jobs, auto-confirms applications, respects daily/weekly limits, notifies user. Called from `/api/smart-apply/trigger`. |
 | **lib/candidateGraph.ts** | `syncCandidateSkills(userId, structured)` — upserts skills with proficiency to `candidate_skills` table. `syncSkillBadges(userId, structured)` — upserts skill badges for profile. `findSimilarCandidates(userId, limit)` — Jaccard similarity search across candidate_skills. |
 | **lib/publicProfile.ts** | `generateSlug(name)` — URL-friendly slug with random suffix. `calculateProfileStrength(profile)` — 0-100 based on completeness (name, headline, bio, avatar, skills, resume, ATS score). `ensurePublicSlug(userId, name)` — creates unique slug if not exists. |
-| **lib/notifications.ts** | `createNotification(userId, type, title, message, data?)` — inserts into notifications table. Non-critical, silently ignores errors. |
+| **lib/recalculate-profile-strength.ts** | **`recalculateProfileStrengthForUser(supabase, userId)`** — reads **`users`** + skill/resume/ATS counts, writes **`users.profile_strength`**. Used by **`PATCH /api/profile`**, **`POST`/`DELETE /api/user/avatar`**. |
+| **lib/avatar-storage.ts** | **`avatarStoragePathFromPublicUrl(url)`** — parses Storage path from a public **`avatars`** object URL (for delete/replace on upload). |
+| **lib/message-attachments.ts** | **`MESSAGE_ATTACHMENTS_BUCKET`**, allowed MIME + size constants; **`isAttachmentPathOwnedBySender`**, **`safeAttachmentFileName`**, **`messagesWithSignedAttachmentUrls`** (signed **`attachment_url`** for **`GET /api/messages`** and thread). |
+| **lib/company-logo-storage.ts** | **`companyLogoStoragePathFromPublicUrl(url)`** — same for **`company-logos`** URLs. |
+| **lib/image-upload-validate.ts** | **`IMAGE_UPLOAD_MAX_BYTES`**, **`ALLOWED_IMAGE_MIME`**, **`validateImageMagicBytes`**, **`extensionForImageMime`** — shared by user avatar and company logo routes. |
+| **lib/notifications.ts** | **`createNotification`** — inserts for the **current** user (RLS). **`createNotificationForUser`** — inserts for **another** user via **`createServiceRoleClient`** when **`SUPABASE_SERVICE_ROLE_KEY`** is set (e.g. **POST /api/messages** notifies **`receiver_id`**). If the service role client is missing, logs **`notification_delivery_skipped`** (monitorable prefix). Insert failures log **`notification_insert_failed`** (no longer fully silent). |
 | **lib/activityFeed.ts** | `logActivity(userId, type, title, description?, metadata?, isPublic?)` — logs user activity. `getUserActivityFeed(userId, limit, offset)` — own activities. `getPublicActivityFeed(limit)` — public milestones. `checkAndLogMilestones(userId)` — auto-detects and logs application milestones (10/25/50/100/250/500). |
 | **lib/socialProof.ts** | `getPlatformStats()` — reads cached stats from platform_stats table. `refreshPlatformStats()` — aggregates across users/applications/hires, updates cached row. Called from cron. |
 | **lib/recruiterPush.ts** | `sendRecruiterPush(recruiterId, candidateId, pushType, title, message, jobId?)` — sends push notification to candidate. Rate limited to 10/day per recruiter. Also creates regular notification for bell display. `getCandidatePushes(candidateId)`, `markPushRead(pushId, candidateId)`. |
@@ -168,21 +251,28 @@ When the browser shows **`GET .../auth/v1/authorize?provider=google ... 400 (Bad
 | **lib/opportunityAlerts.ts** | `getActiveAlerts(userId)` — non-dismissed, non-expired alerts. `createHighMatchAlert(userId, job, score)` — for 85%+ matches, with dedup. `createLowCompetitionAlert()`. `createRecruiterInterestAlert()`. `scanOpportunities(userId)` — checks recent auto-apply results for high matches, unresponded recruiter pushes. `dismissAlert()`, `markAlertSeen()`. |
 | **lib/gemini.ts** | `isGeminiAvailable()`, `geminiGenerate`, `geminiGenerateContent`. Model: gemini-2.5-flash. Requires `GEMINI_API_KEY`. |
 | **lib/openai.ts** | `isOpenAIAvailable()`, `chatCompletion(system, user, { jsonMode? })`. Model: gpt-4o-mini. Requires `OPENAI_API_KEY`. |
-| **lib/usage.ts** | `getUsageCount(userId, feature)`, `canUseFeature(userId, feature, planType)`, `logUsage(userId, feature)`, `getUsageSummary(userId, planType)` — single-query optimization (1 DB call instead of 8). Free limits: resume_analysis 3, job_match 3, cover_letter 1, interview_prep 0, resume_improve 0 (Pro only), job_finder 1, auto_apply 2, smart_apply 0 (Pro only). |
-| **lib/rateLimit.ts** | DB-backed rate limiter (serverless-safe): 10 requests per minute per user. `await checkRateLimit(userId)` → `{ allowed, retryAfterMs }`. Uses `usage_logs` table with `rate_limit` feature. Fail-open on DB errors. |
+| **lib/usage-limits.ts** | Client-safe: **`FeatureType`**, **`FREE_PLAN_LIMITS`** (free monthly caps). Imported by dashboard UI; **`lib/usage.ts`** re-exports for server routes. |
+| **lib/usage.ts** | `getUsageCount`, `canUseFeature`, `logUsage`, `checkAndLogUsage`, `getUsageSummary`. Uses **`FREE_PLAN_LIMITS`** from **`usage-limits.ts`**. **`getUsageSummary`** runs **8 parallel `COUNT` queries** (one per feature, monthly). Pro **`checkAndLogUsage`** returns accurate **`used`** after logging. |
+| **lib/rateLimit.ts** | DB-backed rate limiter (serverless-safe): **`checkRateLimit(userId)`** — 10/min, feature **`rate_limit`**. **`checkRecipientSearchRateLimit(userId)`** — feature **`message_recipient_search`** for **`GET /api/messages/recipient-search`**; max/minute from **`RECIPIENT_SEARCH_RATE_LIMIT_MAX`** (default **45**, see **`lib/rate-limit-config.ts`**). **429** responses log JSON **`recipient_search_rate_limited`** to server logs. Shared implementation; fail-open on DB errors. |
 | **lib/validation.ts** | `isValidUUID(id)`, `sanitizeRedirectPath(path, fallback)`, `escapeHtml(str)`. |
 | **lib/buildDocx.ts** | `buildImprovedResumeDocx(content: ImprovedResumeContent)` → Buffer (DOCX). Used by download and export-docx APIs. Includes "Created with AI Job Assistant" watermark footer. |
+| **lib/ats-resume-analysis.ts** | Shared ATS prompts and `runAtsAnalysisFromText(parsedText, { recheck?, previousAnalysis? })` (uses `cachedAiGenerateContent`). Used by **POST /api/analyze-resume** and **POST /api/recruiter/resumes/[resumeId]/analyze**. |
+| **lib/resume-for-user.ts** | `getResumeParsedTextForUser` — strict load of resume `parsed_text` for the current user (cover letter generation). `getResumeForJobApplication` — same row for **POST /api/jobs/[id]/apply**; allows empty parsed text (stored as null). `getImprovedResumePlainTextForUser` — loads `improved_resumes.improved_content`, normalizes, flattens via **`improvedResumeContentToPlainText`** (**`lib/improved-resume-plaintext.ts`**) for apply and cover letter when user picks an AI improved resume. |
+| **lib/job-posting-text.ts** | `buildJobPostingPromptText` — single plain-text blob from title, description, requirements, skills, location, work/employment type, company name (used for job-board cover letter context). |
+
+**Client conventions (summary):** Prefer **`apiFetch`** + **`hooks/queries/*`** for reads; for cover letter generation use **`useGenerateCoverLetter`** so usage and dashboard queries stay in sync. Server routes should reuse **`lib/resume-for-user`** when resolving resume text by id instead of duplicating `select` blocks.
 
 ---
 
 ## 5. API routes (behavior and data flow)
 
-All protected APIs use `getUser()`; 401 if no user. Many use `checkRateLimit(user.id)` and return 429 when not allowed. Feature-gated routes use `canUseFeature` and `logUsage`.
+All protected APIs use `getUser()`; 401 if no user. Many use `checkRateLimit(user.id)` and return 429 when not allowed. Feature-gated routes use `canUseFeature` and `logUsage`. **AI caching:** `/api/interview-prep`, `/api/import-linkedin`, `/api/auto-jobs`, `/api/recruiter/salary-estimate`, `/api/recruiter/jobs/generate-description`, `/api/recruiter/applications/[id]/screen`, `/api/recruiter/skill-gap`, `/api/recruiter/jobs/[id]/optimize`, and `/api/recruiter/jobs/[id]/auto-shortlist` use `cachedAiGenerate` (same arguments/JSON as uncached; cache hits read `ai_cache`).
 
 | Route | Method | Purpose |
 |-------|--------|--------|
-| **/api/analyze-resume** | POST | Body: resumeText, resumeId?, recheckAfterImprovement?, previousAnalysis?. Validates; checks rate limit and resume_analysis feature; calls AI (RECHECK_PROMPT if recheck); inserts resume_analysis if resumeId; logs usage; returns ATSAnalysisResult. |
-| **/api/upload-resume** | POST | Multipart: file (PDF/DOCX, max 5MB). Parses text (pdfParser/docxParser), uploads to storage, inserts resumes row with storage path (not signed URL); returns { id, parsed_text }. |
+| **/api/analyze-resume** | POST | Body: resumeText, resumeId?, recheckAfterImprovement?, previousAnalysis?. Validates; checks rate limit and resume_analysis feature; **`runAtsAnalysisFromText`** from `lib/ats-resume-analysis.ts`; inserts resume_analysis if resumeId matches owner; logs usage; returns ATSAnalysisResult. |
+| **/api/upload-resume** | GET, POST | **GET:** List current user's uploaded resumes (`id`, derived `file_name`, `file_url`, `created_at`). **POST:** Multipart file (PDF/DOCX, max 5MB). Parses text, uploads to storage, inserts `resumes` row; returns `{ id, parsed_text }`. |
+| **/api/improved-resumes** | GET | List current user's AI improved resumes for UI pickers: `{ improvedResumes: [{ id, label, created_at }] }` (`label` defaults from `job_title`). Used by **Job Board** apply alongside **GET /api/upload-resume**. |
 | **/api/resume-file/[id]** | GET | On-demand signed URL generation (15-min expiry) for downloading resume files. Verifies ownership. Backward-compatible with legacy full URLs. |
 | **/api/resume-analysis/[id]** | GET | Validates UUID; fetches resume_analysis by id (no user_id filter; RLS applies). Optionally loads resume parsed_text. Returns analysis + resume_text, resume_id. |
 | **/api/improve-resume** | POST | Body: resumeText, resumeId?, jobTitle?, jobDescription?, previousAnalysis?. Pro-only (canUseFeature resume_improve). AI returns ImprovedResumeContent; inserts improved_resumes (user_id, resume_id if any, job_title, job_description); logs activity (resume_improved); returns { ...content, improvedResumeId }. |
@@ -191,12 +281,15 @@ All protected APIs use `getUser()`; 401 if no user. Many use `checkRateLimit(use
 | **/api/improved-resumes/export-docx** | POST | Body: { content: ImprovedResumeContent }. Auth only. Builds DOCX from content (no DB row); returns file. Used when client has content but no saved id. |
 | **/api/job-match** | POST | Body: resumeText, resumeId?, jobDescription, jobTitle?. Usage job_match; AI match; inserts job_matches (user_id, resume_id?, job_description, job_title, resume_text, match_score, analysis); logs usage; returns match result. |
 | **/api/job-matches/[id]** | GET | Fetches job_matches by id and user_id. |
-| **/api/generate-cover-letter** | POST | Body: companyName, jobTitle, jobDescription, resumeText, etc. Usage cover_letter; AI; inserts cover_letters; logs after save; returns content. |
+| **/api/generate-cover-letter** | POST | Body: **`jobDescription`** (required), plus at least one resume source. If multiple are sent, **priority** is **`improvedResumeId`** → **`resumeId`** → **`resumeText`**. Usage cover_letter; AI; inserts cover_letters; returns `{ coverLetter, id, companyName, jobTitle, createdAt }`. |
 | **/api/cover-letters** | GET | List cover_letters for user. |
 | **/api/cover-letters/[id]** | GET, PATCH, DELETE | Single cover letter by id and user_id. |
 | **/api/interview-prep** | POST | Body: role, experienceLevel, resumeText?. Usage interview_prep; AI; inserts interview_sessions; returns content_json. |
 | **/api/usage** | GET | Returns getUsageSummary for current user. |
-| **/api/user** | GET | Current user profile. PATCH: update name/preferences (validated/sanitized). |
+| **/api/user** | GET, PATCH | GET: `id`, `email`, `name`, `plan_type`, `role`, `last_active_role`, **`headline`**, **`bio`**, **`avatar_url`**, **`profile_strength`**, `recruiter_onboarding_complete`, `preferences`. **PATCH:** name + preferences (validated/sanitized). **`recalculateProfileStrengthForUser`** runs only when **`name`** is present in the body (name affects strength); preference-only updates return current **`profile_strength`** without full recalc. No-op body returns current **`profile_strength`**. |
+| **/api/user/avatar** | POST, DELETE | **POST:** multipart field **`file`** (JPEG/PNG/WebP, max 2MB, magic-byte checked) → Storage **`avatars/{userId}/…`**, public URL on **`users.avatar_url`**, **`recalculateProfileStrengthForUser`**. **DELETE:** clears **`avatar_url`**, removes prior object when URL matches this bucket. |
+| **/api/dashboard** | GET | Aggregated dashboard payload: recent **`resume_analysis`** (via **`resumes!inner(user_id)`** + **`eq("resumes.user_id", user.id)`** — only the seeker’s own analyses), **`job_matches`**, **`cover_letters`**, application count, avg match score, **`getUsageSummary`**, user display name, plan. Used by **`useDashboardStats()`**. |
+| **/api/history** | GET | Longer lists (limit 50) of analyses, matches, cover letters, improved resumes for history UI (`useHistory()`). |
 | **/api/user/delete-account** | POST | Deletes related data (resumes, resume_analysis, improved_resumes, job_matches, cover_letters, usage_logs, etc.) then auth user. |
 | **/api/dev/plan** | PATCH | Dev only (NODE_ENV === development). Body: planType (free|pro|premium). Updates users.plan_type for current user. |
 | **/api/auto-jobs** | POST | Body: resumeText, location?. Extracts skills via AI, searches Adzuna API (if ADZUNA_APP_ID/ADZUNA_APP_KEY set) + generates AI job suggestions. Saves to job_searches. Usage: job_finder (free: 1/month). |
@@ -204,24 +297,38 @@ All protected APIs use `getUser()`; 401 if no user. Many use `checkRateLimit(use
 | **/api/applications** | GET, POST | GET: list all applications for user. POST: create new application (company, role required; status, applied_date, url, salary, location, notes optional). Logs activity (application_submitted) and checks milestones. |
 | **/api/applications/[id]** | GET, PATCH, DELETE | Single application by id and user_id. PATCH: partial update. DELETE: remove. |
 | **/api/import-linkedin** | POST | Body: profileText (min 50 chars). AI parses LinkedIn profile text into ImprovedResumeContent JSON. |
-| **/api/user/role** | PATCH | Body: { role }. Switches user role between job_seeker and recruiter. |
+| **/api/user/role** | PATCH | Body: `{ role }`. Updates `users.role` and `users.last_active_role`. Uses `SUPABASE_SERVICE_ROLE_KEY` when set (server-only); otherwise session client. E2E mock user IDs skip DB. On failure may return `detail` (Postgres message). Migration `20260402140000_users_update_policy_explicit_check.sql` sets explicit UPDATE `WITH CHECK` on `public.users`. |
+| **/api/history** | GET | Lists up to 50 each: resume_analysis, job_matches, cover_letters, improved_resumes for current user. Used by `useHistory`. |
+| **/api/jobs/applied** | GET | Returns `job_id[]` from `job_applications` for current user (recruiter-posted jobs already applied to). Empty array on error. |
+| **/api/opportunity-alerts/scan** | POST | Auth. Triggers `scanOpportunities(userId)` for the current user (manual scan endpoint). |
+| **/api/public/extract-resume** | POST | **Public** (no auth). Multipart `file` — extracts plain text from PDF/DOCX/TXT (max 4MB) for landing / pre-signup flows; text returned to client (e.g. sessionStorage). |
+| **/api/public/fresher-resume** | POST | **Public.** JSON body (desired role, education, skills, projects). `cachedAiGenerate` returns `{ resumeText, atsScore }` for fresher landing → signup flows. |
 | **/api/jobs** | GET | Public: list active job postings with filters (search, location, work_type, employment_type, skills). Paginated. |
 | **/api/jobs/[id]** | GET | Public: single active job posting with company info. |
-| **/api/jobs/[id]/apply** | POST | Job seeker applies to a job. Body: { resume_id?, cover_letter? }. Increments application_count. |
-| **/api/recruiter/company** | GET, POST | Recruiter company profiles CRUD. |
+| **/api/jobs/[id]/apply** | POST | Job seeker applies to a job. Body: **`cover_letter`**, and optionally **`resume_id`** OR **`improved_resume_id`** (not both). Upload path: **`getResumeForJobApplication`**. Improved path: **`getImprovedResumePlainTextForUser`**; `job_applications.resume_id` is set to the improved row’s underlying `resumes.id` when present, else null; `resume_text` holds flattened improved content. Increments application_count. |
+| **/api/recruiter/company** | GET, POST | **GET:** JSON **array** of companies for this recruiter (newest first). **POST:** create. |
 | **/api/recruiter/company/[id]** | GET, PATCH, DELETE | Single company profile. |
+| **/api/recruiter/company/[id]/logo** | POST, DELETE | Multipart **`file`** (JPEG/PNG/WebP, 2MB) → **`company-logos/{userId}/…`**, sets **`companies.logo_url`**. **DELETE** clears URL + removes storage object. |
 | **/api/recruiter/jobs** | GET, POST | List/create job postings. |
 | **/api/recruiter/jobs/[id]** | GET, PATCH, DELETE | Single job posting CRUD. |
-| **/api/recruiter/jobs/generate-description** | POST | AI-generated job description from title, skills, experience level, work type. |
+| **/api/recruiter/jobs/generate-description** | POST | Body: `title`, optional `skills[]`, `work_type`, optional `experience_level` (entry|mid|senior|lead|executive), optional `experience_min` / `experience_max` (for prompt context). Returns JSON: **`description`**, **`requirements`**, **`skills_required`** (string array). Uses `cachedAiGenerate` with jsonMode + cache feature `job_description`. |
 | **/api/recruiter/jobs/[id]/optimize** | POST | AI analysis of job posting: suggestions, optimized title/description, score. |
 | **/api/recruiter/jobs/[id]/auto-shortlist** | POST | AI auto-screen applied candidates, shortlist top matches. Returns shortlisted count. |
 | **/api/recruiter/applications** | GET | List applications for recruiter's jobs with filters (job_id, stage). |
 | **/api/recruiter/applications/[id]** | GET, PATCH, DELETE | Single application: update stage, notes, rating, interview_date. |
 | **/api/recruiter/applications/[id]/screen** | POST | AI screening of candidate resume against job requirements. Saves ai_screening JSONB. |
 | **/api/recruiter/applications/[id]/interview** | POST, PATCH, DELETE | Schedule/reschedule/cancel interview. Updates interview_date, interview_notes, stage. |
-| **/api/recruiter/candidates** | GET | Search candidates with skills/experience/location filters. |
-| **/api/recruiter/candidates/[id]** | GET | Detailed candidate profile with resumes and preferences. |
-| **/api/recruiter/messages** | GET, POST | List messages (with unread filter) and send messages. |
+| **/api/recruiter/candidates** | GET | Recruiter-only. Query: `skills`, `experience`, `location`, `page` (default 1), `pageSize` (default 25, max 100). Scans up to **5000** newest `job_seeker` rows with nested `resumes` + `user_preferences`, builds full filtered list (**includes users without resumes**; `has_resume` + `resume_preview` when text exists — preview is a **prefix** of parsed text, length in **`limits.resume_preview_chars`**). Skill/location filters match that preview text. Returns **JSON**: `{ candidates, page, pageSize, total, totalPages, truncated?, limits, search_quality: { model, note } }`. **`search_quality`** documents that this is **not** exhaustive full-text search over all users. `truncated` is true if the DB scan hit the 5000 cap. |
+| **/api/recruiter/candidates/[id]** | GET | Detailed candidate: `users` + nested `resumes(resume_analysis(...))` + `user_preferences`. Job seeker only; 404 otherwise. On query failure, JSON may include **`detail`** (Postgres/PostgREST message) for debugging embed/select issues. |
+| **/api/recruiter/resumes/[resumeId]/download** | GET | Recruiter-only. Returns JSON `{ url }` — signed URL (15 min) or legacy full URL for the resume file in `resumes` storage; verifies resume owner is `job_seeker`. |
+| **/api/recruiter/resumes/[resumeId]/analyze** | POST | Recruiter-only. Runs ATS on the resume’s **`parsed_text`** (non-empty); `checkAndLogUsage(recruiter, "resume_analysis", …)`; inserts `resume_analysis`; requires RLS policy from **`20260402170000_recruiter_insert_resume_analysis.sql`**. Returns ATSAnalysisResult JSON. |
+| **/api/messages** | GET, POST | Authenticated. **GET:** JSON **`{ messages, peer_profiles, has_more?, next_before?, partial? }`**. Each message may include **`read_at`**, attachment fields, and signed **`attachment_url`** when **`attachment_path`** is set. Query: **`limit`** (default **100**, max **200**), **`before`**, **`unread=true`**. Pagination: **`has_more`**, **`next_before`**; **`partial`** is **`true`**. **`peer_profiles`:** RPC **`messaging_peer_profiles`**. **POST:** **`receiver_id`**, **`content`** (or attachment-only with empty body stored as **`(attachment)`**), optional **`subject`**, **`job_id`**, **`template_name`**, optional **`attachment_path`** / **`attachment_name`** / **`attachment_mime`** (path must be under the sender’s Storage folder from **`POST /api/messages/attachment`**). **`user_role_for_id`**; recruiter ↔ job seeker only. **`createNotificationForUser`** on insert. |
+| **/api/messages/thread** | GET | **Peer-scoped thread** (full conversation independent of inbox pagination). Query: **`peer_id`** (required UUID), **`limit`**, **`before`**. JSON: **`{ messages, peer_profiles, has_more, next_before, peer_id }`** — messages include signed **`attachment_url`** when applicable. Used by **`useThreadMessages`**. |
+| **/api/messages/unread-summary** | GET | **`{ counts: Record<peerId, number> }`** — unread inbound **`messages`** grouped by **`sender_id`** (conversation partner). Drives sidebar/thread badges with **`useMessageUnreadSummary`**. |
+| **/api/messages/mark-read** | POST | Body **`{ peer_id }`**. Marks inbound messages from that conversation partner as read for the current user (**`is_read`**, **`read_at`**). |
+| **/api/messages/recipient-search** | GET | Query **`q`** (min 2 chars). Returns **`{ results: { id, name, email, role }[] }`** of opposite-role users matching name/email (compose **To** field). RPC **`search_message_recipients`** escapes **`%` / `_` / `\`** for **`ILIKE … ESCAPE '\'`**; ordering favors exact email, then prefix matches, then recent messaging activity (see **`20260407120000_messages_read_at_attachments_search_rank.sql`**). **`pg_trgm`** indexes on **`users.email`** / **`name`**. **Rate limit:** **`checkRecipientSearchRateLimit`**. **429** + **`Retry-After`**; **`recipient_search_rate_limited`** in logs. |
+| **/api/messages/attachment** | POST | Multipart **`file`** — uploads to **`message-attachments/{userId}/…`**; JSON **`{ attachment_path, attachment_name, attachment_mime }`** for **`POST /api/messages`**. Max **5MB**; allowed types aligned with bucket policy. |
+| **/api/recruiter/messages** | GET, POST | Re-exports the same **`GET`/`POST`** handlers as **`/api/messages`** (legacy path; clients may use either). |
 | **/api/recruiter/templates** | GET, POST | Message templates CRUD. |
 | **/api/recruiter/templates/[id]** | GET, PATCH, DELETE | Single template. |
 | **/api/recruiter/alerts** | GET, POST | Saved search alerts CRUD. |
@@ -234,8 +341,8 @@ All protected APIs use `getUser()`; 401 if no user. Many use `checkRateLimit(use
 | **/api/notifications** | GET, PATCH | GET: list notifications (max 30). PATCH: mark single read (body: { id }) or all read (body: { mark_all_read: true }). |
 | **/api/share** | POST | Generate share token for resume_analysis. Body: { analysis_id }. Verifies ownership via resumes FK. Returns existing token or generates new one (32-char hex). |
 | **/api/smart-apply** | GET, POST, PATCH | GET: list user's smart apply rules. POST: create/update rule (body: resume_id, min_match_score, salary range, preferred_roles, locations, include_remote, daily/weekly limits). Pro-only. PATCH: toggle enable/disable (body: { id, enabled }). |
-| **/api/smart-apply/trigger** | POST | Unified cron endpoint: (1) run all smart apply rules, (2) send daily report notifications, (3) refresh platform stats, (4) refresh skill demand data, (5) recruiter auto-push, (6) scan opportunity alerts for recently active users. Protected by `CRON_SECRET` header in production. |
-| **/api/profile** | GET, PATCH | GET: own public profile with badges, resume count, best ATS score. PATCH: update headline, bio, profile_visible. Auto-generates public slug on enable. Recalculates profile strength. |
+| **/api/smart-apply/trigger** | POST | Unified cron endpoint: (1) `runAllSmartRules`, (2) daily report notifications (sample of recent auto-apply users), (3) `refreshPlatformStats`, (4) `refreshSkillDemand`, (5) `runDailyRecruiterAutoPush`, (6) `scanOpportunities` for users active in streaks (recent days), (7) delete stale `usage_logs` rows where `feature=rate_limit` older than 5 minutes, (8) delete expired `ai_cache` rows. Protected by `Authorization: Bearer CRON_SECRET` in production; dev allows unauthenticated POST. |
+| **/api/profile** | GET, PATCH | GET: own public profile with badges, resume count, best ATS score. PATCH: update headline, bio, profile_visible. Auto-generates public slug on enable. **PATCH** ends with **`recalculateProfileStrengthForUser`** (same formula as avatar upload). |
 | **/api/insights** | GET | Learning insights + conversion funnel for current user. Returns { insights: LearningInsights, funnel: ConversionFunnel }. |
 | **/api/daily-report** | GET | Today's daily report for current user (jobs found, applied, interviews, responses, action items). |
 | **/api/recruiter/intelligence** | GET | Hiring intelligence dashboard: metrics, pipeline health, source performance, top jobs, recommendations. Recruiter-only. |
@@ -264,21 +371,23 @@ All protected APIs use `getUser()`; 401 if no user. Many use `checkRateLimit(use
 
 | Page | Path | Behavior |
 |------|------|----------|
-| Landing | `/` | app/page.tsx — **client component** with Job Seeker / Recruiter tab toggle. Job Seeker: "Get 3x More Interviews" hero, Upload→Score→Apply flow, interview probability preview, streak rewards. Recruiter: "Top 10 Candidates In 5 Seconds" hero, Post→Shortlist→Hire flow, recruiter tools grid, candidate preview. All CTAs link to `/signup?role=${activeTab}`. Shared pricing + career intelligence. |
+| Landing | `/` | app/page.tsx — **client component** with Job Seeker / Recruiter tab toggle. **Free** tier pricing bullets use **`FREE_PLAN_LIMITS`** so marketing matches enforcement. CTAs link to `/signup?role=${activeTab}`. |
 | Login | `/login` | Login form; redirect `next` sanitized. |
 | Signup | `/signup` | Sign up. |
 | Reset | `/login/reset` | Password reset. |
-| Dashboard | `/dashboard` | Server: getUser, getUsageSummary, `applications` count (for checklist), recent resume_analysis, job_matches, cover_letters; activity list sorted by date. **ProductNarrativeBanner**, **StartHereChecklist** (3 steps; dismiss in `localStorage`), **StartHereActions** (Analyzer / Match / Auto-Apply), **ExploreMoreActions** (builder, job board, finder, smart apply, tailor, cover, interview, coach, applications). Client widgets: **StreakWidget**, **OpportunityAlerts**, **DailyActions**. ScoreCard, JobMatchAvgCard, UsageCard, ActivityList. |
+| Dashboard | `/dashboard` | **Client page** (`"use client"`). Data via **`useDashboardStats()`** → `GET /api/dashboard` (recent analyses, matches, cover letters, application count, avg match score, usage, name, plan). **ProductNarrativeBanner**, **StartHereChecklist** (3 steps; dismiss in `localStorage`), **StartHereActions**, **ExploreMoreActions**. Lazy-loaded: **StreakWidget**, **DailyActions**, **OpportunityAlerts**. **ScoreCard**, **JobMatchAvgCard**, **UsageCard**, **ActivityList** (recent activity derived from dashboard payload). |
 | Resume Analyzer | `/resume-analyzer` | Client: upload, paste text, analyze, improve (optional job/analysis context). Query params: analysisId, improvedId (load past analysis or improved resume). State: improvedResumeId passed to ImprovedResumeView for DOCX download. Re-analyze improved resume uses analysisForRecheck snapshot. |
 | Job Match | `/job-match` | JobMatchForm; calls /api/job-match; MatchResult. |
 | Cover Letter | `/cover-letter` | CoverLetterForm; generate; CoverLetterResult. |
 | Interview Prep | `/interview-prep` | Form (role, level, resume); InterviewQuestions. |
-| History | `/history` | Server: lists resume_analysis, job_matches, improved_resumes, cover_letters (each by user_id; resume_analysis has no user_id column – RLS only). HistoryImprovedResumeSection receives loadError from query; shows error or empty hint. |
+| History | `/history` | Uses **`useHistory()`** → `GET /api/history` for analyses, matches, cover letters, improved resumes. **HistoryImprovedResumeSection** and related components; handles load errors and empty states. |
 | Auto Job Finder | `/job-finder` | Client: upload/paste resume + optional location; calls /api/auto-jobs; shows SkillsOverview (extracted skills) + JobResults (job cards with apply links, source filter). |
+| AI Auto-Apply | `/auto-apply` | Client: Uses `usePastRuns`, `useStartAutoApply` hooks for list/start. Polling for run status updates still uses raw fetch (transient state). AutoApplyForm → AutoApplyProgress → AutoApplyResults flow. Past runs list. |
 | Resume Tailoring | `/tailor-resume` | Client: upload/paste resume + paste job description; calls existing /api/improve-resume with jobTitle + jobDescription; renders ImprovedResumeView with download options. |
 | LinkedIn Import | `/import-linkedin` | Client: upload LinkedIn PDF or paste profile text; calls /api/import-linkedin; renders ImprovedResumeView. |
-| Smart Auto-Apply | `/smart-apply` | Client: Pro feature. Configure rules (match score slider, salary range, roles, locations, remote toggle, daily/weekly limits). View active rules with stats (total applied, total runs). Toggle enable/disable. How-it-works section. |
-| Applications | `/applications` | Client: CRUD application tracker with board (Kanban) and list views; stats row; status filter; inline status change. |
+| Smart Auto-Apply | `/smart-apply` | Client: Pro feature. Uses `useSmartApplyRules`, `useResumes`, `useUsage`, `useSaveSmartApplyRule`, `useToggleSmartApplyRule` hooks. Configure rules (match score slider, salary range, roles, locations, remote toggle, daily/weekly limits). View active rules with stats (total applied, total runs). Toggle enable/disable. How-it-works section. |
+| Applications | `/applications` | Client: Uses `useApplications`, `useDeleteApplication`, `useUpdateApplicationStatus` hooks. CRUD application tracker with board (Kanban) and list views; stats row; status filter; inline status change. |
+| Messages (job seeker) | `/messages` | Same **`MessagesInbox`** as recruiters (pagination + load older). Query params: **`compose=1`**, **`receiver_id=`**, **`peer=`**. |
 | Career Analytics | `/analytics` | Client: AI-powered insights dashboard. Key metrics (applications, interviews, offers, avg response time). Conversion funnel (Saved→Applied→Interview→Offer). AI recommendations. Skills that get interviews vs roles to reconsider. Learning system status with dynamic weights. |
 | Activity Feed | `/activity` | Client: Tabs for "My Activity" (personal) and "Community" (public milestones). Platform stats social proof banner (6 metrics). Activity timeline with typed icons and colors. |
 | Salary Insights | `/salary-insights` | Client: Search by job title + location + experience. Shows salary range (min/avg/max), percentile distribution bar, trend (rising/stable/declining), comparable roles. |
@@ -290,18 +399,19 @@ All protected APIs use `getUser()`; 401 if no user. Many use `checkRateLimit(use
 | SEO Job Page | `/jobs/[slug]` | **Public** server component. Full job posting with JSON-LD structured data (JobPosting schema). OG meta. Skills, salary, requirements. Signup CTA for AI-powered application. |
 | SEO Salary Page | `/salary/[slug]` | **Public** server component. Salary ranges, percentiles, common skills for any role. Format: `/salary/react-developer-in-bangalore`. SEO optimized. |
 | Pricing | `/pricing` | Client: plan comparison (Free ₹0 / Pro ₹299 / Premium ₹499). Feature lists include smart auto-apply, profile boost, daily reports, hiring prediction. Upgrade buttons. |
-| Job Board | `/job-board` | Client: browse active recruiter-posted jobs with search/filters. Apply with resume selection and cover letter. |
-| Role Select | `/select-role` | Choose job_seeker or recruiter role on first visit. |
-| Settings | `/settings` | SettingsForm; DevPlanSwitcher (dev only) to toggle plan_type. |
-| **Recruiter Dashboard** | `/recruiter` | Stats (active jobs, applications, unread messages), quick actions, recent applications. |
+| Job Board | `/job-board` | Client: browse active recruiter-posted jobs with search/filters. Apply with resume selection and optional cover letter; **Generate with AI** uses **`buildJobPostingPromptText`** + **`useGenerateCoverLetter`** (**resumeId** + composed job text). |
+| Role Select | `/select-role` | Choose job_seeker or recruiter role; PATCH `/api/user/role`; awaits query refetch before `router.push` to avoid recruiter layout seeing stale role. |
+| Settings | `/settings` | SettingsForm (**profile photo**, **profile strength** explainer `<details>`); DevPlanSwitcher (dev only) to toggle plan_type. |
+| **Recruiter Dashboard** | `/recruiter` | Stats: active jobs, applications, **unread messages** (sum of **`GET /api/messages/unread-summary`** counts), quick actions, recent applications. |
 | Recruiter Jobs | `/recruiter/jobs` | Job listings with status filter, toggle active/paused, delete. |
 | New Job | `/recruiter/jobs/new` | Create job with AI description generator. |
 | Edit Job | `/recruiter/jobs/[id]` | Edit job details, status, delete. |
 | Optimize Job | `/recruiter/jobs/[id]/optimize` | AI job post optimization with score and suggestions. |
 | Auto-Shortlist | `/recruiter/jobs/[id]/auto-shortlist` | AI auto-screen unreviewed applications. |
-| Candidates | `/recruiter/candidates` | Search candidate resume database with skills/experience/location filters. |
+| Candidates | `/recruiter/candidates` | Loads page 1 on mount (**25 per page**; API allows up to **100**). Copy documents **resume text preview** length for filters. **`GET /api/recruiter/candidates`** returns **`limits`** plus **`truncated`** when the 5000-user scan cap is hit. |
+| Candidate profile | `/recruiter/candidates/[id]` | Client page: **GET /api/recruiter/candidates/[id]**; preferences + resumes with ATS analysis (from `resume_analysis`), extracted text preview, **Download** + **Preview** (signed URL; PDF in iframe), **Run ATS analysis** (**POST /api/recruiter/resumes/[resumeId]/analyze** when `parsed_text` is present). **Message in app** → **`/recruiter/messages?compose=1&receiver_id=…`**; optional **Copy user ID** for support. |
 | Applications (ATS) | `/recruiter/applications` | ATS pipeline (Kanban + list view), AI screening, rating, stage management. |
-| Messages | `/recruiter/messages` | Inbox and compose messages to candidates. |
+| Messages | `/recruiter/messages` | **`MessagesInbox`**: conversations + **Load older messages** (paginated **`GET /api/messages`**); banner when the inbox may be partial. Compose: **`?compose=1&receiver_id=`**, **`peer=`**. **`useMessages`** (**infinite query**) / **`useSendMessage`** (invalidates message queries) → **`/api/messages`**; thread open → **`POST /api/messages/mark-read`**. |
 | Templates | `/recruiter/templates` | CRUD message templates (interview invite, rejection, offer, follow-up). |
 | Company Profile | `/recruiter/company` | Company profile form. |
 | Analytics | `/recruiter/analytics` | Dashboard with metrics, pipeline breakdown, top jobs. |
@@ -315,20 +425,171 @@ All protected APIs use `getUser()`; 401 if no user. Many use `checkRateLimit(use
 | SEO Salary Index | `/salary` | **Public**. "Highest Paying Tech Roles 2026". Aggregated salary table with avg, range, data points. City links. SEO metadata + OG tags. Signup CTA. |
 | Saved Alerts | `/recruiter/alerts` | Manage saved candidate search alerts. |
 | Pricing Plans | `/recruiter/pricing` | Recruiter plan comparison (Starter ₹999 / Pro ₹4,999 / Enterprise ₹14,999). |
-| Recruiter Settings | `/recruiter/settings` | Display name, role switch. |
+| Recruiter Settings | `/recruiter/settings` | Display name, **profile photo** (**`/api/user/avatar`**), role switch. |
 
-### 6.1 Key components
+### 6.1 Component catalog (`components/` — 64 TSX files)
 
-- **ImprovedResumeView:** Props: content, improvedResumeId?. Copy: improvedToPlainText → clipboard with "Copied!" / error feedback. PDF: iframe with srcdoc HTML → print() then remove iframe on afterprint (no blob URL in address bar). DOCX: if improvedResumeId → open GET download URL; else POST /api/improved-resumes/export-docx with content and trigger download. Uses esc() for HTML in print view (XSS-safe).
-- **ResumeUpload, ResumeAnalysisResult, JobMatchForm, MatchResult, CoverLetterForm, CoverLetterResult, InterviewQuestions:** Form + result per feature.
-- **Dashboard:** ScoreCard, JobMatchAvgCard, UsageCard, ActivityList, **ProductNarrativeBanner** / **StartHereChecklist** / **StartHereActions** / **ExploreMoreActions**, **StreakWidget** (flame icon, streak count, level badge, XP multiplier, streak freeze indicator, progress bar to next reward, stats row with best streak/active days/XP), **DailyActions** (personalized to-do checklist with completion progress bar, priority labels, action icons, "Go" links, 100% completion celebration), **OpportunityAlerts** (urgency-colored alert cards with dismiss, action links, auto-scan on load).
-- **Layout:** DashboardLayout, Sidebar (nav + mobile hamburger), Topbar (usage refresh).
-- **RecruiterLayout:** Server component in `(recruiter)/layout.tsx`; checks `role === 'recruiter'`, redirects to `/select-role` if not.
-- **RecruiterSidebar:** Navigation for recruiter section with all recruiter pages + Instant Shortlist + Top Candidates + "Switch to Job Seeker" link.
-- **RecruiterTopbar:** Simple topbar with user dropdown and NotificationBell.
-- **NotificationBell:** Supabase Realtime subscription for instant notifications. Toast popup on new notification. Animated pulse badge for unread count. Falls back to 60s polling if Realtime unavailable. Used in RecruiterTopbar (can add to dashboard Topbar).
-- **JobMatchCard:** Shows match score circle, interview probability badge (HIGH/MEDIUM/LOW), expandable interview chance panel with progress bar, reasons, and boost tips. Checkbox for apply selection.
-- **AutoApplyForm/AutoApplyProgress/AutoApplyResults:** Config form, status display, and results with job selection and confirm flow.
+Grouped by folder; each file is a React component unless noted.
+
+**Layout (`components/layout/`)**
+
+| Component | Role |
+|-----------|------|
+| **DashboardLayout** | Wraps job seeker pages: sidebar + topbar + **`ProfileCompletionBanner`** (job seeker: profile strength &lt; 70) + main content area. |
+| **Sidebar** | Client; `navGroups` sections (Start here → Track & insights); **Messages** link to **`/messages`** (after Applications) with aggregate unread badge via **`useMessageUnreadState`** (mounts **`useMessageUnreadRealtime`**; wraps **`useMessageUnreadSummary`** with 30s polling fallback; overflow `9+`); mobile drawer, overlay, Escape to close, body scroll lock. |
+| **Topbar** | **`useUser`** + **`useUsage`** (`GET /api/usage`): monthly resume/job chips; limits fall back to **`FREE_PLAN_LIMITS`** for free tier (not legacy 2/1). **Upgrade** only when user row is loaded and **`plan_type === free`**. **Messages** shortcut: **`/recruiter/messages`** if the route is under **`/recruiter`**, otherwise **`/messages`** (same rule as **`NotificationBell`** message links) + aggregate unread badge via **`useMessageUnreadState`** (mounts **`useMessageUnreadRealtime`**). **`NotificationBell`** remains separate. Tagline aligned with product (no hard multiplier claims). |
+| **RecruiterLayout** | Used by `(recruiter)/layout.tsx`; enforces recruiter role (redirect to `/select-role?next=/recruiter` only when not loading/fetching; `useRecruiterUser` refetches on mount). **`ProfileCompletionBanner`** when no company row (`!recruiter_onboarding_complete`). |
+| **RecruiterSidebar** | Full recruiter nav (jobs, candidates, ATS, messages, templates, company, analytics, salary, skill gap, instant shortlist, top candidates, alerts, pricing, settings). **Messages** item shows aggregate unread badge via **`useMessageUnreadState`** (mounts **`useMessageUnreadRealtime`**; overflow `9+`). |
+| **RecruiterTopbar** | Recruiter header: **Messages** link (**`/recruiter/messages`**) with aggregate unread badge via **`useMessageUnreadState`** (mounts **`useMessageUnreadRealtime`**) + **NotificationBell**; optional **company logo** badge (**`useRecruiterCompany`**) next to **`UserAvatar`**. |
+| **ProfileCompletionBanner** | Below **`Topbar`** / **`RecruiterTopbar`**: nudges job seekers until **`profile_strength` ≥ 70** and recruiters until **`recruiter_onboarding_complete`**. Path-aware: on **`/settings`** / **`/recruiter/company`** shows helper text instead of redundant “Go to settings” / “Add company” links. |
+| **NotificationBell** | Loads **`/api/notifications`** (includes **`data` JSONB**). Realtime **`INSERT`** + **`UPDATE`** on **`notifications`** for the current user; toast on insert; click **message** notifications → **`/messages?peer=`** or **`/recruiter/messages?peer=`** from **`data.sender_id`**; mark read / mark all read with optimistic cache updates. |
+
+**Dashboard (`components/dashboard/`)**
+
+| Component | Role |
+|-----------|------|
+| **ProductNarrativeBanner** | Hero CTA strip toward resume analyzer / core value. |
+| **StartHereChecklist** | 3-step onboarding checklist (ATS, job match, application); dismiss persisted in `localStorage`. |
+| **StartHereActions** / **ExploreMoreActions** | Primary and secondary shortcut cards to main tools. |
+| **ScoreCard** / **JobMatchAvgCard** / **UsageCard** | Latest ATS score, average job match %, monthly usage meters. |
+| **ActivityList** | Recent activity derived from dashboard API data; empty state with suggested actions. |
+| **StreakWidget** | Lazy-loaded; streak, level, XP multiplier, freeze tokens, progress to next reward (uses streak API hooks). |
+| **DailyActions** | Lazy-loaded; `/api/daily-actions` checklist, priorities, completion progress. |
+| **OpportunityAlerts** | Lazy-loaded; `/api/opportunity-alerts`; background `POST /api/opportunity-alerts/scan` decoupled from list load. |
+| **QuickActions** | Compact action chips (where used). |
+
+**Auto-apply (`components/auto-apply/`)**
+
+| Component | Role |
+|-----------|------|
+| **AutoApplyForm** | Resume select, location, roles, salary, max results; starts `POST /api/auto-apply`. |
+| **AutoApplyProgress** | Polling UI while run status is `pending` / `processing`. |
+| **AutoApplyResults** | Review table/cards; PATCH selected jobs; confirm → `POST .../confirm`. |
+| **JobMatchCard** | Per-job match %, interview probability (HIGH/MEDIUM/LOW), expandable reasons/boost tips, optional checkbox for batch apply. |
+
+**Applications (`components/applications/`)**
+
+| Component | Role |
+|-----------|------|
+| **ApplicationBoard** | Kanban + list views; drag/status updates via applications API hooks. |
+| **ApplicationForm** | Create/edit single application fields. |
+
+**Messages (`components/messages/`)**
+
+| Component | Role |
+|-----------|------|
+| **MessagesInbox** | Shared UI for **`/messages`** and **`/recruiter/messages`**: **mobile (`< lg`) single-pane** (inbox list → thread/compose full-screen with **Back**), **desktop (`lg+`) split-pane** (list + thread). Compose supports **`?compose=1&receiver_id=`** (redirects to **`peer=`** when history exists). **`RecipientPicker`** (**`GET /api/messages/recipient-search`**). **`POST /api/messages/mark-read`** whenever the open thread contains unread inbound messages (gated by tab visibility/focus; clears unread summary optimistically and broadcasts via **`useMessagingReadSync`** so the peer refetches **`read_at`**). Attachments via **`POST /api/messages/attachment`**. **Sent/Read** on own bubbles; **`useMessagingTyping`**. Thread UX: auto-scroll to latest on open and after sending; incoming messages auto-scroll only when near bottom; otherwise show **Jump to latest**; renders a **New messages** divider before the first unread inbound message. Mobile composer uses **`safe-bottom`**. |
+| **RecipientPicker** | Compose **To** field: debounced search, dropdown of matches; deep-linked **`receiver_id`** shows a locked recipient hint until changed. |
+
+**Resume (`components/resume/`)**
+
+| Component | Role |
+|-----------|------|
+| **ResumeUpload** | File upload + paste; drives upload/analyze flow on analyzer page. |
+| **ResumeAnalysisResult** | ATS score UI, missing skills, improvements; may show **UpgradeBanner**, **FeedbackButtons**, **ShareScoreButton**. |
+| **ImprovedResumeView** | Renders normalized five sections; copy plaintext; PDF via hidden iframe `print()`; DOCX via saved id GET or **POST** `/api/improved-resumes/export-docx`; XSS-safe escaping for print HTML. |
+
+**Job & cover & interview & tailor & LinkedIn**
+
+| Path | Components |
+|------|------------|
+| **job/** | **JobMatchForm**, **MatchResult** — job match flow; feedback/share on result. |
+| **job-finder/** | **JobFinderForm**, **SkillsOverview**, **JobResults** — auto-jobs search, source filter. |
+| **cover-letter/** | **CoverLetterForm**, **CoverLetterResult**. |
+| **interview/** | **InterviewQuestions** — grouped Q&A display. |
+| **tailor/** | **TailorResumeForm** — tailor via improve-resume API. |
+| **linkedin/** | **LinkedInImportForm** — paste/upload → import API. |
+
+**Landing (`components/landing/`)**
+
+| Component | Role |
+|-----------|------|
+| **LandingRoleToggle** | Switches Job Seeker vs Recruiter tab on `/`. |
+| **JobSeekerLanding** / **RecruiterLanding** | Tab-specific hero, steps, proof sections. |
+| **HeroResumeCTA** | Resume CTA block. |
+| **JobSeekerProofSection** | Social proof metrics. |
+| **LandingTrustPreview** | Score/candidate preview cards. |
+| **CreateResumeFresherFlow** | Fresher path; may call **POST `/api/public/fresher-resume`**. |
+| **landingShell** / **landingPaths** / **landingTypes** | Shared layout/constants/types for landing. |
+
+**Auth (`components/auth/`)**
+
+| Component | Role |
+|-----------|------|
+| **auth-split-shell** | Two-column layout for login/signup pages. |
+| **auth-trust-signals** | Trust badges (3.2× users, etc.). |
+
+**UI primitives (`components/ui/`)**
+
+| Component | Role |
+|-----------|------|
+| **UserAvatar** | Initials fallback or image for **`avatar_url`**; used in **`MessagesInbox`**, **`SettingsForm`**. |
+| **Button**, **Card** (with header/title/description/content/footer), **Input** (incl. Textarea, Select), **Label** | Styled form building blocks; **Button** has variants/sizes. |
+| **PageLoading** | Full-page/section loading states for route `loading.tsx`. |
+| **SectionSkeleton** | **CardRowSkeleton**, **ListSkeleton**, etc., for dashboard lazy boundaries. |
+| **ProgressBar** | Determinate progress. |
+| **AIProgressIndicator** | Indeterminate AI step indicator. |
+| **EmptyState** | Icon + title + description + action. |
+| **UpgradeBanner** | Usage-limit nudges (amber/red) when `_usage` near zero. |
+| **FeedbackButtons** | Thumbs up/down → **POST `/api/feedback`**. |
+| **ShareScoreButton** | Native share or clipboard for scores. |
+| **SuccessAnimation** | Full-screen success overlay; `onDone` via ref to avoid effect loops. |
+| **index.ts** | Re-exports Button, Card, Input, Label, PageLoading. |
+
+### 6.2 Cross-cutting behavior (summary)
+
+- **ImprovedResumeView** — central to analyzer, tailor, LinkedIn import; always uses **normalizeImprovedResumeContent** upstream.
+- **FeedbackButtons** — wired on **ResumeAnalysisResult**, **MatchResult**, **CoverLetterResult**.
+- **ShareScoreButton** — **ResumeAnalysisResult**, **MatchResult**.
+- Lazy **Suspense** boundaries on dashboard for **StreakWidget**, **DailyActions**, **OpportunityAlerts** to reduce initial JS.
+
+### 6.3 TanStack Query hooks (`hooks/queries/`)
+
+Each file exports one or more `use*` hooks; all use `apiFetch` unless noted.
+
+| File | APIs touched (typical) |
+|------|-------------------------|
+| **use-user.ts** | `GET /api/user`; **`useDeleteAccount`** → `POST /api/user/delete-account`; **`useUploadAvatar`** / **`useRemoveAvatar`** → **`POST`/`DELETE /api/user/avatar`** (updates **`userKeys.me()`** + **`recruiterKeys.user()`** cache + invalidates both). |
+| **use-dashboard.ts** | `GET /api/dashboard`, `GET /api/history` |
+| **use-applications.ts** | `GET/PATCH/DELETE /api/applications`, `/api/applications/[id]`; **`useSaveApplication`** (POST create or PATCH by id) |
+| **use-auto-apply.ts** | `GET /api/auto-apply`, `GET /api/auto-apply/[id]`, `POST /api/auto-apply`, `PATCH /api/auto-apply/[id]` (selections), `POST /api/auto-apply/[id]/confirm` |
+| **use-smart-apply.ts** | `GET/POST/PATCH /api/smart-apply`, `GET /api/upload-resume`, `GET /api/usage` |
+| **use-job-board.ts** | `GET /api/jobs`, `GET /api/jobs/applied`, `GET /api/upload-resume`, `GET /api/improved-resumes`, `POST /api/jobs/[id]/apply` (optional `improved_resume_id`) |
+| **use-recruiter.ts** | Recruiter CRUD: jobs (`POST/PATCH`, AI `generate-description`, `…/optimize`, `…/auto-shortlist`); **`GET /api/recruiter/candidates`** (`useRecruiterCandidatesSearch`), **`GET /api/recruiter/candidates/[id]`** (`useRecruiterCandidateDetail`); resume **`/download`** signed URL + **`/analyze`** (`useRecruiterResumeSignedUrl`, `useRecruiterResumeAnalyze`); **`POST /api/recruiter/skill-gap`**, **`POST /api/recruiter/salary-estimate`**; **`useMessages`** / **`useRecruiterMessages`** → **`GET /api/messages`**; **`useSendMessage`** → **`POST /api/messages`**; **`useRecruiterCompany`** (first row from array); **`useSaveCompany`** (invalidates company + user queries); **`useUploadCompanyLogo`** / **`useRemoveCompanyLogo`**; templates, alerts, top-candidates, push, instant-shortlist; **`useUpdateUser`** merges **`profile_strength`** from **`PATCH /api/user`** into caches; `PATCH /api/user/role` |
+| **use-activity.ts** | `GET /api/activity-feed`, `GET /api/platform-stats` |
+| **use-notifications.ts** | `GET/PATCH /api/notifications` |
+| **use-opportunity-alerts.ts** | `GET/PATCH /api/opportunity-alerts`, `POST /api/opportunity-alerts/scan` |
+| **use-streak.ts** | `GET/POST /api/streak` |
+| **use-streak-rewards.ts** | `GET/POST /api/streak-rewards` |
+| **use-daily-actions.ts** | `GET/PATCH /api/daily-actions` |
+| **use-analytics.ts** | `GET /api/insights` |
+| **use-career-coach.ts** | `GET /api/career-coach` |
+| **use-resume-performance.ts** | `GET /api/resume-performance`, `POST /api/share-result` (benchmark share) |
+| **use-skill-demand.ts** | `GET /api/skill-demand` |
+
+**Note:** Prefer **`hooks/mutations/*`** and query-module mutations in **`use-auto-apply.ts`** / **`use-recruiter.ts`** over ad-hoc `fetch` for shared invalidation; file uploads still use multipart helpers.
+
+### 6.4 TanStack Query mutations (`hooks/mutations/`)
+
+**Barrel:** **`hooks/mutations/index.ts`** re-exports the hooks below for convenient imports.
+
+| File | Role |
+|------|------|
+| **use-upload-resume.ts** | `useUploadResume()` → **POST /api/upload-resume** (multipart). Invalidates `jobBoardKeys.resumes()` + `dashboardKeys.stats`. **`ResumeUpload`**, **`TailorResumeForm`**, **`JobFinderForm`**, **`LinkedInImportForm`**. |
+| **use-analyze-resume.ts** | `useAnalyzeResume()` → **POST /api/analyze-resume**. **`/resume-analyzer`** (initial analyze + re-check improved resume). |
+| **use-improve-resume.ts** | `useImproveResume()` → **POST /api/improve-resume**. **`/resume-analyzer`**, **`TailorResumeForm`**. |
+| **use-import-linkedin.ts** | `useImportLinkedIn()` → **POST /api/import-linkedin**. **`LinkedInImportForm`**. |
+| **use-auto-jobs.ts** | `useAutoJobsSearch()` → **POST /api/auto-jobs**. **`JobFinderForm`**. |
+| **use-job-match.ts** | `useJobMatch()` → **POST /api/job-match**. **`JobMatchForm`**. |
+| **use-generate-cover-letter.ts** | `useGenerateCoverLetter()` → **POST /api/generate-cover-letter**. **`CoverLetterForm`**, **`/job-board`**. |
+| **use-cover-letter-crud.ts** | `useCoverLetterContent` (GET), `usePatchCoverLetter` (PATCH), `useDeleteCoverLetter` (DELETE) for **`/api/cover-letters/[id]`**. Invalidates **`dashboardKeys.history`**. **`HistoryCoverLetterSection`**, **`CoverLetterResult`**. |
+| **use-salary-intelligence.ts** | `useSalaryIntelligenceSearch()` → **GET /api/salary-intelligence**. **`/salary-insights`**. |
+| **use-interview-prep.ts** | `useInterviewPrep()` → **POST /api/interview-prep**. **`/interview-prep`**. |
+| **use-dev-plan.ts** | `useDevPlanPatch()` → **PATCH /api/dev/plan** (local dev). **`DevPlanSwitcher`**. |
+| **use-feedback.ts** | `useSubmitFeedback()` → **POST /api/feedback**. **`FeedbackButtons`**. |
+| **use-public-landing.ts** | `usePublicExtractResume()` (multipart **POST /api/public/extract-resume**), `usePublicFresherResume()` (**POST /api/public/fresher-resume**). Landing hero / fresher flow. |
+
+Rows above through **use-generate-cover-letter** call **`dispatchUsageUpdated`** and invalidate **`dashboardKeys.stats`** + **`dashboardKeys.history`** where the API records usage or history (upload invalidates stats + resume list only). Cover-letter CRUD only touches **`dashboardKeys.history`**.
 
 ---
 
@@ -341,7 +602,8 @@ All protected APIs use `getUser()`; 401 if no user. Many use `checkRateLimit(use
 - **types/autoApply.ts:** AutoApplyConfig, AutoApplyJobResult (includes interview_probability), AutoApplyRun, InterviewProbability, SmartApplyRules, SmartApplyRule.
 - **types/structuredResume.ts:** StructuredResume, StructuredExperience, StructuredProject, StructuredEducation.
 - **types/application.ts:** Application, ApplicationStatus, STATUS_LABELS, STATUS_COLORS.
-- **types/recruiter.ts:** Company, JobPosting, JobApplication, AIScreening, Message, MessageTemplate, ApplicationStage, STAGE_LABELS, STAGE_COLORS, WorkType, EmploymentType, WORK_TYPE_LABELS, EMPLOYMENT_TYPE_LABELS.
+- **types/recruiter.ts:** Company, JobPosting, JobApplication, AIScreening, **Message** (**read_at**, optional attachment metadata + API **`attachment_url`**), MessageTemplate, ApplicationStage, STAGE_LABELS, STAGE_COLORS, WorkType, EmploymentType, WORK_TYPE_LABELS, EMPLOYMENT_TYPE_LABELS.
+- **types/messages.ts:** **`PeerProfile`**, **`MessagesListResponse`** (`messages` + **`peer_profiles`**) for **`GET /api/messages`**.
 
 ---
 
@@ -352,8 +614,8 @@ All protected APIs use `getUser()`; 401 if no user. Many use `checkRateLimit(use
 - **next.config.ts:** Security headers (X-Frame-Options DENY, X-Content-Type-Options nosniff, HSTS, Referrer-Policy, Permissions-Policy). `serverExternalPackages` for pdf-parse and mammoth.
 - **CI/CD:** `.github/workflows/ci.yml` — runs lint, type check (`tsc --noEmit`), and build on push/PR to main.
 - **DB Triggers:** `updated_at` auto-update triggers on applications, auto_apply_runs, job_postings, job_applications, companies tables.
-- **Supabase Realtime:** Enabled on `notifications` table for instant notification delivery to the NotificationBell component. Must enable Realtime replication for the `notifications` table in Supabase Dashboard → Database → Replication.
-- **Cron:** Single cron endpoint `POST /api/smart-apply/trigger` handles: (1) Smart Auto-Apply execution, (2) daily report notifications, (3) platform stats refresh, (4) skill demand data refresh, (5) recruiter auto-push (matches candidates to active jobs). Protected by `Authorization: Bearer CRON_SECRET`. Recommended: daily at midnight. Options: Vercel Cron, Railway Cron, GitHub Actions scheduled workflow.
+- **Supabase Realtime:** Enabled on **`notifications`** for **NotificationBell**; **`public.messages`** must be in the Realtime publication (Dashboard → Database → Replication) or **`postgres_changes`** never fires and the inbox/thread will not live-update. **`useMessages`** subscribes with **`sender_id` / `receiver_id`** filters; **`useThreadMessages`** adds a per-open-thread channel (**`messages-thread:{uid}:{peerId}`**) and a **~12s `refetchInterval`** fallback while a thread is open. Typing uses **broadcast** on **`typing:{sorted peer ids}`**.
+- **Cron:** `POST /api/smart-apply/trigger` runs smart apply, daily reports, platform stats, skill demand, recruiter auto-push, opportunity scans, **rate_limit log cleanup**, and **expired AI cache cleanup**. Protected by `Authorization: Bearer CRON_SECRET` in production. Recommended: daily at midnight (Vercel / Railway / GitHub Actions).
 
 ---
 
@@ -377,14 +639,15 @@ New page: `app/(dashboard)/onboarding/page.tsx` — 3-step guided experience:
 
 Added to middleware protected routes. New users redirected to `/onboarding` after signup.
 
-### 9.3 Sidebar Reorganization
+### 9.3 Sidebar (`components/layout/Sidebar.tsx`)
 
-Navigation items grouped into categories with section headers:
-- **(no label):** Dashboard
-- **Apply:** Resume Analyzer, Job Match, Job Board, Auto Job Finder, AI Auto-Apply, Smart Auto-Apply
-- **Improve:** Resume Tailoring, Cover Letter, Interview Prep, LinkedIn Import, AI Career Coach
-- **Insights:** Applications, Career Analytics, Resume Performance, Activity Feed, Salary Insights, Skill Demand, Streak Rewards
-- **(no label):** History, Pricing, Settings
+Navigation groups (see file for exact order and icons):
+- **Start here:** Dashboard, Quick Resume Builder, Resume Analyzer, Job Match, AI Auto-Apply
+- **Explore more:** Job Board, Auto Job Finder, Smart Auto-Apply, Resume Tailoring, Cover Letter, Interview Prep, AI Career Coach
+- **Advanced:** LinkedIn Import
+- **Track & insights:** Applications, **Messages** (`/messages`), Career Analytics, Resume Performance, Activity Feed, Salary Insights, Skill Demand, Streak Rewards
+- **(no group label):** History, Pricing, Settings
+- Footer: **Switch to Recruiter** (when applicable)
 
 ### 9.4 Landing Page Changes
 
@@ -427,12 +690,10 @@ New public page: `app/demo/page.tsx` — accessible without authentication.
 - Full results are blurred/locked behind signup CTA
 - Converts curiosity into signups
 
-### 9.8 Notification Copy Improvements
+### 9.8 Notification copy (auto-apply confirm)
 
-Updated notification messages to be more engaging:
-- Auto-Apply confirm: `"X new applications sent!"` → `"Your next interview could be around the corner!"`
-- Smart Apply: `"X high-match jobs found for you today!"`
-- Daily Report: `"Your daily career update is ready!"`
+- Auto-Apply confirm notification: **title** includes count (e.g. `N new application(s) sent!`); **message** includes `Your next interview could be around the corner!` (see `app/api/auto-apply/[id]/confirm/route.ts`).
+- Smart Apply and daily report copy remain in their respective notification creators in `lib/smartApplyEngine.ts` / `lib/dailyReport.ts`.
 
 ### 9.9 Smart Upgrade Triggers
 

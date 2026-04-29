@@ -99,19 +99,33 @@ export async function checkBoostStatus(userId: string): Promise<{
  */
 export async function updateCandidateRank(userId: string): Promise<number> {
   const supabase = await createClient();
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  // Factors: profile completeness, ATS score, skills count, activity
-  const { data: user } = await supabase
-    .from("users")
-    .select("profile_strength, is_boosted, boost_multiplier")
-    .eq("id", userId)
-    .single();
+  // Run all independent queries in parallel
+  const [
+    { data: user },
+    { data: userResumes },
+    { count: skillsCount },
+    { count: recentActivity },
+  ] = await Promise.all([
+    supabase
+      .from("users")
+      .select("profile_strength, is_boosted, boost_multiplier")
+      .eq("id", userId)
+      .single(),
+    supabase.from("resumes").select("id").eq("user_id", userId),
+    supabase
+      .from("candidate_skills")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId),
+    supabase
+      .from("activity_feed")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .gte("created_at", thirtyDaysAgo.toISOString()),
+  ]);
 
-  // Get best ATS score (resume_analysis has no user_id; join via resumes)
-  const { data: userResumes } = await supabase
-    .from("resumes")
-    .select("id")
-    .eq("user_id", userId);
   const resumeIds = (userResumes || []).map((r) => r.id);
   let bestAtsScore = 0;
   if (resumeIds.length > 0) {
@@ -123,21 +137,6 @@ export async function updateCandidateRank(userId: string): Promise<number> {
       .limit(1);
     bestAtsScore = analyses?.[0]?.score || 0;
   }
-
-  // Get skills count
-  const { count: skillsCount } = await supabase
-    .from("candidate_skills")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId);
-
-  // Get recent activity (last 30 days)
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const { count: recentActivity } = await supabase
-    .from("activity_feed")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .gte("created_at", thirtyDaysAgo.toISOString());
 
   const profileStrength = user?.profile_strength || 0;
   const atsScore = bestAtsScore;
@@ -187,21 +186,52 @@ export async function getTopCandidates(
     .limit(limit);
 
   const { data } = await query;
-  if (!data) return [];
+  if (!data || data.length === 0) return [];
 
-  // Enrich with skills
+  const userIds = data.map((u) => u.id);
+
+  // Batch-fetch skills and resumes for ALL users at once (eliminates N+1)
+  const [{ data: allSkills }, { data: allResumes }] = await Promise.all([
+    supabase
+      .from("candidate_skills")
+      .select("user_id, skill, years_experience")
+      .in("user_id", userIds)
+      .order("years_experience", { ascending: false }),
+    supabase.from("resumes").select("id, user_id").in("user_id", userIds),
+  ]);
+
+  const skillsByUser = new Map<string, string[]>();
+  for (const s of allSkills || []) {
+    const arr = skillsByUser.get(s.user_id) || [];
+    if (arr.length < 5) arr.push(s.skill);
+    skillsByUser.set(s.user_id, arr);
+  }
+
+  const resumeIdsByUser = new Map<string, string[]>();
+  for (const r of allResumes || []) {
+    const arr = resumeIdsByUser.get(r.user_id) || [];
+    arr.push(r.id);
+    resumeIdsByUser.set(r.user_id, arr);
+  }
+
+  // Batch-fetch ATS scores for all resume IDs
+  const allResumeIds = (allResumes || []).map((r) => r.id);
+  let atsScoreByResumeId = new Map<string, number>();
+  if (allResumeIds.length > 0) {
+    const { data: allAnalyses } = await supabase
+      .from("resume_analysis")
+      .select("resume_id, score")
+      .in("resume_id", allResumeIds);
+    for (const a of allAnalyses || []) {
+      const current = atsScoreByResumeId.get(a.resume_id) || 0;
+      if (a.score > current) atsScoreByResumeId.set(a.resume_id, a.score);
+    }
+  }
+
   const results: CandidateRanking[] = [];
   for (const user of data) {
-    const { data: userSkills } = await supabase
-      .from("candidate_skills")
-      .select("skill")
-      .eq("user_id", user.id)
-      .order("years_experience", { ascending: false })
-      .limit(5);
+    const topSkills = skillsByUser.get(user.id) || [];
 
-    const topSkills = (userSkills || []).map((s) => s.skill);
-
-    // Filter by required skills if specified
     if (skills && skills.length > 0) {
       const normalizedRequired = skills.map((s) => s.toLowerCase());
       const normalizedUserSkills = topSkills.map((s) => s.toLowerCase());
@@ -211,22 +241,13 @@ export async function getTopCandidates(
       if (!hasMatch) continue;
     }
 
-    // Get ATS score (join via resumes since resume_analysis has no user_id)
+    const userResumeIds = resumeIdsByUser.get(user.id) || [];
     let userAtsScore: number | null = null;
-    const { data: userResumes } = await supabase
-      .from("resumes")
-      .select("id")
-      .eq("user_id", user.id)
-      .limit(10);
-    const rIds = (userResumes || []).map((r) => r.id);
-    if (rIds.length > 0) {
-      const { data: atsData } = await supabase
-        .from("resume_analysis")
-        .select("score")
-        .in("resume_id", rIds)
-        .order("score", { ascending: false })
-        .limit(1);
-      userAtsScore = atsData?.[0]?.score || null;
+    for (const rId of userResumeIds) {
+      const score = atsScoreByResumeId.get(rId);
+      if (score !== undefined && (userAtsScore === null || score > userAtsScore)) {
+        userAtsScore = score;
+      }
     }
 
     results.push({

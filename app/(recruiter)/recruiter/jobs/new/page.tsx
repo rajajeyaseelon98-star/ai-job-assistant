@@ -4,12 +4,23 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Wand2 } from "lucide-react";
 import type { WorkType, EmploymentType } from "@/types/recruiter";
+import {
+  useCreateRecruiterJob,
+  useGenerateJobDescription,
+} from "@/hooks/queries/use-recruiter";
+import { toAiUiError } from "@/lib/client-ai-error";
+import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
+import { InlineRetryCard } from "@/components/ui/InlineRetryCard";
+import { ActionReceiptCard } from "@/components/ui/ActionReceiptCard";
 
 export default function NewJobPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
+  const createMut = useCreateRecruiterJob();
+  const generateMut = useGenerateJobDescription();
+  const loading = createMut.isPending;
+  const aiLoading = generateMut.isPending;
   const [error, setError] = useState("");
+  const [isCreditError, setIsCreditError] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [requirements, setRequirements] = useState("");
@@ -22,81 +33,80 @@ export default function NewJobPage() {
   const [location, setLocation] = useState("");
   const [workType, setWorkType] = useState<WorkType>("onsite");
   const [employmentType, setEmploymentType] = useState<EmploymentType>("full_time");
+  const [savedReceipt, setSavedReceipt] = useState<{ status: "draft" | "active" } | null>(null);
+  const [lastSubmitIntent, setLastSubmitIntent] = useState<"draft" | "active">("active");
 
   async function generateDescription() {
     if (!title.trim()) {
       setError("Enter a job title first");
+      setIsCreditError(false);
       return;
     }
-    setAiLoading(true);
     setError("");
+    setIsCreditError(false);
     try {
-      const res = await fetch("/api/recruiter/jobs/generate-description", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
-          experience_level: `${experienceMin}-${experienceMax || "any"} years`,
-          work_type: workType,
-        }),
+      const data = await generateMut.mutateAsync({
+        title,
+        skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
+        work_type: workType,
+        experience_min: experienceMin,
+        experience_max: experienceMax || null,
       });
-      if (res.ok) {
-        const data = await res.json();
-        setDescription(data.description || "");
-        if (data.requirements) setRequirements(data.requirements);
-      } else {
-        const data = await res.json();
-        setError(data.error || "AI generation failed");
+      setDescription(data.description || "");
+      if (typeof data.requirements === "string" && data.requirements.trim()) {
+        setRequirements(data.requirements);
       }
-    } catch {
-      setError("Failed to generate description");
-    } finally {
-      setAiLoading(false);
+      if (Array.isArray(data.skills_required) && data.skills_required.length > 0) {
+        setSkills(data.skills_required.join(", "));
+      }
+    } catch (e) {
+      const ui = toAiUiError(e);
+      setError(ui.message || "Failed to generate description");
+      setIsCreditError(ui.isCreditsExhausted);
+    }
+  }
+
+  async function submitJob(status: "draft" | "active") {
+    if (!title.trim() || !description.trim()) {
+      setError("Title and description are required");
+      setIsCreditError(false);
+      return;
+    }
+
+    setError("");
+    setIsCreditError(false);
+    setSavedReceipt(null);
+    setLastSubmitIntent(status);
+    try {
+      await createMut.mutateAsync({
+        title,
+        description,
+        requirements,
+        skills_required: skills.split(",").map((s) => s.trim()).filter(Boolean),
+        experience_min: parseInt(experienceMin) || 0,
+        experience_max: experienceMax ? parseInt(experienceMax) : null,
+        salary_min: salaryMin ? parseInt(salaryMin) : null,
+        salary_max: salaryMax ? parseInt(salaryMax) : null,
+        salary_currency: salaryCurrency,
+        location,
+        work_type: workType,
+        employment_type: employmentType,
+        status,
+      });
+      setSavedReceipt({ status });
+      setTimeout(() => {
+        router.push("/recruiter/jobs");
+      }, 900);
+    } catch (e) {
+      const ui = toAiUiError(e);
+      setError(ui.message || "Failed to create job");
+      setIsCreditError(ui.isCreditsExhausted);
     }
   }
 
   async function handleSubmit(e: React.FormEvent, status: "draft" | "active") {
     e.preventDefault();
-    if (!title.trim() || !description.trim()) {
-      setError("Title and description are required");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch("/api/recruiter/jobs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          description,
-          requirements,
-          skills_required: skills.split(",").map((s) => s.trim()).filter(Boolean),
-          experience_min: parseInt(experienceMin) || 0,
-          experience_max: experienceMax ? parseInt(experienceMax) : null,
-          salary_min: salaryMin ? parseInt(salaryMin) : null,
-          salary_max: salaryMax ? parseInt(salaryMax) : null,
-          salary_currency: salaryCurrency,
-          location,
-          work_type: workType,
-          employment_type: employmentType,
-          status,
-        }),
-      });
-
-      if (res.ok) {
-        router.push("/recruiter/jobs");
-      } else {
-        const data = await res.json();
-        setError(data.error || "Failed to create job");
-      }
-    } catch {
-      setError("Something went wrong");
-    } finally {
-      setLoading(false);
-    }
+    await submitJob(status);
   }
 
   return (
@@ -206,7 +216,31 @@ export default function NewJobPage() {
           </div>
         </div>
 
-        {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+        {error && (
+          isCreditError ? (
+            <AICreditExhaustedAlert message={error} pricingHref="/recruiter/pricing" />
+          ) : (
+            <InlineRetryCard
+              message={error}
+              onRetry={() => void submitJob(lastSubmitIntent)}
+              retryLabel={lastSubmitIntent === "active" ? "Retry publish" : "Retry save draft"}
+              alternateHref="/recruiter/jobs"
+              alternateLabel="Back to jobs"
+            />
+          )
+        )}
+        {savedReceipt ? (
+          <ActionReceiptCard
+            title={savedReceipt.status === "active" ? "Job published" : "Draft saved"}
+            description={
+              savedReceipt.status === "active"
+                ? "Your job is live and discoverable to candidates."
+                : "Your draft is saved and can be published anytime."
+            }
+            primaryHref="/recruiter/jobs"
+            primaryLabel="Open jobs"
+          />
+        ) : null}
 
         <div className="flex items-center gap-4 pt-8 border-t border-slate-100">
           <button type="button" onClick={(e) => handleSubmit(e, "active")} disabled={loading}

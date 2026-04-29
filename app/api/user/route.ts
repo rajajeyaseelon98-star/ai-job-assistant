@@ -1,23 +1,38 @@
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
+import { getE2eMockUserApiResponse, isE2eMockUserId } from "@/lib/e2e-auth";
 import { createClient } from "@/lib/supabase/server";
+import { recalculateProfileStrengthForUser } from "@/lib/recalculate-profile-strength";
 
 export async function GET() {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (isE2eMockUserId(user.id) && user.profile?.role) {
+    return NextResponse.json(getE2eMockUserApiResponse(user.profile.role));
+  }
   const supabase = await createClient();
-  const { data: profile } = await supabase
-    .from("users")
-    .select("id, email, name, plan_type")
-    .eq("id", user.id)
-    .single();
-  const { data: prefs } = await supabase
-    .from("user_preferences")
-    .select("experience_level, preferred_role, preferred_location, salary_expectation")
-    .eq("user_id", user.id)
-    .single();
+  const [{ data: profile }, { data: prefs }, { data: companies, error: companyErr }] = await Promise.all([
+    supabase
+      .from("users")
+      .select(
+        "id, email, name, plan_type, role, last_active_role, headline, bio, avatar_url, profile_strength"
+      )
+      .eq("id", user.id)
+      .single(),
+    supabase
+      .from("user_preferences")
+      .select("experience_level, preferred_role, preferred_location, salary_expectation")
+      .eq("user_id", user.id)
+      .single(),
+    supabase.from("companies").select("id").eq("recruiter_id", user.id).limit(1),
+  ]);
+  if (companyErr) {
+    return NextResponse.json({ error: "Failed to load user profile" }, { status: 500 });
+  }
+  const recruiter_onboarding_complete = (companies?.length ?? 0) > 0;
   return NextResponse.json({
     ...profile,
+    recruiter_onboarding_complete,
     preferences: prefs ?? {
       experience_level: null,
       preferred_role: null,
@@ -30,6 +45,9 @@ export async function GET() {
 export async function PATCH(request: Request) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (isE2eMockUserId(user.id)) {
+    return NextResponse.json({ ok: true, profile_strength: 72 });
+  }
 
   let body: Record<string, unknown>;
   try {
@@ -40,16 +58,15 @@ export async function PATCH(request: Request) {
 
   const supabase = await createClient();
 
-  // Validate and sanitize name
   if (body.name !== undefined) {
     if (typeof body.name !== "string" && body.name !== null) {
       return NextResponse.json({ error: "name must be a string" }, { status: 400 });
     }
-    const name = typeof body.name === "string" ? body.name.trim().slice(0, 100) : null;
-    await supabase.from("users").update({ name }).eq("id", user.id);
   }
+  const name = body.name !== undefined
+    ? (typeof body.name === "string" ? body.name.trim().slice(0, 100) : null)
+    : undefined;
 
-  // Validate and sanitize preferences
   const rawExpLevel = body.experience_level ?? body.experienceLevel;
   const rawRole = body.preferred_role ?? body.preferredRole;
   const rawLocation = body.preferred_location ?? body.preferredLocation;
@@ -62,15 +79,48 @@ export async function PATCH(request: Request) {
     salary_expectation: typeof rawSalary === "string" ? rawSalary.trim().slice(0, 100) : null,
   };
   const hasPrefs = Object.values(prefs).some((v) => v != null && v !== "");
-  if (hasPrefs) {
+
+  let didUpdate = false;
+
+  if (name !== undefined && hasPrefs) {
+    didUpdate = true;
+    await Promise.all([
+      supabase.from("users").update({ name }).eq("id", user.id),
+      supabase.from("user_preferences").upsert(
+        { user_id: user.id, ...prefs, updated_at: new Date().toISOString() },
+        { onConflict: "user_id" }
+      ),
+    ]);
+  } else if (name !== undefined) {
+    didUpdate = true;
+    await supabase.from("users").update({ name }).eq("id", user.id);
+  } else if (hasPrefs) {
+    didUpdate = true;
     await supabase.from("user_preferences").upsert(
-      {
-        user_id: user.id,
-        ...prefs,
-        updated_at: new Date().toISOString(),
-      },
+      { user_id: user.id, ...prefs, updated_at: new Date().toISOString() },
       { onConflict: "user_id" }
     );
   }
-  return NextResponse.json({ ok: true });
+
+  if (!didUpdate) {
+    const { data: row } = await supabase.from("users").select("profile_strength").eq("id", user.id).single();
+    return NextResponse.json({
+      ok: true,
+      profile_strength: row?.profile_strength ?? 0,
+    });
+  }
+
+  // Preferences alone do not affect profile_strength (see calculateProfileStrength); skip full recalc.
+  const nameChanged = name !== undefined;
+  if (!nameChanged) {
+    const { data: row } = await supabase.from("users").select("profile_strength").eq("id", user.id).single();
+    return NextResponse.json({
+      ok: true,
+      profile_strength: row?.profile_strength ?? 0,
+    });
+  }
+
+  const profile_strength = await recalculateProfileStrengthForUser(supabase, user.id);
+
+  return NextResponse.json({ ok: true, profile_strength });
 }

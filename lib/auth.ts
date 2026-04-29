@@ -1,4 +1,6 @@
+import { buildGetUserResultFromE2eRole, readE2eMockRoleFromCookies } from "./e2e-auth";
 import { createClient } from "./supabase/server";
+import { cookies } from "next/headers";
 
 export type PlanType = "free" | "pro" | "premium";
 export type UserRole = "job_seeker" | "recruiter";
@@ -10,6 +12,7 @@ export interface UserProfile {
   created_at: string;
   plan_type: PlanType;
   role: UserRole;
+  last_active_role?: UserRole;
 }
 
 /** Get current user from Supabase Auth and their profile from public.users */
@@ -18,6 +21,13 @@ export async function getUser(): Promise<{
   email: string;
   profile: UserProfile | null;
 } | null> {
+  const cookieStore = await cookies();
+  const e2eRole = readE2eMockRoleFromCookies(cookieStore);
+  if (e2eRole) {
+    const u = buildGetUserResultFromE2eRole(e2eRole);
+    return { ...u, profile: u.profile as UserProfile };
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -26,7 +36,7 @@ export async function getUser(): Promise<{
 
   let { data: profile } = await supabase
     .from("users")
-    .select("id, email, name, created_at, plan_type, role")
+    .select("id, email, name, created_at, plan_type, role, last_active_role")
     .eq("id", user.id)
     .single();
 
@@ -34,7 +44,7 @@ export async function getUser(): Promise<{
     await ensureUserRow(user.id, user.email);
     const res = await supabase
       .from("users")
-      .select("id, email, name, created_at, plan_type, role")
+      .select("id, email, name, created_at, plan_type, role, last_active_role")
       .eq("id", user.id)
       .single();
     profile = res.data;
@@ -51,7 +61,7 @@ export async function getUser(): Promise<{
 export async function ensureUserRow(userId: string, email: string) {
   const supabase = await createClient();
   await supabase.from("users").upsert(
-    { id: userId, email, plan_type: "free", role: "job_seeker" },
+    { id: userId, email, plan_type: "free", role: "job_seeker", last_active_role: "job_seeker" },
     { onConflict: "id", ignoreDuplicates: true }
   );
 }

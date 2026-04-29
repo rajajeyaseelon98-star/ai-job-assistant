@@ -1,41 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Plus, Briefcase, MapPin, Users, Pencil, Eye, EyeOff, Trash2 } from "lucide-react";
 import type { JobPosting } from "@/types/recruiter";
 import { WORK_TYPE_LABELS, EMPLOYMENT_TYPE_LABELS } from "@/types/recruiter";
+import { useRecruiterJobs, useToggleJobStatus, useDeleteJob } from "@/hooks/queries/use-recruiter";
 
 export default function JobsPage() {
-  const [jobs, setJobs] = useState<JobPosting[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
 
-  useEffect(() => {
-    fetch("/api/recruiter/jobs")
-      .then((r) => (r.ok ? r.json() : []))
-      .then(setJobs)
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: jobsRaw, isLoading: loading } = useRecruiterJobs();
+  const jobs = (jobsRaw ?? []) as JobPosting[];
+  const toggleMutation = useToggleJobStatus();
+  const deleteMut = useDeleteJob();
 
   const filtered = filter === "all" ? jobs : jobs.filter((j) => j.status === filter);
 
   async function toggleStatus(job: JobPosting) {
     const newStatus = job.status === "active" ? "paused" : "active";
-    const res = await fetch(`/api/recruiter/jobs/${job.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
-    });
-    if (res.ok) {
-      const updated = await res.json();
-      setJobs((prev) => prev.map((j) => (j.id === job.id ? updated : j)));
-    }
+    await toggleMutation.mutateAsync({ id: job.id, status: newStatus });
   }
 
   async function deleteJob(id: string) {
-    const res = await fetch(`/api/recruiter/jobs/${id}`, { method: "DELETE" });
-    if (res.ok) setJobs((prev) => prev.filter((j) => j.id !== id));
+    await deleteMut.mutateAsync(id);
   }
 
   return (

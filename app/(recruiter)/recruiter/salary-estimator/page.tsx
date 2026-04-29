@@ -2,20 +2,19 @@
 
 import { useState } from "react";
 import { Loader2, IndianRupee, TrendingUp } from "lucide-react";
-
-interface SalaryResult {
-  min: number;
-  max: number;
-  median: number;
-  currency: string;
-  factors: string[];
-  market_insight: string;
-}
+import {
+  useRecruiterSalaryEstimate,
+  type RecruiterSalaryEstimateResult,
+} from "@/hooks/queries/use-recruiter";
+import { toAiUiError } from "@/lib/client-ai-error";
+import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
 
 export default function SalaryEstimatorPage() {
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<SalaryResult | null>(null);
+  const estimateMut = useRecruiterSalaryEstimate();
+  const loading = estimateMut.isPending;
+  const [result, setResult] = useState<RecruiterSalaryEstimateResult | null>(null);
   const [error, setError] = useState("");
+  const [isCreditError, setIsCreditError] = useState(false);
   const [title, setTitle] = useState("");
   const [skills, setSkills] = useState("");
   const [experience, setExperience] = useState("3");
@@ -24,29 +23,27 @@ export default function SalaryEstimatorPage() {
 
   async function handleEstimate(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim()) { setError("Job title is required"); return; }
-    setLoading(true);
+    if (!title.trim()) {
+      setError("Job title is required");
+      setIsCreditError(false);
+      return;
+    }
     setError("");
+    setIsCreditError(false);
     try {
-      const res = await fetch("/api/recruiter/salary-estimate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim(),
-          skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
-          experience_years: parseInt(experience) || 3,
-          location: location.trim() || "India",
-          work_type: workType,
-        }),
+      const data = await estimateMut.mutateAsync({
+        title: title.trim(),
+        skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
+        experience_years: parseInt(experience) || 3,
+        location: location.trim() || "India",
+        work_type: workType,
       });
-      if (res.ok) {
-        setResult(await res.json());
-      } else {
-        const data = await res.json();
-        setError(data.error || "Estimation failed");
-      }
-    } catch { setError("Something went wrong"); }
-    finally { setLoading(false); }
+      setResult(data);
+    } catch (e) {
+      const ui = toAiUiError(e);
+      setError(ui.message || "Something went wrong");
+      setIsCreditError(ui.isCreditsExhausted);
+    }
   }
 
   function formatSalary(val: number) {
@@ -95,7 +92,13 @@ export default function SalaryEstimatorPage() {
           </div>
         </div>
 
-        {error && <p className="rounded-xl bg-rose-50 border border-rose-100 px-4 py-3 text-sm text-rose-700">{error}</p>}
+        {error && (
+          isCreditError ? (
+            <AICreditExhaustedAlert message={error} pricingHref="/recruiter/pricing" />
+          ) : (
+            <p className="rounded-xl bg-rose-50 border border-rose-100 px-4 py-3 text-sm text-rose-700">{error}</p>
+          )
+        )}
 
         <button type="submit" disabled={loading}
           className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 rounded-xl px-8 py-3.5 font-medium disabled:opacity-50 w-full md:w-auto">

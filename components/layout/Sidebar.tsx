@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useUser } from "@/hooks/queries/use-user";
 import {
   LayoutDashboard,
   FileText,
@@ -30,7 +31,9 @@ import {
   Award,
   Brain,
   Gift,
+  MessageSquare,
 } from "lucide-react";
+import { useMessageUnreadState } from "@/hooks/queries/use-message-unread-state";
 
 interface NavGroup {
   label: string;
@@ -68,9 +71,11 @@ const navGroups: NavGroup[] = [
     label: "Track & insights",
     items: [
       { href: "/applications", label: "Applications", icon: ClipboardList },
+      { href: "/messages", label: "Messages", icon: MessageSquare },
       { href: "/analytics", label: "Career Analytics", icon: BarChart3 },
       { href: "/resume-performance", label: "Resume Performance", icon: Award },
       { href: "/activity", label: "Activity Feed", icon: Activity },
+      { href: "/usage", label: "AI Usage", icon: BarChart3 },
       { href: "/salary-insights", label: "Salary Insights", icon: IndianRupee },
       { href: "/skill-demand", label: "Skill Demand", icon: TrendingUp },
       { href: "/streak-rewards", label: "Streak Rewards", icon: Gift },
@@ -88,7 +93,11 @@ const navGroups: NavGroup[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const { data: user } = useUser();
+  const { totalUnread } = useMessageUnreadState();
+  const canSwitchToRecruiter = !!user?.recruiter_onboarding_complete;
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
@@ -174,10 +183,14 @@ export function Sidebar() {
                 {group.items.map((item) => {
                   const isActive = pathname === item.href;
                   const Icon = item.icon;
+                  const showMessagesBadge = item.href === "/messages" && totalUnread > 0;
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
+                      prefetch={false}
+                      onMouseEnter={() => router.prefetch(item.href)}
+                      onTouchStart={() => router.prefetch(item.href)}
                       className={`flex items-center gap-3 rounded-lg border-l-2 py-2 pl-2.5 pr-3 text-sm transition-colors duration-200 ease-in-out ${
                         isActive
                           ? "border-indigo-600 bg-indigo-50 font-medium text-indigo-700"
@@ -186,6 +199,15 @@ export function Sidebar() {
                     >
                       <Icon className="h-4 w-4 shrink-0" />
                       <span className="truncate">{item.label}</span>
+                      {showMessagesBadge ? (
+                        <span
+                          className={`ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none text-white ${
+                            isActive ? "bg-indigo-600" : "bg-indigo-600"
+                          }`}
+                        >
+                          {totalUnread > 9 ? "9+" : totalUnread}
+                        </span>
+                      ) : null}
                     </Link>
                   );
                 })}
@@ -195,14 +217,24 @@ export function Sidebar() {
         </nav>
 
         {/* Footer */}
-        <div className="safe-bottom shrink-0 border-t border-slate-200 px-3 py-3">
-          <Link
-            href="/select-role?next=/recruiter"
-            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600 shadow-sm transition-all duration-200 hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-indigo-700"
-          >
-            <ArrowLeftRight className="h-4 w-4 shrink-0 text-slate-500" />
-            <span className="truncate">Switch to Recruiter</span>
-          </Link>
+        <div className="safe-bottom shrink-0 space-y-2 border-t border-slate-200 px-3 py-3">
+          {canSwitchToRecruiter ? (
+            <Link
+              href="/select-role?next=/recruiter"
+              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600 shadow-sm transition-all duration-200 hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-indigo-700"
+            >
+              <ArrowLeftRight className="h-4 w-4 shrink-0 text-slate-500" />
+              <span className="truncate">Switch to Recruiter</span>
+            </Link>
+          ) : (
+            <Link
+              href="/select-role?next=/recruiter/company"
+              className="flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50/60 px-3 py-2.5 text-sm font-medium text-indigo-800 shadow-sm transition-all duration-200 hover:border-indigo-300 hover:bg-indigo-50"
+            >
+              <Briefcase className="h-4 w-4 shrink-0 text-indigo-600" />
+              <span className="truncate">Hire talent (recruiter)</span>
+            </Link>
+          )}
         </div>
       </aside>
     </>

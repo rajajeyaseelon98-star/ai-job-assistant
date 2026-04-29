@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Loader2, Star, Brain, ChevronDown, ChevronUp } from "lucide-react";
 import type { JobApplication, ApplicationStage } from "@/types/recruiter";
 import { STAGE_LABELS, STAGE_COLORS } from "@/types/recruiter";
+import { useRecruiterApplications, useUpdateApplicationStage, useScreenApplication } from "@/hooks/queries/use-recruiter";
 
 const PIPELINE_STAGES: ApplicationStage[] = [
   "applied", "shortlisted", "interview_scheduled", "interviewed", "offer_sent", "hired", "rejected",
@@ -19,60 +20,27 @@ const STAGE_DOT_COLORS: Record<ApplicationStage, string> = {
 };
 
 export default function RecruiterApplicationsPage() {
-  const [apps, setApps] = useState<JobApplication[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: appsRaw, isLoading: loading } = useRecruiterApplications();
+  const apps = (appsRaw ?? []) as JobApplication[];
+  const stageMutation = useUpdateApplicationStage();
+  const screenMutation = useScreenApplication();
   const [view, setView] = useState<"pipeline" | "list">("pipeline");
   const [screeningId, setScreeningId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch("/api/recruiter/applications")
-      .then((r) => (r.ok ? r.json() : []))
-      .then(setApps)
-      .finally(() => setLoading(false));
-  }, []);
-
   async function updateStage(id: string, stage: ApplicationStage) {
-    const res = await fetch(`/api/recruiter/applications/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ stage }),
-    });
-    if (res.ok) {
-      const updated = await res.json();
-      setApps((prev) => prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
-    }
+    await stageMutation.mutateAsync({ id, stage });
   }
 
   async function runScreening(id: string) {
     setScreeningId(id);
     try {
-      const res = await fetch(`/api/recruiter/applications/${id}/screen`, { method: "POST" });
-      if (res.ok) {
-        const screening = await res.json();
-        setApps((prev) =>
-          prev.map((a) =>
-            a.id === id
-              ? { ...a, ai_screening: screening, ai_summary: screening.summary, match_score: screening.ats_score }
-              : a
-          )
-        );
-      }
-    } catch {
-      // ignore
-    } finally {
-      setScreeningId(null);
-    }
+      await screenMutation.mutateAsync(id);
+    } catch { /* ignore */ }
+    finally { setScreeningId(null); }
   }
 
   async function updateRating(id: string, rating: number) {
-    const res = await fetch(`/api/recruiter/applications/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ recruiter_rating: rating }),
-    });
-    if (res.ok) {
-      setApps((prev) => prev.map((a) => (a.id === id ? { ...a, recruiter_rating: rating } : a)));
-    }
+    await stageMutation.mutateAsync({ id, recruiter_rating: rating });
   }
 
   if (loading) return <p className="text-sm text-text-muted">Loading applications...</p>;

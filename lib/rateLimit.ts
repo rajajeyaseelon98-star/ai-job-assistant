@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getRecipientSearchRateLimitConfig } from "@/lib/rate-limit-config";
 
 /**
  * Database-backed rate limiter that works in serverless environments.
@@ -6,42 +7,70 @@ import { createClient } from "@/lib/supabase/server";
  * Falls back to allowing requests if the DB query fails (fail-open for availability).
  */
 const WINDOW_MS = 60_000; // 1 minute window
-const MAX_REQUESTS = 10; // max requests per window per user
+// Dev/testing can easily exceed the default due to retries + rapid iteration.
+const MAX_REQUESTS = process.env.NODE_ENV === "production" ? 10 : 200; // max requests per window per user
 
-export async function checkRateLimit(
-  userId: string
+type RateLimitConfig = {
+  windowMs: number;
+  max: number;
+  /** Must match usage_logs.feature CHECK (see migrations). */
+  feature: string;
+};
+
+async function checkRateLimitWithConfig(
+  userId: string,
+  config: RateLimitConfig
 ): Promise<{ allowed: boolean; retryAfterMs: number }> {
   try {
     const supabase = await createClient();
-    const windowStart = new Date(Date.now() - WINDOW_MS).toISOString();
+    const windowStart = new Date(Date.now() - config.windowMs).toISOString();
 
     const { count, error } = await supabase
       .from("usage_logs")
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId)
-      .eq("feature", "rate_limit")
+      .eq("feature", config.feature)
       .gte("timestamp", windowStart);
 
     if (error) {
-      // Fail open — allow request if DB query fails
       console.error("Rate limit check failed:", error.message);
       return { allowed: true, retryAfterMs: 0 };
     }
 
     const currentCount = count ?? 0;
 
-    if (currentCount >= MAX_REQUESTS) {
-      return { allowed: false, retryAfterMs: WINDOW_MS };
+    if (currentCount >= config.max) {
+      return { allowed: false, retryAfterMs: config.windowMs };
     }
 
-    // Log this request for rate counting
-    await supabase
-      .from("usage_logs")
-      .insert({ user_id: userId, feature: "rate_limit" });
+    await supabase.from("usage_logs").insert({ user_id: userId, feature: config.feature });
 
     return { allowed: true, retryAfterMs: 0 };
   } catch {
-    // Fail open on unexpected errors
     return { allowed: true, retryAfterMs: 0 };
   }
+}
+
+export async function checkRateLimit(userId: string): Promise<{
+  allowed: boolean;
+  retryAfterMs: number;
+}> {
+  return checkRateLimitWithConfig(userId, {
+    windowMs: WINDOW_MS,
+    max: MAX_REQUESTS,
+    feature: "rate_limit",
+  });
+}
+
+/** Separate bucket for GET /api/messages/recipient-search (debounced typing still issues many requests). */
+export async function checkRecipientSearchRateLimit(userId: string): Promise<{
+  allowed: boolean;
+  retryAfterMs: number;
+}> {
+  const cfg = getRecipientSearchRateLimitConfig();
+  return checkRateLimitWithConfig(userId, {
+    windowMs: cfg.windowMs,
+    max: cfg.max,
+    feature: "message_recipient_search",
+  });
 }

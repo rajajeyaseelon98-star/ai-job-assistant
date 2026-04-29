@@ -45,23 +45,22 @@ export async function executeSmartRule(rule: SmartApplyRule): Promise<{
     const weekStart = new Date(now);
     weekStart.setDate(weekStart.getDate() - 7);
 
-    // Count today's applications
-    const { count: todayCount } = await supabase
-      .from("applications")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", rule.user_id)
-      .gte("applied_date", todayStart.toISOString().split("T")[0]);
+    const [{ count: todayCount }, { count: weekCount }] = await Promise.all([
+      supabase
+        .from("applications")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", rule.user_id)
+        .gte("applied_date", todayStart.toISOString().split("T")[0]),
+      supabase
+        .from("applications")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", rule.user_id)
+        .gte("applied_date", weekStart.toISOString().split("T")[0]),
+    ]);
 
     if ((todayCount ?? 0) >= rule.rules.max_applications_per_day) {
       return { success: true, jobs_applied: 0, error: "Daily application limit reached" };
     }
-
-    // Count this week's applications
-    const { count: weekCount } = await supabase
-      .from("applications")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", rule.user_id)
-      .gte("applied_date", weekStart.toISOString().split("T")[0]);
 
     if ((weekCount ?? 0) >= rule.rules.max_applications_per_week) {
       return { success: true, jobs_applied: 0, error: "Weekly application limit reached" };
@@ -152,24 +151,23 @@ export async function executeSmartRule(rule: SmartApplyRule): Promise<{
     });
 
     if (qualifyingJobs.length === 0) {
-      // Update run as completed with no applications
-      await supabase
-        .from("auto_apply_runs")
-        .update({ status: "completed", updated_at: new Date().toISOString() })
-        .eq("id", run.id);
-
-      // Update rule next run time
       const nextRun = new Date();
       nextRun.setHours(nextRun.getHours() + SMART_APPLY_COOLDOWN_HOURS);
-      await supabase
-        .from("smart_apply_rules")
-        .update({
-          last_run_at: new Date().toISOString(),
-          next_run_at: nextRun.toISOString(),
-          total_runs: rule.total_runs + 1,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", rule.id);
+      await Promise.all([
+        supabase
+          .from("auto_apply_runs")
+          .update({ status: "completed", updated_at: new Date().toISOString() })
+          .eq("id", run.id),
+        supabase
+          .from("smart_apply_rules")
+          .update({
+            last_run_at: new Date().toISOString(),
+            next_run_at: nextRun.toISOString(),
+            total_runs: rule.total_runs + 1,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", rule.id),
+      ]);
 
       return { success: true, jobs_applied: 0 };
     }
@@ -207,29 +205,28 @@ export async function executeSmartRule(rule: SmartApplyRule): Promise<{
       if (!insertError) appliedCount++;
     }
 
-    // Update run as completed
-    await supabase
-      .from("auto_apply_runs")
-      .update({
-        status: "completed",
-        jobs_applied: appliedCount,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", run.id);
-
-    // Update rule
     const nextRun = new Date();
     nextRun.setHours(nextRun.getHours() + SMART_APPLY_COOLDOWN_HOURS);
-    await supabase
-      .from("smart_apply_rules")
-      .update({
-        last_run_at: new Date().toISOString(),
-        next_run_at: nextRun.toISOString(),
-        total_runs: rule.total_runs + 1,
-        total_applied: rule.total_applied + appliedCount,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", rule.id);
+    await Promise.all([
+      supabase
+        .from("auto_apply_runs")
+        .update({
+          status: "completed",
+          jobs_applied: appliedCount,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", run.id),
+      supabase
+        .from("smart_apply_rules")
+        .update({
+          last_run_at: new Date().toISOString(),
+          next_run_at: nextRun.toISOString(),
+          total_runs: rule.total_runs + 1,
+          total_applied: rule.total_applied + appliedCount,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", rule.id),
+    ]);
 
     // Notify user
     if (appliedCount > 0) {

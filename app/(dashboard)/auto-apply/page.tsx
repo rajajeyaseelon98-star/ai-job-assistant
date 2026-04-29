@@ -1,46 +1,36 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Rocket, History } from "lucide-react";
 import { AutoApplyForm } from "@/components/auto-apply/AutoApplyForm";
 import { AutoApplyProgress } from "@/components/auto-apply/AutoApplyProgress";
 import { AutoApplyResults } from "@/components/auto-apply/AutoApplyResults";
+import { AutoApplyRunTimeline } from "@/components/auto-apply/AutoApplyRunTimeline";
+import { usePastRuns, useStartAutoApply, useAutoApplyRun } from "@/hooks/queries/use-auto-apply";
 import type { AutoApplyRun } from "@/types/autoApply";
+import { ActionStatusBanner } from "@/components/ui/ActionStatusBanner";
 
 export default function AutoApplyPage() {
-  const [currentRun, setCurrentRun] = useState<AutoApplyRun | null>(null);
-  const [pastRuns, setPastRuns] = useState<AutoApplyRun[]>([]);
+  const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  const [isNewRun, setIsNewRun] = useState(false);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState("");
-  const pollCleanupRef = useRef<(() => void) | null>(null);
 
-  // Cleanup polling on unmount
+  const { data: pastRuns = [], refetch: refetchPastRuns } = usePastRuns();
+  const startMutation = useStartAutoApply();
+
+  const { data: polledRun } = useAutoApplyRun(activeRunId, {
+    refetchInterval: isNewRun ? 3000 : false,
+  });
+
+  const currentRun = polledRun ?? null;
+
   useEffect(() => {
-    return () => { pollCleanupRef.current?.(); };
-  }, []);
-
-  // Load past runs
-  useEffect(() => {
-    fetch("/api/auto-apply")
-      .then((r) => (r.ok ? r.json() : []))
-      .then(setPastRuns);
-  }, []);
-
-  // Poll for status updates
-  const pollRun = useCallback((runId: string) => {
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/auto-apply/${runId}`);
-        if (!res.ok) return;
-        const run = (await res.json()) as AutoApplyRun;
-        setCurrentRun(run);
-        if (!["pending", "processing", "confirmed"].includes(run.status)) {
-          clearInterval(interval);
-        }
-      } catch { /* ignore */ }
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+    if (isNewRun && currentRun && !["pending", "processing", "confirmed"].includes(currentRun.status)) {
+      setIsNewRun(false);
+      refetchPastRuns();
+    }
+  }, [isNewRun, currentRun, refetchPastRuns]);
 
   async function handleStart(config: {
     resume_id: string;
@@ -52,36 +42,22 @@ export default function AutoApplyPage() {
     setStarting(true);
     setError("");
     try {
-      const res = await fetch("/api/auto-apply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(config),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setCurrentRun({ ...data, results: [], config } as AutoApplyRun);
-        pollCleanupRef.current?.();
-        pollCleanupRef.current = pollRun(data.id);
-      } else {
-        const data = await res.json();
-        setError(data.error || "Failed to start");
-      }
-    } catch {
-      setError("Something went wrong");
+      const data = await startMutation.mutateAsync(config);
+      setActiveRunId(data.id);
+      setIsNewRun(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setStarting(false);
     }
   }
 
   function handleComplete() {
-    // Refresh past runs
-    fetch("/api/auto-apply")
-      .then((r) => (r.ok ? r.json() : []))
-      .then(setPastRuns);
+    refetchPastRuns();
   }
 
-  const showForm = !currentRun || currentRun.status === "completed" || currentRun.status === "failed";
-  const showProgress = currentRun && ["pending", "processing", "confirmed"].includes(currentRun.status);
+  const showForm = !isNewRun && (!currentRun || currentRun.status === "completed" || currentRun.status === "failed");
+  const showProgress = isNewRun || (currentRun && ["pending", "processing", "confirmed"].includes(currentRun.status));
   const showResults = currentRun && currentRun.status === "ready_for_review" && currentRun.results?.length > 0;
   const showCompleted = currentRun && currentRun.status === "completed";
 
@@ -99,18 +75,21 @@ export default function AutoApplyPage() {
       </div>
 
       {error && (
-        <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+        <ActionStatusBanner kind="error" message={error} />
       )}
 
       {showForm && <AutoApplyForm onStart={handleStart} loading={starting} />}
 
       {showProgress && currentRun && (
-        <AutoApplyProgress
-          status={currentRun.status}
-          jobsFound={currentRun.jobs_found || 0}
-          jobsMatched={currentRun.jobs_matched || 0}
-          error={currentRun.error_message}
-        />
+        <div className="space-y-3">
+          <AutoApplyRunTimeline currentStep={currentRun.currentStep ?? currentRun.status} />
+          <AutoApplyProgress
+            status={currentRun.status}
+            jobsFound={currentRun.jobs_found || 0}
+            jobsMatched={currentRun.jobs_matched || 0}
+            error={currentRun.error_message}
+          />
+        </div>
       )}
 
       {(showResults || showCompleted) && currentRun && (
@@ -132,11 +111,7 @@ export default function AutoApplyPage() {
             {pastRuns.slice(0, 10).map((run) => (
               <button
                 key={run.id}
-                onClick={() => {
-                  fetch(`/api/auto-apply/${run.id}`)
-                    .then((r) => (r.ok ? r.json() : null))
-                    .then((data) => { if (data) setCurrentRun(data); });
-                }}
+                onClick={() => setActiveRunId(run.id)}
                 className="w-full p-4 text-left transition-colors hover:bg-slate-50"
               >
                 <div className="flex items-center justify-between gap-4">

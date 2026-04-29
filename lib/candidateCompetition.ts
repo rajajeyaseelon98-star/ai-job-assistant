@@ -106,25 +106,35 @@ export async function getOverallCompetition(userId: string): Promise<{
 }> {
   const supabase = await createClient();
 
-  // Get user's application count
-  const { count: totalApps } = await supabase
-    .from("applications")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId);
-
-  // Get user's candidate rank vs others
-  const { data: user } = await supabase
-    .from("users")
-    .select("candidate_rank_score")
-    .eq("id", userId)
-    .single();
+  // Run first batch of independent queries in parallel
+  const [
+    { count: totalApps },
+    { data: user },
+    { count: totalUsers },
+    { data: skills },
+  ] = await Promise.all([
+    supabase
+      .from("applications")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId),
+    supabase
+      .from("users")
+      .select("candidate_rank_score")
+      .eq("id", userId)
+      .single(),
+    supabase
+      .from("users")
+      .select("*", { count: "exact", head: true })
+      .gt("candidate_rank_score", 0),
+    supabase
+      .from("candidate_skills")
+      .select("skill, years_experience")
+      .eq("user_id", userId)
+      .order("years_experience", { ascending: false })
+      .limit(1),
+  ]);
 
   const userScore = user?.candidate_rank_score || 0;
-
-  const { count: totalUsers } = await supabase
-    .from("users")
-    .select("*", { count: "exact", head: true })
-    .gt("candidate_rank_score", 0);
 
   const { count: lowerUsers } = await supabase
     .from("users")
@@ -135,14 +145,6 @@ export async function getOverallCompetition(userId: string): Promise<{
   const avgPercentile = (totalUsers || 1) > 0
     ? Math.round(((lowerUsers || 0) / (totalUsers || 1)) * 100)
     : 50;
-
-  // Get strongest skill area
-  const { data: skills } = await supabase
-    .from("candidate_skills")
-    .select("skill, years_experience")
-    .eq("user_id", userId)
-    .order("years_experience", { ascending: false })
-    .limit(1);
 
   const strongestSkill = skills?.[0]?.skill || null;
 

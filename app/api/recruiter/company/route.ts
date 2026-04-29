@@ -15,17 +15,47 @@ export async function GET() {
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("companies")
-    .select("*")
-    .eq("recruiter_id", user.id)
-    .order("updated_at", { ascending: false });
+  const [{ data: ownedCompanies, error: ownedError }, { data: memberships, error: memberError }] =
+    await Promise.all([
+      supabase
+        .from("companies")
+        .select("*")
+        .eq("recruiter_id", user.id)
+        .order("updated_at", { ascending: false }),
+      supabase
+        .from("company_memberships")
+        .select("role,status,company:companies(*)")
+        .eq("user_id", user.id),
+    ]);
 
-  if (error) {
+  if (ownedError || memberError) {
     return NextResponse.json({ error: "Failed to load companies" }, { status: 500 });
   }
 
-  return NextResponse.json(data || []);
+  const membershipCompanies = (memberships || [])
+    .map((m) => {
+      const row = m as Record<string, unknown>;
+      const company = row.company as Record<string, unknown> | null | undefined;
+      if (!company) return null;
+      return {
+        ...company,
+        membership_role: row.role,
+        membership_status: row.status,
+      };
+    })
+    .filter(Boolean) as Record<string, unknown>[];
+
+  const owned = (ownedCompanies || []) as Record<string, unknown>[];
+  const seen = new Set<string>();
+  const merged = [...membershipCompanies, ...owned].filter((c) => {
+    const id = String((c as Record<string, unknown>).id || "");
+    if (!id) return false;
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+
+  return NextResponse.json(merged);
 }
 
 const VALID_SIZES = ["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"];
@@ -101,5 +131,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Failed to create company" }, { status: 500 });
   }
 
-  return NextResponse.json(data, { status: 201 });
+  // Create an owner membership row (enables multi-user recruiter teams)
+  const { error: membershipError } = await supabase.from("company_memberships").insert({
+    company_id: data.id,
+    user_id: user.id,
+    role: "owner",
+    status: "active",
+    invited_by: null,
+  });
+  if (membershipError) {
+    console.warn("[company] failed to create owner membership (non-fatal)", {
+      companyId: data.id,
+      error: membershipError.message,
+    });
+  }
+
+  return NextResponse.json({ ...data, membership_role: "owner", membership_status: "active" }, { status: 201 });
 }

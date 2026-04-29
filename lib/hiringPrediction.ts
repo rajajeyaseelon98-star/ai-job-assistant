@@ -52,52 +52,47 @@ export async function predictHiringSuccess(
   const normalizedTitle = jobTitle.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim();
   const titleWords = normalizedTitle.split(/\s+/).filter((w) => w.length > 2);
 
-  let historicalRate = 50; // Default
+  let historicalRate = 50;
   let similarHires = 0;
   let avgDaysToHire: number | null = null;
+  let roleDemand = 50;
+  const currentMonth = new Date().toISOString().slice(0, 7);
 
-  if (titleWords.length > 0) {
-    // Find similar hiring outcomes — filter by job title similarity
-    const { data: outcomes } = await supabase
-      .from("hiring_outcomes")
-      .select("was_hired, days_to_hire, match_score, job_title")
-      .limit(500);
+  // Fetch hiring outcomes + skill demand in parallel (both independent)
+  const [{ data: outcomes }, { data: demandData }] = await Promise.all([
+    titleWords.length > 0
+      ? supabase.from("hiring_outcomes").select("was_hired, days_to_hire, match_score, job_title").limit(500)
+      : Promise.resolve({ data: null }),
+    supabase
+      .from("skill_demand")
+      .select("demand_count, supply_count")
+      .eq("month", currentMonth)
+      .in("normalized_skill", normalizedCandidateSkills.slice(0, 10)),
+  ]);
 
-    if (outcomes && outcomes.length > 0) {
-      // Filter to outcomes with similar job titles (at least 1 keyword match)
-      const relevant = outcomes.filter((o) => {
-        if (!o.match_score) return false;
-        if (!o.job_title) return false;
-        const outcomeTitle = o.job_title.toLowerCase().replace(/[^a-z0-9\s]/g, "");
-        return titleWords.some((w) => outcomeTitle.includes(w));
-      });
+  if (outcomes && outcomes.length > 0) {
+    const relevant = outcomes.filter((o) => {
+      if (!o.match_score) return false;
+      if (!o.job_title) return false;
+      const outcomeTitle = o.job_title.toLowerCase().replace(/[^a-z0-9\s]/g, "");
+      return titleWords.some((w) => outcomeTitle.includes(w));
+    });
 
-      // Fall back to all outcomes if too few title matches
-      const usable = relevant.length >= 5 ? relevant : outcomes.filter((o) => o.match_score);
+    const usable = relevant.length >= 5 ? relevant : outcomes.filter((o) => o.match_score);
 
-      if (usable.length >= 5) {
-        const hired = usable.filter((o) => o.was_hired);
-        historicalRate = Math.round((hired.length / usable.length) * 100);
-        similarHires = hired.length;
+    if (usable.length >= 5) {
+      const hired = usable.filter((o) => o.was_hired);
+      historicalRate = Math.round((hired.length / usable.length) * 100);
+      similarHires = hired.length;
 
-        const hiresWithDays = hired.filter((h) => h.days_to_hire);
-        if (hiresWithDays.length > 0) {
-          avgDaysToHire = Math.round(
-            hiresWithDays.reduce((sum, h) => sum + (h.days_to_hire || 0), 0) / hiresWithDays.length
-          );
-        }
+      const hiresWithDays = hired.filter((h) => h.days_to_hire);
+      if (hiresWithDays.length > 0) {
+        avgDaysToHire = Math.round(
+          hiresWithDays.reduce((sum, h) => sum + (h.days_to_hire || 0), 0) / hiresWithDays.length
+        );
       }
     }
   }
-
-  // 4. Role demand (from skill_demand table)
-  let roleDemand = 50;
-  const currentMonth = new Date().toISOString().slice(0, 7);
-  const { data: demandData } = await supabase
-    .from("skill_demand")
-    .select("demand_count, supply_count")
-    .eq("month", currentMonth)
-    .in("normalized_skill", normalizedCandidateSkills.slice(0, 10));
 
   if (demandData && demandData.length > 0) {
     const totalDemand = demandData.reduce((s, d) => s + (d.demand_count || 0), 0);

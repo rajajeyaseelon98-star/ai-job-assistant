@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
-import { aiGenerate } from "@/lib/ai";
+import { cachedAiGenerate } from "@/lib/ai";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { validateTextLength } from "@/lib/validation";
 import type { ImprovedResumeContent } from "@/types/analysis";
 import { normalizeImprovedResumeContent } from "@/lib/normalizeImprovedResume";
+import { CREDITS_EXHAUSTED_CODE, isCreditsExhaustedError } from "@/lib/aiCreditError";
 
 const LINKEDIN_PARSE_PROMPT = `You are an expert resume creator. The user has provided their LinkedIn profile text (copied from their LinkedIn page or exported PDF).
 Parse this text and create a professional resume from it.
@@ -75,14 +76,26 @@ export async function POST(request: Request) {
   const safeProfileText = textVal.text;
   let content: ImprovedResumeContent;
   try {
-    const raw = await aiGenerate(LINKEDIN_PARSE_PROMPT, safeProfileText.slice(0, 12000), {
+    const raw = await cachedAiGenerate(LINKEDIN_PARSE_PROMPT, safeProfileText.slice(0, 12000), {
       jsonMode: true,
+      cacheFeature: "linkedin_import",
+      featureName: "linkedin_import",
+      userId: user.id,
     });
     let jsonStr = raw.trim();
     const jsonMatch = jsonStr.match(/^```(?:json)?\s*([\s\S]*?)```$/m);
     if (jsonMatch) jsonStr = jsonMatch[1].trim();
     content = normalizeImprovedResumeContent(JSON.parse(jsonStr));
   } catch (e) {
+    if (isCreditsExhaustedError(e)) {
+      return NextResponse.json(
+        {
+          error: CREDITS_EXHAUSTED_CODE,
+          message: "You have reached your AI credit limit. Please upgrade.",
+        },
+        { status: 402 }
+      );
+    }
     console.error("LinkedIn parse error:", e);
     return NextResponse.json(
       {

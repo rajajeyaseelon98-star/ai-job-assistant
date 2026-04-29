@@ -3,37 +3,36 @@
 import { useState } from "react";
 import { InterviewQuestions } from "@/components/interview/InterviewQuestions";
 import { AIProgressIndicator } from "@/components/ui/AIProgressIndicator";
+import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
 import type { InterviewPrepResponse } from "@/types/analysis";
+import { useInterviewPrep } from "@/hooks/mutations/use-interview-prep";
+import { toAiUiError } from "@/lib/client-ai-error";
 
 const EXPERIENCE_LEVELS = ["Junior", "Mid", "Senior"] as const;
 
 export default function InterviewPrepPage() {
+  const prepMut = useInterviewPrep();
   const [role, setRole] = useState("React Developer");
   const [experienceLevel, setExperienceLevel] = useState<string>("Mid");
   const [data, setData] = useState<InterviewPrepResponse | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCreditError, setIsCreditError] = useState(false);
+  const loading = prepMut.isPending;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setLoading(true);
+    setIsCreditError(false);
     try {
-      const res = await fetch("/api/interview-prep", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          role: role.trim() || "Software Developer",
-          experienceLevel: experienceLevel || undefined,
-        }),
+      const json = await prepMut.mutateAsync({
+        role: role.trim() || "Software Developer",
+        experienceLevel: experienceLevel || undefined,
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to generate");
       setData(json);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setLoading(false);
+      const ui = toAiUiError(e);
+      setError(ui.message || "Failed");
+      setIsCreditError(ui.isCreditsExhausted);
     }
   }
 
@@ -84,7 +83,15 @@ export default function InterviewPrepPage() {
           </button>
           {loading && <AIProgressIndicator message="Generating interview questions…" />}
         </form>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+        {error && (
+          <div className="mt-2">
+            {isCreditError ? (
+              <AICreditExhaustedAlert message={error} pricingHref="/pricing" />
+            ) : (
+              <p className="text-sm text-red-600">{error}</p>
+            )}
+          </div>
+        )}
       </section>
 
       {data && (

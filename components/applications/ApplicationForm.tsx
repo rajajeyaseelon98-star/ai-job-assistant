@@ -5,6 +5,8 @@ import { Loader2, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { Application, ApplicationStatus } from "@/types/application";
 import { STATUS_LABELS } from "@/types/application";
+import { useSaveApplication } from "@/hooks/queries/use-applications";
+import { formatApiFetchThrownError } from "@/lib/api-error";
 
 interface ApplicationFormProps {
   initial?: Partial<Application>;
@@ -13,6 +15,7 @@ interface ApplicationFormProps {
 }
 
 export function ApplicationForm({ initial, onSave, onCancel }: ApplicationFormProps) {
+  const saveMut = useSaveApplication();
   const [company, setCompany] = useState(initial?.company || "");
   const [role, setRole] = useState(initial?.role || "");
   const [status, setStatus] = useState<ApplicationStatus>(initial?.status || "saved");
@@ -21,8 +24,8 @@ export function ApplicationForm({ initial, onSave, onCancel }: ApplicationFormPr
   const [salary, setSalary] = useState(initial?.salary || "");
   const [location, setLocation] = useState(initial?.location || "");
   const [notes, setNotes] = useState(initial?.notes || "");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const loading = saveMut.isPending;
 
   const isEdit = !!initial?.id;
 
@@ -33,40 +36,26 @@ export function ApplicationForm({ initial, onSave, onCancel }: ApplicationFormPr
       return;
     }
 
-    setLoading(true);
     setError("");
 
     try {
-      const endpoint = isEdit ? `/api/applications/${initial!.id}` : "/api/applications";
-      const method = isEdit ? "PATCH" : "POST";
-
-      const res = await fetch(endpoint, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          company: company.trim(),
-          role: role.trim(),
-          status,
-          applied_date: appliedDate || null,
-          url: url.trim() || null,
-          salary: salary.trim() || null,
-          location: location.trim() || null,
-          notes: notes.trim() || null,
-        }),
+      const body = {
+        company: company.trim(),
+        role: role.trim(),
+        status,
+        applied_date: appliedDate || null,
+        url: url.trim() || null,
+        salary: salary.trim() || null,
+        location: location.trim() || null,
+        notes: notes.trim() || null,
+      };
+      const data = await saveMut.mutateAsync({
+        id: isEdit ? initial!.id : undefined,
+        body,
       });
-
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || "Failed to save");
-        return;
-      }
-
-      const data = await res.json();
       onSave(data);
-    } catch {
-      setError("Something went wrong");
-    } finally {
-      setLoading(false);
+    } catch (e) {
+      setError(formatApiFetchThrownError(e) || "Something went wrong");
     }
   }
 

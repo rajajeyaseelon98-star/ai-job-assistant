@@ -4,6 +4,12 @@ import { useState } from "react";
 import { use } from "react";
 import { Loader2, Wand2, ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useOptimizeRecruiterJob, usePatchRecruiterJob } from "@/hooks/queries/use-recruiter";
+import { useRecruiterJob } from "@/hooks/queries/use-recruiter";
+import { toAiUiError } from "@/lib/client-ai-error";
+import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
+import { InlineRetryCard } from "@/components/ui/InlineRetryCard";
+import { ActionReceiptCard } from "@/components/ui/ActionReceiptCard";
 
 interface OptimizeResult {
   suggestions: string[];
@@ -15,44 +21,45 @@ interface OptimizeResult {
 export default function OptimizeJobPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const { data: originalJob } = useRecruiterJob(id);
+  const optimizeMut = useOptimizeRecruiterJob();
+  const patchMut = usePatchRecruiterJob();
+  const loading = optimizeMut.isPending;
+  const applying = patchMut.isPending;
   const [result, setResult] = useState<OptimizeResult | null>(null);
   const [error, setError] = useState("");
-  const [applying, setApplying] = useState(false);
+  const [isCreditError, setIsCreditError] = useState(false);
+  const [applied, setApplied] = useState(false);
 
   async function handleOptimize() {
-    setLoading(true);
     setError("");
+    setIsCreditError(false);
     try {
-      const res = await fetch(`/api/recruiter/jobs/${id}/optimize`, { method: "POST" });
-      if (res.ok) {
-        setResult(await res.json());
-      } else {
-        const data = await res.json();
-        setError(data.error || "Optimization failed");
-      }
-    } catch { setError("Something went wrong"); }
-    finally { setLoading(false); }
+      const data = await optimizeMut.mutateAsync(id);
+      setResult(data);
+    } catch (e) {
+      const ui = toAiUiError(e);
+      setError(ui.message || "Something went wrong");
+      setIsCreditError(ui.isCreditsExhausted);
+    }
   }
 
   async function applyOptimizations() {
     if (!result) return;
-    setApplying(true);
+    setError("");
+    setIsCreditError(false);
     try {
       const updates: Record<string, string> = {};
       if (result.optimized_title) updates.title = result.optimized_title;
       if (result.optimized_description) updates.description = result.optimized_description;
 
-      const res = await fetch(`/api/recruiter/jobs/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates),
-      });
-      if (res.ok) {
-        router.push(`/recruiter/jobs/${id}`);
-      }
-    } catch { setError("Failed to apply changes"); }
-    finally { setApplying(false); }
+      await patchMut.mutateAsync({ id, body: updates });
+      setApplied(true);
+    } catch (e) {
+      const ui = toAiUiError(e);
+      setError(ui.message || "Failed to apply changes");
+      setIsCreditError(ui.isCreditsExhausted);
+    }
   }
 
   return (
@@ -72,7 +79,29 @@ export default function OptimizeJobPage({ params }: { params: Promise<{ id: stri
         </button>
       )}
 
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+      {error && (
+        isCreditError ? (
+          <AICreditExhaustedAlert message={error} pricingHref="/recruiter/pricing" />
+        ) : (
+          <InlineRetryCard
+            message={error}
+            onRetry={() => void (result ? applyOptimizations() : handleOptimize())}
+            retryLabel="Retry"
+            alternateHref={`/recruiter/jobs/${id}`}
+            alternateLabel="Back to job"
+          />
+        )
+      )}
+      {applied ? (
+        <ActionReceiptCard
+          title="Optimizations applied"
+          description="Your job post was updated with AI suggestions."
+          primaryHref={`/recruiter/jobs/${id}`}
+          primaryLabel="Review edited job"
+          secondaryHref="/recruiter/jobs"
+          secondaryLabel="Back to jobs"
+        />
+      ) : null}
 
       {result && (
         <div className="space-y-6">
@@ -110,6 +139,11 @@ export default function OptimizeJobPage({ params }: { params: Promise<{ id: stri
               <div className="rounded-lg border border-green-200 bg-green-50 p-3">
                 <p className="text-sm text-green-800">{result.optimized_title}</p>
               </div>
+              {typeof (originalJob as Record<string, unknown> | null)?.title === "string" ? (
+                <p className="mt-1 text-xs text-slate-500">
+                  Before: {String((originalJob as Record<string, unknown>).title)}
+                </p>
+              ) : null}
             </div>
           )}
 
@@ -119,6 +153,14 @@ export default function OptimizeJobPage({ params }: { params: Promise<{ id: stri
               <div className="max-h-64 overflow-y-auto rounded-lg border border-green-200 bg-green-50 p-3">
                 <p className="whitespace-pre-wrap text-sm text-green-800">{result.optimized_description}</p>
               </div>
+              {typeof (originalJob as Record<string, unknown> | null)?.description === "string" ? (
+                <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <p className="mb-1 text-xs font-semibold text-slate-600">Before</p>
+                  <p className="whitespace-pre-wrap text-xs text-slate-700">
+                    {String((originalJob as Record<string, unknown>).description).slice(0, 800)}
+                  </p>
+                </div>
+              ) : null}
             </div>
           )}
 

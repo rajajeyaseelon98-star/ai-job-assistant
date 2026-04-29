@@ -21,7 +21,6 @@ export async function GET(request: NextRequest) {
       candidate:users!job_applications_candidate_id_fkey(id, email, name),
       job:job_postings!job_applications_job_id_fkey(id, title, company_id)
     `)
-    .eq("recruiter_id", user.id)
     .order("created_at", { ascending: false });
 
   if (jobId) query = query.eq("job_id", jobId);

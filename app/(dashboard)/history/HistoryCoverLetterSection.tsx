@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import {
+  useCoverLetterContent,
+  useDeleteCoverLetter,
+} from "@/hooks/mutations/use-cover-letter-crud";
 
 interface Item {
   id: string;
@@ -12,17 +15,15 @@ interface Item {
 }
 
 export function HistoryCoverLetterSection({ items }: { items: Item[] }) {
-  const router = useRouter();
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const getMut = useCoverLetterContent();
+  const deleteMut = useDeleteCoverLetter();
 
   const dateStr = (d: string) =>
     new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
   async function handleDownload(id: string) {
     try {
-      const res = await fetch(`/api/cover-letters/${id}`);
-      if (!res.ok) return;
-      const data = await res.json();
+      const data = await getMut.mutateAsync(id);
       const blob = new Blob([data.content], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -37,14 +38,17 @@ export function HistoryCoverLetterSection({ items }: { items: Item[] }) {
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this cover letter?")) return;
-    setDeletingId(id);
     try {
-      await fetch(`/api/cover-letters/${id}`, { method: "DELETE" });
-      router.refresh();
-    } finally {
-      setDeletingId(null);
+      await deleteMut.mutateAsync(id);
+    } catch {
+      /* ignore */
     }
   }
+
+  const downloadingId =
+    getMut.isPending && typeof getMut.variables === "string" ? getMut.variables : null;
+  const deletingId =
+    deleteMut.isPending && typeof deleteMut.variables === "string" ? deleteMut.variables : null;
 
   return (
     <section className="mb-12">
@@ -77,7 +81,8 @@ export function HistoryCoverLetterSection({ items }: { items: Item[] }) {
                 <button
                   type="button"
                   onClick={() => handleDownload(c.id)}
-                  className="bg-slate-50 border border-transparent text-slate-600 hover:bg-slate-100 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all"
+                  disabled={downloadingId === c.id}
+                  className="bg-slate-50 border border-transparent text-slate-600 hover:bg-slate-100 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all disabled:opacity-50"
                 >
                   Download
                 </button>

@@ -64,17 +64,18 @@ function getStreakMultiplier(streak: number): number {
 export async function getUserStreak(userId: string): Promise<UserStreak> {
   const supabase = await createClient();
 
-  const { data: streak } = await supabase
-    .from("user_streaks")
-    .select("*")
-    .eq("user_id", userId)
-    .single();
-
-  const { data: userRow } = await supabase
-    .from("users")
-    .select("xp_points, streak_freeze_count")
-    .eq("id", userId)
-    .single();
+  const [{ data: streak }, { data: userRow }] = await Promise.all([
+    supabase
+      .from("user_streaks")
+      .select("*")
+      .eq("user_id", userId)
+      .single(),
+    supabase
+      .from("users")
+      .select("xp_points, streak_freeze_count")
+      .eq("id", userId)
+      .single(),
+  ]);
 
   const currentStreak = streak?.current_streak || 0;
   const longestStreak = streak?.longest_streak || 0;

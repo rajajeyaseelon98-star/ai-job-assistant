@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { dispatchUsageUpdated } from "@/components/layout/Topbar";
 import { AIProgressIndicator } from "@/components/ui/AIProgressIndicator";
+import { useJobMatch } from "@/hooks/mutations/use-job-match";
 
 interface JobMatchFormProps {
   defaultResumeText?: string;
@@ -28,8 +28,8 @@ export function JobMatchForm({
   const [jobTitle, setJobTitle] = useState(defaultJobTitle);
   const [jobDescription, setJobDescription] = useState(defaultJobDescription);
   const [resumeText, setResumeText] = useState(defaultResumeText);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const jobMatchMut = useJobMatch();
 
   useEffect(() => {
     if (defaultJobTitle !== undefined) setJobTitle(defaultJobTitle);
@@ -44,31 +44,23 @@ export function JobMatchForm({
       return;
     }
     setError(null);
-    setLoading(true);
     try {
-      const res = await fetch("/api/job-match", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          resumeText: resumeText.trim(),
-          jobDescription: jobDescription.trim(),
-          jobTitle: jobTitle.trim() || undefined,
-        }),
+      const data = await jobMatchMut.mutateAsync({
+        resumeText: resumeText.trim(),
+        jobDescription: jobDescription.trim(),
+        jobTitle: jobTitle.trim() || undefined,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Match failed");
       onResult(data, {
         jobTitle: jobTitle.trim(),
         jobDescription: jobDescription.trim(),
         resumeText: resumeText.trim(),
       });
-      dispatchUsageUpdated();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Match failed");
-    } finally {
-      setLoading(false);
     }
   }
+
+  const loading = jobMatchMut.isPending;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">

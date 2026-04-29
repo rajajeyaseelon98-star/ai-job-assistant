@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { dispatchUsageUpdated } from "@/components/layout/Topbar";
+import { useDevPlanPatch } from "@/hooks/mutations/use-dev-plan";
+import { formatApiFetchThrownError } from "@/lib/api-error";
 
 type PlanType = "free" | "pro" | "premium";
 
@@ -12,33 +14,22 @@ interface DevPlanSwitcherProps {
 
 export function DevPlanSwitcher({ currentPlan }: DevPlanSwitcherProps) {
   const router = useRouter();
+  const planMut = useDevPlanPatch();
   const [plan, setPlan] = useState<PlanType>(currentPlan);
-  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const loading = planMut.isPending;
 
   async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const value = e.target.value as PlanType;
     setPlan(value);
-    setLoading(true);
     setMessage(null);
     try {
-      const res = await fetch("/api/dev/plan", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planType: value }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok) {
-        setMessage("Plan updated. Refreshing…");
-        dispatchUsageUpdated();
-        router.refresh();
-      } else {
-        setMessage(data.error || "Failed to update plan");
-      }
-    } catch {
-      setMessage("Request failed");
-    } finally {
-      setLoading(false);
+      await planMut.mutateAsync(value);
+      setMessage("Plan updated. Refreshing…");
+      dispatchUsageUpdated();
+      router.refresh();
+    } catch (e) {
+      setMessage(formatApiFetchThrownError(e) || "Request failed");
     }
   }
 

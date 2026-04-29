@@ -12,4 +12,5 @@ export interface ATSAnalysisResult {
   missingSkills: string[];
   resumeImprovements: string[];
   recommendedRoles: string[];
+  confidence: number;
 }

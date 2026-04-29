@@ -3,6 +3,12 @@ import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { isValidUUID } from "@/lib/validation";
+import { getImprovedResumePlainTextForUser, getResumeForJobApplication } from "@/lib/resume-for-user";
+import { createNotificationForUser } from "@/lib/notifications";
+import { getAppBaseUrl } from "@/lib/appUrl";
+import { sendEmail } from "@/lib/email";
+import { applicationReceivedEmailTemplate } from "@/lib/emailTemplates";
+import { createServiceRoleClient } from "@/lib/supabase/admin";
 
 export async function POST(
   request: Request,
@@ -35,13 +41,25 @@ export async function POST(
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { resume_id, cover_letter } = body as {
+  const { resume_id, improved_resume_id, cover_letter } = body as {
     resume_id?: string;
+    improved_resume_id?: string;
     cover_letter?: string;
   };
 
+  if (resume_id && improved_resume_id) {
+    return NextResponse.json(
+      { error: "Use only one of resume_id or improved_resume_id" },
+      { status: 400 }
+    );
+  }
+
   if (resume_id && !isValidUUID(resume_id)) {
     return NextResponse.json({ error: "Invalid resume ID" }, { status: 400 });
+  }
+
+  if (improved_resume_id && !isValidUUID(improved_resume_id)) {
+    return NextResponse.json({ error: "Invalid improved resume ID" }, { status: 400 });
   }
 
   const supabase = await createClient();
@@ -49,7 +67,7 @@ export async function POST(
   // Fetch the job to confirm it's active and get recruiter_id
   const { data: job, error: jobError } = await supabase
     .from("job_postings")
-    .select("id, recruiter_id, status")
+    .select("id, recruiter_id, company_id, status, title")
     .eq("id", jobId)
     .single();
 
@@ -61,21 +79,30 @@ export async function POST(
     return NextResponse.json({ error: "This job is no longer accepting applications" }, { status: 400 });
   }
 
-  // If resume_id provided, fetch the parsed text
   let resumeText: string | null = null;
-  if (resume_id) {
-    const { data: resume, error: resumeError } = await supabase
-      .from("resumes")
-      .select("id, parsed_text")
-      .eq("id", resume_id)
-      .eq("user_id", user.id)
-      .single();
+  /** FK to `resumes` when applying with an upload, or when improved resume was derived from one */
+  let applicationResumeId: string | null = null;
 
-    if (resumeError || !resume) {
+  if (resume_id) {
+    const loaded = await getResumeForJobApplication(supabase, user.id, resume_id);
+    if (!loaded.ok) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
     }
-
-    resumeText = resume.parsed_text || null;
+    resumeText = loaded.text;
+    applicationResumeId = resume_id;
+  } else if (improved_resume_id) {
+    const loaded = await getImprovedResumePlainTextForUser(supabase, user.id, improved_resume_id);
+    if (!loaded.ok) {
+      if (loaded.reason === "not_found") {
+        return NextResponse.json({ error: "Improved resume not found" }, { status: 404 });
+      }
+      return NextResponse.json(
+        { error: "Improved resume has no usable text. Try re-generating it in Resume Analyzer." },
+        { status: 400 }
+      );
+    }
+    resumeText = loaded.text;
+    applicationResumeId = loaded.underlying_resume_id;
   }
 
   // Insert the application
@@ -85,7 +112,7 @@ export async function POST(
       job_id: jobId,
       candidate_id: user.id,
       recruiter_id: job.recruiter_id,
-      resume_id: resume_id || null,
+      resume_id: applicationResumeId,
       resume_text: resumeText,
       cover_letter: cover_letter?.trim().slice(0, 5000) || null,
       stage: "applied",
@@ -121,6 +148,112 @@ export async function POST(
       .from("job_postings")
       .update({ application_count: (current?.application_count || 0) + 1 })
       .eq("id", jobId);
+  }
+
+  // Notify company recruiters (best-effort; do not fail the application if notifications can't be delivered).
+  try {
+    const companyId = job.company_id as string | null | undefined;
+    if (companyId) {
+      const { data: members } = await supabase
+        .from("company_memberships")
+        .select("user_id,status")
+        .eq("company_id", companyId)
+        .eq("status", "active");
+      const targets = (members || [])
+        .map((m) => (m as { user_id: string }).user_id)
+        .filter(Boolean);
+      await Promise.all(
+        targets.map((targetUserId) =>
+          createNotificationForUser(
+            targetUserId,
+            "application",
+            "New application received",
+            `${user.email} applied to “${String(job.title || "a job")}”.`,
+            { job_id: jobId, application_id: application.id, candidate_id: user.id }
+          )
+        )
+      );
+
+      // Optional: email recruiters (Phase 6 follow-up, gated).
+      try {
+        const admin = createServiceRoleClient();
+        if (!admin) {
+          // Service role required to resolve recruiter emails; skip silently.
+        } else {
+          const baseUrl = await getAppBaseUrl();
+          const applicationUrl = `${baseUrl}/recruiter/applications?applicationId=${encodeURIComponent(
+            application.id
+          )}`;
+          const { data: companyRow } = await supabase
+            .from("companies")
+            .select("id,name")
+            .eq("id", companyId)
+            .maybeSingle();
+          const companyName = String(
+            (companyRow as { name?: string } | null | undefined)?.name || "your company"
+          );
+
+          // Fetch emails for targets (service role, to avoid RLS issues)
+          const { data: profiles } = await admin
+            .from("users")
+            .select("id,email")
+            .in("id", targets);
+          const emails = (profiles || [])
+            .map((p) => (p as { email?: string }).email)
+            .filter((e): e is string => typeof e === "string" && e.includes("@"));
+        const maxRecipients = Math.max(
+          1,
+          Math.min(100, Number(process.env.EMAIL_MAX_RECIPIENTS_PER_EVENT || 25) || 25)
+        );
+        const recipientBatch = emails.slice(0, maxRecipients);
+
+          const tpl = applicationReceivedEmailTemplate({
+            companyName,
+            jobTitle: String(job.title || "a job"),
+            candidateEmail: user.email,
+            applicationUrl,
+          });
+
+          await Promise.all(
+          recipientBatch.map((to) =>
+              sendEmail({
+                to,
+                subject: tpl.subject,
+                html: tpl.html,
+                text: tpl.text,
+                category: "marketplace",
+              eventType: "application_received_recruiter",
+              idempotencyKey: `application:${application.id}:recruiter:${to}`,
+              meta: {
+                application_id: application.id,
+                job_id: jobId,
+                candidate_id: user.id,
+                company_id: companyId,
+              },
+              })
+            )
+          );
+        }
+      }
+      catch (e) {
+        console.warn("[apply] recruiter email dispatch failed", {
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
+    } else {
+      // Fallback: notify the recruiter_id owner.
+      await createNotificationForUser(
+        job.recruiter_id,
+        "application",
+        "New application received",
+        `${user.email} applied to your job.`,
+        { job_id: jobId, application_id: application.id, candidate_id: user.id }
+      );
+    }
+  } catch (e) {
+    console.warn("[apply] notification dispatch failed", {
+      error: e instanceof Error ? e.message : String(e),
+    });
   }
 
   return NextResponse.json(application, { status: 201 });

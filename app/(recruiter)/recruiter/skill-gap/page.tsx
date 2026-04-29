@@ -2,49 +2,58 @@
 
 import { useState } from "react";
 import { Loader2, BarChart3, CheckCircle, XCircle, ArrowRight } from "lucide-react";
-
-interface SkillGapResult {
-  matching_skills: string[];
-  missing_skills: string[];
-  transferable_skills: string[];
-  recommendations: string[];
-  gap_score: number;
-}
+import {
+  useRecruiterSkillGap,
+  type RecruiterSkillGapResult,
+} from "@/hooks/queries/use-recruiter";
+import { toAiUiError } from "@/lib/client-ai-error";
+import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
+import { InlineRetryCard } from "@/components/ui/InlineRetryCard";
+import { ActionReceiptCard } from "@/components/ui/ActionReceiptCard";
 
 export default function SkillGapPage() {
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<SkillGapResult | null>(null);
+  const skillGapMut = useRecruiterSkillGap();
+  const loading = skillGapMut.isPending;
+  const [result, setResult] = useState<RecruiterSkillGapResult | null>(null);
   const [error, setError] = useState("");
+  const [isCreditError, setIsCreditError] = useState(false);
   const [resumeText, setResumeText] = useState("");
   const [jobId, setJobId] = useState("");
   const [applicationId, setApplicationId] = useState("");
   const [mode, setMode] = useState<"application" | "manual">("application");
 
-  async function handleAnalyze(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
+  async function runAnalyze() {
     setError("");
-    try {
-      const body = mode === "application"
+    setIsCreditError(false);
+    const body =
+      mode === "application"
         ? { application_id: applicationId.trim() }
         : { resume_text: resumeText.trim(), job_id: jobId.trim() };
 
-      if (mode === "application" && !applicationId.trim()) { setError("Application ID required"); setLoading(false); return; }
-      if (mode === "manual" && (!resumeText.trim() || !jobId.trim())) { setError("Both resume text and job ID required"); setLoading(false); return; }
+    if (mode === "application" && !applicationId.trim()) {
+      setError("Application ID required");
+      setIsCreditError(false);
+      return;
+    }
+    if (mode === "manual" && (!resumeText.trim() || !jobId.trim())) {
+      setError("Both resume text and job ID required");
+      setIsCreditError(false);
+      return;
+    }
 
-      const res = await fetch("/api/recruiter/skill-gap", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (res.ok) {
-        setResult(await res.json());
-      } else {
-        const data = await res.json();
-        setError(data.error || "Analysis failed");
-      }
-    } catch { setError("Something went wrong"); }
-    finally { setLoading(false); }
+    try {
+      const data = await skillGapMut.mutateAsync(body);
+      setResult(data);
+    } catch (e) {
+      const ui = toAiUiError(e);
+      setError(ui.message || "Something went wrong");
+      setIsCreditError(ui.isCreditsExhausted);
+    }
+  }
+
+  async function handleAnalyze(e: React.FormEvent) {
+    e.preventDefault();
+    await runAnalyze();
   }
 
   return (
@@ -89,7 +98,19 @@ export default function SkillGapPage() {
           </>
         )}
 
-        {error && <p className="rounded-xl bg-rose-50 border border-rose-100 px-4 py-3 text-sm text-rose-700">{error}</p>}
+        {error && (
+          isCreditError ? (
+            <AICreditExhaustedAlert message={error} pricingHref="/recruiter/pricing" />
+          ) : (
+          <InlineRetryCard
+            message={error}
+            onRetry={() => void runAnalyze()}
+            retryLabel="Retry skill-gap analysis"
+            alternateHref="/recruiter/applications"
+            alternateLabel="Open applications"
+          />
+          )
+        )}
 
         <button type="submit" disabled={loading}
           className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 rounded-xl px-8 py-3.5 font-medium disabled:opacity-50 w-full md:w-auto">
@@ -100,6 +121,14 @@ export default function SkillGapPage() {
 
       {result && (
         <div className="space-y-3 sm:space-y-4">
+          <ActionReceiptCard
+            title="Skill-gap report generated"
+            description="Review missing skills and recommendations below before making a hiring decision."
+            primaryHref="/recruiter/applications"
+            primaryLabel="Review applications"
+            secondaryHref="/recruiter/candidates"
+            secondaryLabel="View candidates"
+          />
           <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-4 rounded-xl border border-gray-200 bg-card p-3 sm:p-4 md:p-5">
             <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white ${
               result.gap_score >= 80 ? "bg-green-500" : result.gap_score >= 50 ? "bg-yellow-500" : "bg-red-500"

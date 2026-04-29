@@ -25,11 +25,22 @@ export async function GET(
   }
 
   const supabase = await createClient();
+
+  // Require membership to avoid leaking company data (DB may allow public read).
+  const { data: membership, error: mErr } = await supabase
+    .from("company_memberships")
+    .select("role,status")
+    .eq("company_id", id)
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+  if (mErr) return NextResponse.json({ error: "Failed to load membership" }, { status: 500 });
+  if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const { data, error } = await supabase
     .from("companies")
     .select("*")
     .eq("id", id)
-    .eq("recruiter_id", user.id)
     .single();
 
   if (error || !data) {
@@ -96,11 +107,25 @@ export async function PATCH(
     updates.benefits = body.benefits.trim().slice(0, 5000) || null;
 
   const supabase = await createClient();
+
+  // Only owner/admin can update company details.
+  const { data: membership, error: mErr } = await supabase
+    .from("company_memberships")
+    .select("role,status")
+    .eq("company_id", id)
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+  if (mErr) return NextResponse.json({ error: "Failed to load membership" }, { status: 500 });
+  const role = (membership as { role?: string } | null | undefined)?.role ?? null;
+  if (role !== "owner" && role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const { data, error } = await supabase
     .from("companies")
     .update(updates)
     .eq("id", id)
-    .eq("recruiter_id", user.id)
     .select()
     .single();
 
@@ -130,11 +155,26 @@ export async function DELETE(
   }
 
   const supabase = await createClient();
+
+  // Only owner can delete the company.
+  const { data: membership, error: mErr } = await supabase
+    .from("company_memberships")
+    .select("role,status")
+    .eq("company_id", id)
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+  if (mErr) return NextResponse.json({ error: "Failed to load membership" }, { status: 500 });
+  const role = (membership as { role?: string } | null | undefined)?.role ?? null;
+  if (role !== "owner") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const { error } = await supabase
     .from("companies")
     .delete()
     .eq("id", id)
-    .eq("recruiter_id", user.id);
+    ;
 
   if (error) {
     return NextResponse.json({ error: "Delete failed" }, { status: 500 });

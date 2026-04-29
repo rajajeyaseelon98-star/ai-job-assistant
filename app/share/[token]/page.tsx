@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -123,12 +124,12 @@ export default async function SharePage({
           <p className="text-xs text-gray-400">
             Created with AI Job Assistant
           </p>
-          <a
+          <Link
             href="/"
             className="mt-2 inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 min-h-[44px] w-full sm:w-auto active:scale-[0.98] transition-transform"
           >
             Analyze Your Resume
-          </a>
+          </Link>
         </div>
       </div>
     </div>

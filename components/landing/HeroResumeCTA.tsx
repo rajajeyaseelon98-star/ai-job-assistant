@@ -7,6 +7,7 @@ import { Upload, Sparkles, Loader2, Check, FileText, Zap, Lock, TrendingUp } fro
 
 import { JOB_SEEKER_SIGNUP } from "./landingPaths";
 import { landingContainer } from "./landingShell";
+import { usePublicExtractResume } from "@/hooks/mutations/use-public-landing";
 
 const LANDING_DRAFT_KEY = "landingResumeDraft";
 const SIGNUP_HREF = JOB_SEEKER_SIGNUP;
@@ -14,6 +15,7 @@ const SIGNUP_HREF = JOB_SEEKER_SIGNUP;
 type UserType = "experienced" | "fresher";
 
 export function HeroResumeCTA() {
+  const extractMut = usePublicExtractResume();
   const router = useRouter();
   const [userType, setUserType] = useState<UserType>("experienced");
   const [inputMode, setInputMode] = useState<"upload" | "paste">("upload");
@@ -60,23 +62,19 @@ export function HeroResumeCTA() {
       try {
         const fd = new FormData();
         fd.append("file", file);
-        const res = await fetch("/api/public/extract-resume", {
-          method: "POST",
-          body: fd,
-        });
-        const data = (await res.json()) as { error?: string; text?: string };
-        if (!res.ok || !data.text) {
-          setLocalError(data.error ?? "Could not read this file. Try pasting your resume text.");
-          return;
-        }
-        storeDraftAndSignup(data.text);
-      } catch {
-        setLocalError("Something went wrong. Try again or paste your resume text.");
+        const { text } = await extractMut.mutateAsync(fd);
+        storeDraftAndSignup(text);
+      } catch (e) {
+        setLocalError(
+          e instanceof Error
+            ? e.message
+            : "Something went wrong. Try again or paste your resume text."
+        );
       } finally {
         setBusy(false);
       }
     },
-    [storeDraftAndSignup]
+    [extractMut, storeDraftAndSignup]
   );
 
   const handleFile = useCallback(

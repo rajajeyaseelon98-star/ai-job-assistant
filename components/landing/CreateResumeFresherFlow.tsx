@@ -5,6 +5,8 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, Check, Loader2, Sparkles } from "lucide-react";
 
 import { JOB_SEEKER_SIGNUP } from "./landingPaths";
+import { usePublicFresherResume } from "@/hooks/mutations/use-public-landing";
+import { formatApiFetchThrownError } from "@/lib/api-error";
 
 const LANDING_DRAFT_KEY = "landingResumeDraft";
 const SIGNUP_HREF = JOB_SEEKER_SIGNUP;
@@ -12,12 +14,13 @@ const SIGNUP_HREF = JOB_SEEKER_SIGNUP;
 type Step = 1 | 2 | 3 | 4;
 
 export function CreateResumeFresherFlow() {
+  const fresherMut = usePublicFresherResume();
   const [step, setStep] = useState<Step>(1);
   const [desiredRole, setDesiredRole] = useState("");
   const [education, setEducation] = useState("");
   const [skills, setSkills] = useState("");
   const [projects, setProjects] = useState("");
-  const [generating, setGenerating] = useState(false);
+  const generating = fresherMut.isPending;
   const [error, setError] = useState<string | null>(null);
   const [resumeText, setResumeText] = useState<string | null>(null);
   const [atsScore, setAtsScore] = useState<number | null>(null);
@@ -28,20 +31,14 @@ export function CreateResumeFresherFlow() {
 
   async function generate() {
     setError(null);
-    setGenerating(true);
     try {
-      const res = await fetch("/api/public/fresher-resume", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          desiredRole: desiredRole.trim(),
-          education: education.trim(),
-          skills: skills.trim(),
-          projects: projects.trim(),
-        }),
+      const data = await fresherMut.mutateAsync({
+        desiredRole: desiredRole.trim(),
+        education: education.trim(),
+        skills: skills.trim(),
+        projects: projects.trim(),
       });
-      const data = (await res.json()) as { error?: string; resumeText?: string; atsScore?: number };
-      if (!res.ok) {
+      if (data.error && !data.resumeText) {
         setError(data.error ?? "Something went wrong");
         return;
       }
@@ -56,10 +53,8 @@ export function CreateResumeFresherFlow() {
       } catch {
         /* ignore */
       }
-    } catch {
-      setError("Network error. Check your connection and try again.");
-    } finally {
-      setGenerating(false);
+    } catch (e) {
+      setError(formatApiFetchThrownError(e) || "Network error. Check your connection and try again.");
     }
   }
 

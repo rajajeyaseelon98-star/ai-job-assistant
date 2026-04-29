@@ -5,14 +5,29 @@ import { useRouter } from "next/navigation";
 import { use } from "react";
 import { Loader2, Wand2, ArrowLeft, Trash2 } from "lucide-react";
 import type { WorkType, EmploymentType, JobStatus } from "@/types/recruiter";
+import {
+  useRecruiterJob,
+  useDeleteJob,
+  useGenerateJobDescription,
+  usePatchRecruiterJob,
+} from "@/hooks/queries/use-recruiter";
+import { formatApiFetchThrownError } from "@/lib/api-error";
+import { toAiUiError } from "@/lib/client-ai-error";
+import { AICreditExhaustedAlert } from "@/components/ui/AICreditExhaustedAlert";
+import { InlineRetryCard } from "@/components/ui/InlineRetryCard";
+import { ActionReceiptCard } from "@/components/ui/ActionReceiptCard";
 
 export default function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
+  const { data: jobData, isLoading: loading, error: loadError } = useRecruiterJob(id);
+  const deleteMut = useDeleteJob();
+  const patchMut = usePatchRecruiterJob();
+  const generateMut = useGenerateJobDescription();
+  const saving = patchMut.isPending;
+  const aiLoading = generateMut.isPending;
   const [error, setError] = useState("");
+  const [isCreditError, setIsCreditError] = useState(false);
   const [success, setSuccess] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -28,65 +43,62 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   const [employmentType, setEmploymentType] = useState<EmploymentType>("full_time");
   const [status, setStatus] = useState<JobStatus>("draft");
   const [applicationCount, setApplicationCount] = useState(0);
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`/api/recruiter/jobs/${id}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((job) => {
-        if (!job) { setError("Job not found"); return; }
-        setTitle(job.title || "");
-        setDescription(job.description || "");
-        setRequirements(job.requirements || "");
-        setSkills(Array.isArray(job.skills_required) ? job.skills_required.join(", ") : "");
-        setExperienceMin(String(job.experience_min ?? 0));
-        setExperienceMax(job.experience_max != null ? String(job.experience_max) : "");
-        setSalaryMin(job.salary_min != null ? String(job.salary_min) : "");
-        setSalaryMax(job.salary_max != null ? String(job.salary_max) : "");
-        setSalaryCurrency(job.salary_currency || "INR");
-        setLocation(job.location || "");
-        setWorkType(job.work_type || "onsite");
-        setEmploymentType(job.employment_type || "full_time");
-        setStatus(job.status || "draft");
-        setApplicationCount(job.application_count || 0);
-      })
-      .catch(() => setError("Failed to load job"))
-      .finally(() => setLoading(false));
-  }, [id]);
+    if (loadError) { setError("Failed to load job"); return; }
+    if (!jobData) return;
+    const job = jobData as Record<string, unknown>;
+    setTitle((job.title as string) || "");
+    setDescription((job.description as string) || "");
+    setRequirements((job.requirements as string) || "");
+    setSkills(Array.isArray(job.skills_required) ? (job.skills_required as string[]).join(", ") : "");
+    setExperienceMin(String(job.experience_min ?? 0));
+    setExperienceMax(job.experience_max != null ? String(job.experience_max) : "");
+    setSalaryMin(job.salary_min != null ? String(job.salary_min) : "");
+    setSalaryMax(job.salary_max != null ? String(job.salary_max) : "");
+    setSalaryCurrency((job.salary_currency as string) || "INR");
+    setLocation((job.location as string) || "");
+    setWorkType((job.work_type as WorkType) || "onsite");
+    setEmploymentType((job.employment_type as EmploymentType) || "full_time");
+    setStatus((job.status as JobStatus) || "draft");
+    setApplicationCount((job.application_count as number) || 0);
+  }, [jobData, loadError]);
 
   async function generateDescription() {
     if (!title.trim()) { setError("Enter a job title first"); return; }
-    setAiLoading(true);
     setError("");
+    setIsCreditError(false);
     try {
-      const res = await fetch("/api/recruiter/jobs/generate-description", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
-          work_type: workType,
-        }),
+      const data = await generateMut.mutateAsync({
+        title,
+        skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
+        work_type: workType,
+        experience_min: experienceMin,
+        experience_max: experienceMax || null,
       });
-      if (res.ok) {
-        const data = await res.json();
-        setDescription(data.description || "");
-      } else {
-        const data = await res.json();
-        setError(data.error || "AI generation failed");
+      setDescription(data.description || "");
+      if (typeof data.requirements === "string" && data.requirements.trim()) {
+        setRequirements(data.requirements);
       }
-    } catch { setError("Failed to generate description"); }
-    finally { setAiLoading(false); }
+      if (Array.isArray(data.skills_required) && data.skills_required.length > 0) {
+        setSkills(data.skills_required.join(", "));
+      }
+    } catch (e) {
+      const ui = toAiUiError(e);
+      setError(ui.message || "Failed to generate description");
+      setIsCreditError(ui.isCreditsExhausted);
+    }
   }
 
   async function handleSave() {
     if (!title.trim() || !description.trim()) { setError("Title and description are required"); return; }
-    setSaving(true);
     setError("");
+    setIsCreditError(false);
     try {
-      const res = await fetch(`/api/recruiter/jobs/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      await patchMut.mutateAsync({
+        id,
+        body: {
           title, description, requirements,
           skills_required: skills.split(",").map((s) => s.trim()).filter(Boolean),
           experience_min: parseInt(experienceMin) || 0,
@@ -95,25 +107,21 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
           salary_max: salaryMax ? parseInt(salaryMax) : null,
           salary_currency: salaryCurrency,
           location, work_type: workType, employment_type: employmentType, status,
-        }),
+        },
       });
-      if (res.ok) {
-        setSuccess("Job updated!");
-        setTimeout(() => setSuccess(""), 3000);
-      } else {
-        const data = await res.json();
-        setError(data.error || "Failed to update");
-      }
-    } catch { setError("Something went wrong"); }
-    finally { setSaving(false); }
+      setSuccess("Job updated!");
+      setLastSavedAt(new Date().toISOString());
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (e) {
+      setError(formatApiFetchThrownError(e) || "Something went wrong");
+    }
   }
 
   async function handleDelete() {
     if (!confirm("Are you sure you want to delete this job posting?")) return;
     try {
-      const res = await fetch(`/api/recruiter/jobs/${id}`, { method: "DELETE" });
-      if (res.ok) router.push("/recruiter/jobs");
-      else setError("Failed to delete job");
+      await deleteMut.mutateAsync(id);
+      router.push("/recruiter/jobs");
     } catch { setError("Something went wrong"); }
   }
 
@@ -232,8 +240,27 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
 
-        {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
-        {success && <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-600">{success}</p>}
+        {error && (
+          isCreditError ? (
+            <AICreditExhaustedAlert message={error} pricingHref="/recruiter/pricing" />
+          ) : (
+            <InlineRetryCard
+              message={error}
+              onRetry={() => void handleSave()}
+              retryLabel="Retry save"
+              alternateHref={`/recruiter/jobs/${id}/optimize`}
+              alternateLabel="Open optimize"
+            />
+          )
+        )}
+        {success && <ActionReceiptCard
+          title="Job changes saved"
+          description={`Saved successfully${lastSavedAt ? ` at ${new Date(lastSavedAt).toLocaleTimeString()}` : ""}.`}
+          primaryHref="/recruiter/jobs"
+          primaryLabel="Back to jobs"
+          secondaryHref={`/recruiter/jobs/${id}/optimize`}
+          secondaryLabel="Optimize post"
+        />}
 
         <div className="flex items-center gap-4 pt-8 border-t border-slate-100">
           <button type="button" onClick={handleSave} disabled={saving}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -13,18 +13,11 @@ import {
   Zap,
   ChevronRight,
 } from "lucide-react";
-
-interface OpportunityAlert {
-  id: string;
-  alert_type: string;
-  title: string;
-  message: string;
-  urgency: string;
-  action_url: string | null;
-  seen: boolean;
-  dismissed: boolean;
-  created_at: string;
-}
+import {
+  useOpportunityAlerts,
+  useTriggerAlertScan,
+  useDismissAlert,
+} from "@/hooks/queries/use-opportunity-alerts";
 
 const ALERT_ICONS: Record<string, React.ElementType> = {
   high_match_job: Target,
@@ -44,27 +37,19 @@ const URGENCY_STYLES: Record<string, { border: string; bg: string; text: string;
 };
 
 export function OpportunityAlerts() {
-  const [alerts, setAlerts] = useState<OpportunityAlert[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: alerts = [], isLoading } = useOpportunityAlerts();
+  const triggerScan = useTriggerAlertScan();
+  const dismissMutation = useDismissAlert();
 
+  const scanned = useRef(false);
   useEffect(() => {
-    fetch("/api/opportunity-alerts?scan=true")
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data) => setAlerts(Array.isArray(data) ? data : []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    if (scanned.current) return;
+    scanned.current = true;
+    triggerScan.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function dismiss(alertId: string) {
-    setAlerts((prev) => prev.filter((a) => a.id !== alertId));
-    await fetch("/api/opportunity-alerts", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ alert_id: alertId, action: "dismiss" }),
-    }).catch(() => {});
-  }
-
-  if (loading || alerts.length === 0) return null;
+  if (isLoading || alerts.length === 0) return null;
 
   return (
     <div className="space-y-2 sm:space-y-3">
@@ -99,7 +84,7 @@ export function OpportunityAlerts() {
               )}
             </div>
             <button
-              onClick={() => dismiss(alert.id)}
+              onClick={() => dismissMutation.mutate(alert.id)}
               className="shrink-0 rounded-md hover:bg-white/50 active:bg-white/70 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors"
               aria-label="Dismiss alert"
             >

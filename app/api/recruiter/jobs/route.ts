@@ -13,10 +13,23 @@ export async function GET() {
   }
 
   const supabase = await createClient();
+  const { data: memberships, error: mErr } = await supabase
+    .from("company_memberships")
+    .select("company_id,status")
+    .eq("user_id", user.id)
+    .eq("status", "active");
+  if (mErr) {
+    return NextResponse.json({ error: "Failed to load memberships" }, { status: 500 });
+  }
+  const companyIds = (memberships || [])
+    .map((m) => (m as { company_id: string }).company_id)
+    .filter(Boolean);
+  if (!companyIds.length) return NextResponse.json([]);
+
   const { data, error } = await supabase
     .from("job_postings")
     .select("*")
-    .eq("recruiter_id", user.id)
+    .in("company_id", companyIds)
     .order("updated_at", { ascending: false });
 
   if (error) {
@@ -94,6 +107,45 @@ export async function POST(request: Request) {
   const statusVal = validStatuses.includes(status || "") ? status : "draft";
 
   const supabase = await createClient();
+
+  // Default company_id to the recruiter's first active membership.
+  let effectiveCompanyId = company_id || null;
+  if (!effectiveCompanyId) {
+    const { data: memberships, error: mErr } = await supabase
+      .from("company_memberships")
+      .select("company_id,status")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .limit(1);
+    if (mErr) return NextResponse.json({ error: "Failed to resolve company" }, { status: 500 });
+    effectiveCompanyId = (memberships?.[0] as { company_id: string } | undefined)?.company_id || null;
+  }
+  if (!effectiveCompanyId) {
+    return NextResponse.json(
+      { error: "Create a company before posting jobs" },
+      { status: 400 }
+    );
+  }
+
+  // Enforce plan limits for active job postings.
+  if (statusVal === "active") {
+    const [{ data: company }, { count: activeCount }] = await Promise.all([
+      supabase.from("companies").select("id,max_active_jobs").eq("id", effectiveCompanyId).maybeSingle(),
+      supabase
+        .from("job_postings")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", effectiveCompanyId)
+        .eq("status", "active"),
+    ]);
+    const maxActiveJobs = (company as { max_active_jobs?: number } | null | undefined)?.max_active_jobs ?? 3;
+    if (maxActiveJobs !== -1 && (activeCount ?? 0) >= maxActiveJobs) {
+      return NextResponse.json(
+        { error: `Plan limit reached: max ${maxActiveJobs} active job postings.` },
+        { status: 402 }
+      );
+    }
+  }
+
   const { data, error } = await supabase
     .from("job_postings")
     .insert({
@@ -115,7 +167,7 @@ export async function POST(request: Request) {
       work_type: workTypeVal,
       employment_type: employmentTypeVal,
       status: statusVal,
-      company_id: company_id || null,
+      company_id: effectiveCompanyId,
     })
     .select()
     .single();

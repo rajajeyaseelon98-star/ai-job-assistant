@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useUser } from "@/hooks/queries/use-user";
+import { useMessageUnreadState } from "@/hooks/queries/use-message-unread-state";
 import {
   LayoutDashboard,
   Briefcase,
@@ -33,6 +35,7 @@ const nav = [
   { href: "/recruiter/templates", label: "Templates", icon: FileText },
   { href: "/recruiter/company", label: "Company Profile", icon: Building2 },
   { href: "/recruiter/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/recruiter/usage", label: "AI Usage", icon: BarChart3 },
   { href: "/recruiter/salary-estimator", label: "Salary Estimator", icon: IndianRupee },
   { href: "/recruiter/skill-gap", label: "Skill Gap Report", icon: GitCompare },
   { href: "/recruiter/instant-shortlist", label: "Instant Shortlist", icon: Zap },
@@ -44,7 +47,12 @@ const nav = [
 
 export function RecruiterSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const { data: user } = useUser();
+  const { totalUnread } = useMessageUnreadState();
+  // Always allow switching back to job seeker while in recruiter shell (recruiter-only users may have no company row yet).
+  const canSwitchToJobSeeker = user?.role === "recruiter";
 
   useEffect(() => {
     setOpen(false);
@@ -116,10 +124,14 @@ export function RecruiterSidebar() {
                   ? pathname === "/recruiter"
                   : pathname.startsWith(item.href);
               const Icon = item.icon;
+              const showMessagesBadge = item.href === "/recruiter/messages" && totalUnread > 0;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch={false}
+                  onMouseEnter={() => router.prefetch(item.href)}
+                  onTouchStart={() => router.prefetch(item.href)}
                   className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-200 ease-in-out ${
                     isActive
                       ? "bg-indigo-50 text-indigo-700"
@@ -128,6 +140,11 @@ export function RecruiterSidebar() {
                 >
                   <Icon className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
                   <span className="truncate">{item.label}</span>
+                  {showMessagesBadge ? (
+                    <span className="ml-auto shrink-0 rounded-full bg-indigo-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+                      {totalUnread > 9 ? "9+" : totalUnread}
+                    </span>
+                  ) : null}
                 </Link>
               );
             })}
@@ -135,13 +152,15 @@ export function RecruiterSidebar() {
         </nav>
 
         <div className="shrink-0 border-t border-slate-200 px-3 py-3 safe-bottom">
-          <Link
-            href="/select-role?next=/dashboard"
-            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all duration-200 hover:border-indigo-200 hover:bg-slate-50 hover:text-indigo-600"
-          >
-            <ArrowLeftRight className="h-4 w-4 shrink-0" />
-            <span className="truncate">Switch to Job Seeker</span>
-          </Link>
+          {canSwitchToJobSeeker ? (
+            <Link
+              href="/select-role?next=/dashboard"
+              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all duration-200 hover:border-indigo-200 hover:bg-slate-50 hover:text-indigo-600"
+            >
+              <ArrowLeftRight className="h-4 w-4 shrink-0" />
+              <span className="truncate">Switch to Job Seeker</span>
+            </Link>
+          ) : null}
         </div>
       </aside>
     </>

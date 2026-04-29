@@ -2,7 +2,7 @@
 
 **Purpose:** In-depth test cases for every feature flow. Covers happy paths, edge cases, error handling, and integration scenarios.
 
-**Last updated:** 2026-03-18
+**Last updated:** 2026-04-23 (Added AI usage/credit system QA coverage in **Section 50**, including DB migrations/grants validation, usage APIs, credit enforcement (`CREDITS_EXHAUSTED`), usage dashboard assertions, and observability checks. Previous updates retained below.)
 
 ---
 
@@ -46,6 +46,9 @@
 36. [Cross-Feature Integration Tests](#36-cross-feature-integration-tests)
 37. [Security & Authorization](#37-security--authorization)
 38. [Database Integrity](#38-database-integrity)
+49. [Dashboard, history, jobs applied, and public APIs](#49-dashboard-history-jobs-applied-and-public-apis)
+50. [AI Usage Tracking & Credits](#50-ai-usage-tracking--credits)
+51. [Automated QA Regression Suite](#51-automated-qa-regression-suite)
 
 ---
 
@@ -89,7 +92,7 @@
 - **Steps:**
   1. Navigate to `/select-role`
   2. Click "Recruiter"
-- **Expected:** `PUT /api/user/role` updates `users.role = "recruiter"`. Redirect to `/recruiter`.
+- **Expected:** `PATCH /api/user/role` updates `users.role = "recruiter"`. Redirect to `/recruiter`.
 
 ### TC-1.7: Role switch from recruiter to job seeker
 - **Steps:**
@@ -1141,11 +1144,13 @@
 
 ## 30. Recruiter: Messaging
 
-### TC-30.1: Send message
+Shared inbox UI (**`MessagesInbox`**) for recruiters at **`/recruiter/messages`** and job seekers at **`/messages`**. **API:** **`GET`/`POST /api/messages`** (canonical; **`GET`** supports **`limit`**, **`before`**, **`unread`**); **`GET /api/messages/thread`** (peer thread + pagination); **`GET /api/messages/unread-summary`** (**`{ counts }`** per sender); **`POST /api/messages/attachment`** (multipart **`file`**); **`GET`/`POST /api/recruiter/messages`** re-exports the same **`GET`/`POST`** handlers; **`POST /api/messages/mark-read`** with **`{ peer_id }`** sets **`is_read`** and **`read_at`** on inbound rows from that peer when a thread is opened.
+
+### TC-30.1: Send message (recruiter → candidate)
 - **Steps:**
-  1. Compose message to candidate
-  2. Send
-- **Expected:** Message saved. Notification sent to candidate.
+  1. As recruiter, open **`/recruiter/messages`**, compose a message to a **job seeker** user id (e.g. from candidate search / profile).
+  2. Send.
+- **Expected:** **`POST /api/messages`** returns **201**; row inserted in **`messages`**. Recipient must be **`job_seeker`** or API returns **403** (see TC-30.8). With **`SUPABASE_SERVICE_ROLE_KEY`** set on the server, a **`notifications`** row is inserted for the **`receiver_id`** (**`type`** = **`message`**); without the service role key, the message still sends but the in-app bell notification is skipped (dev console warning).
 
 ### TC-30.2: Use template
 - **Steps:**
@@ -1164,6 +1169,40 @@
   2. Edit template
   3. Delete template
 - **Expected:** Full CRUD works. Types: general, interview_invite, rejection, offer, follow_up.
+
+### TC-30.5: Job seeker inbox
+- **Steps:**
+  1. As job seeker, open **`/messages`** (Sidebar → **Messages**).
+  2. Confirm list + main panel load (conversation list, empty state or threads).
+- **Expected:** Same inbox behavior as recruiter layout; **`GET /api/messages`** returns messages where the user is sender or receiver.
+
+### TC-30.6: Compose deep link (`compose` + `receiver_id`)
+- **Steps:**
+  1. Visit **`/messages?compose=1&receiver_id=<recruiter UUID>`** (job seeker) or **`/recruiter/messages?compose=1&receiver_id=<job seeker UUID>`** (recruiter).
+- **Expected:** Compose form opens; **Recipient user ID** field is prefilled; URL can be used from candidate profile **Message in app** or candidate list **Message**.
+
+### TC-30.7: Thread deep link (`peer`) and mark read
+- **Steps:**
+  1. Open **`/messages?peer=<uuid>`** or **`/recruiter/messages?peer=<uuid>`** for an existing conversation partner.
+  2. Observe network or server logs.
+- **Expected:** Thread loads; **`POST /api/messages/mark-read`** runs with **`{ peer_id }`**; inbound messages from that peer become read.
+
+### TC-30.8: API role validation on send (**403**)
+- **Precondition:** Authenticated sender; **`receiver_id`** exists in **`users`**.
+- **Steps:**
+  1. As **recruiter**, **`POST /api/messages`** with **`receiver_id`** of another **recruiter** (or non-job_seeker).
+  2. As **job seeker**, **`POST /api/messages`** with **`receiver_id`** of another **job seeker** (or non-recruiter).
+- **Expected:** **403** JSON error: recruiter path — *"Recruiters can only message job seeker accounts."*; job seeker path — *"You can only message recruiter accounts."*
+
+### TC-30.9: Candidate search row Message (recruiter)
+- **Steps:**
+  1. On **`/recruiter/candidates`**, click **Message** on a row (not only the profile link).
+- **Expected:** Navigates to **`/recruiter/messages?compose=1&receiver_id=<that candidate’s user id>`**; compose opens without invalid nested links.
+
+### TC-30.10: Copy user ID on candidate profile (recruiter)
+- **Steps:**
+  1. On **`/recruiter/candidates/[id]`**, use **Copy user ID** (or equivalent control).
+- **Expected:** User UUID is copied to the clipboard; optional short “copied” feedback.
 
 ---
 
@@ -1276,7 +1315,7 @@
 ### TC-35.1: Full cron trigger
 - **Steps:**
   1. POST /api/smart-apply/trigger with valid CRON_SECRET
-- **Expected:** All 6 tasks execute: smart rules, daily reports, platform stats, skill demand, auto-push, opportunity scan.
+- **Expected:** All 8 steps execute: smart rules, daily reports, platform stats, skill demand, auto-push, opportunity scan, stale `rate_limit` usage_logs cleanup, expired `ai_cache` cleanup. JSON response includes `cleanup.rate_limit_cleaned` and `cleanup.cache_cleaned`.
 
 ### TC-35.2: Invalid CRON_SECRET (production)
 - **Precondition:** NODE_ENV=production
@@ -1653,7 +1692,7 @@
 ## 45. Notification Copy Improvements (Phase 9)
 
 ### TC-45.1: Auto-Apply Notifications
-- [ ] After auto-apply confirm: title shows "X new applications sent!"
+- [ ] After auto-apply confirm: notification title includes count (e.g. "N new application(s) sent!")
 - [ ] Message includes "Your next interview could be around the corner!"
 
 ### TC-45.2: Smart Apply Notifications
@@ -1737,3 +1776,152 @@
 - [ ] On devices with `navigator.share`, uses native share dialog
 - [ ] On devices without `navigator.share`, shows "Copy to clipboard" option
 - [ ] No TypeScript or runtime errors on SSR (typeof navigator check)
+
+---
+
+## 49. Dashboard, history, jobs applied, and public APIs
+
+### TC-49.1: GET /api/dashboard
+- **Precondition:** Authenticated job seeker
+- **Steps:** Call `GET /api/dashboard`
+- **Expected:** 200 JSON with `analyses`, `matches`, `coverLetters`, `applicationCount`, `avgMatchScore`, `usage`, `userName`, `planType`. Matches TanStack `useDashboardStats` shape.
+
+### TC-49.2: GET /api/history
+- **Steps:** Call `GET /api/history`
+- **Expected:** 200 with `analyses`, `matches`, `coverLetters`, `improvedResumes` arrays (max 50 each).
+
+### TC-49.3: GET /api/upload-resume (list)
+- **Steps:** Call `GET /api/upload-resume` with session
+- **Expected:** 200 with array of `{ id, file_name, file_url, created_at }` for owned resumes.
+
+### TC-49.4: GET /api/jobs/applied
+- **Precondition:** User has applied to at least one recruiter job
+- **Steps:** Call `GET /api/jobs/applied`
+- **Expected:** 200 JSON array of `job_id` strings. No auth returns `[]` with 200 (fail-open for anonymous).
+
+### TC-49.5: POST /api/public/extract-resume
+- **Precondition:** No authentication
+- **Steps:** Multipart POST with valid PDF under 4MB
+- **Expected:** 200 with extracted `text` field. No session cookie required.
+
+### TC-49.6: POST /api/public/fresher-resume
+- **Precondition:** No authentication; valid JSON body (desired role, education, skills, projects within limits)
+- **Expected:** 200 with `resumeText` and `atsScore` (0–100). Uses AI cache where applicable.
+
+### TC-49.7: POST /api/opportunity-alerts/scan
+- **Precondition:** Authenticated user (uses `supabase.auth.getUser()` in route)
+- **Steps:** POST `/api/opportunity-alerts/scan`
+- **Expected:** 200 JSON `{ scanned: true, alertsCreated: <number> }`. 401 without session.
+
+---
+
+## 50. AI Usage Tracking & Credits
+
+### TC-50.1: Migration applied (schema)
+- **Steps:**
+  1. Verify `public.ai_usage` exists
+  2. Verify `users.total_credits`, `users.used_credits` exist
+- **Expected:** Table/columns available and queryable.
+
+### TC-50.2: Grants + RLS baseline
+- **Steps:**
+  1. As authenticated app user, call `/api/usage/summary`
+  2. Confirm no `permission denied` error
+- **Expected:** Authenticated role can `SELECT`/`INSERT` on `ai_usage` (with RLS row scoping).
+
+### TC-50.3: Usage insert on ATS analyze
+- **Steps:**
+  1. Run `POST /api/analyze-resume` successfully
+  2. Check `/api/usage/history?limit=10`
+- **Expected:** New row appears with `feature_name = resume_analysis`, non-negative token/credit values.
+
+### TC-50.4: Usage insert on improve resume
+- **Steps:**
+  1. Run `POST /api/improve-resume`
+  2. Check `/api/usage/feature-breakdown`
+- **Expected:** `resume_improve` (or relevant feature key) increases in calls/tokens/credits.
+
+### TC-50.5: Cover letter generation diagnostics
+- **Steps:**
+  1. Trigger cover letter generation failure
+  2. Inspect API JSON
+- **Expected:** 500 payload includes `detail` (no generic-only error), enabling root-cause debugging.
+
+### TC-50.6: Summary aggregation correctness
+- **Steps:**
+  1. Perform 2-3 distinct AI actions
+  2. Compare totals in `/api/usage/summary` with `/api/usage/history`
+- **Expected:** `totalTokens` and `totalCredits` reflect sum of history rows for current user.
+
+### TC-50.7: Credit enforcement OFF
+- **Precondition:** `AI_CREDITS_ENFORCEMENT_ENABLED=false`
+- **Steps:**
+  1. Set `used_credits >= total_credits`
+  2. Run an AI endpoint
+- **Expected:** Request still executes (tracking continues), no `CREDITS_EXHAUSTED`.
+
+### TC-50.8: Credit enforcement ON
+- **Precondition:** `AI_CREDITS_ENFORCEMENT_ENABLED=true`
+- **Steps:**
+  1. Set `used_credits >= total_credits`
+  2. Run ATS / improve / recruiter AI endpoint
+- **Expected:** API returns HTTP 402 with `{ error: "CREDITS_EXHAUSTED", message: ... }`.
+
+### TC-50.9: UI exhaustion handling
+- **Steps:**
+  1. Trigger `CREDITS_EXHAUSTED` on jobseeker and recruiter pages
+- **Expected:** UI renders `AICreditExhaustedAlert` upgrade CTA; no raw code/error dumps.
+
+### TC-50.10: Usage dashboard navigation and rendering
+- **Steps:**
+  1. Open sidebar and click `AI Usage`
+  2. Verify `/usage` page loads
+- **Expected:** Summary cards, breakdown, and history sections render; non-empty after AI actions.
+
+### TC-50.11: Usage API failure observability
+- **Steps:**
+  1. Temporarily break usage query path (e.g., permission/table issue in test env)
+  2. Call `/api/usage/summary`
+- **Expected:** API returns 500 with `detail`; server logs include `[usage-summary]` (or related tag).
+
+### TC-50.12: Tracking write failure observability
+- **Steps:**
+  1. Force insert failure scenario in test env
+  2. Execute AI call
+- **Expected:** Server warning log appears (`[ai-usage] ... failed`), not silent drop.
+
+---
+
+## 51. Automated QA Regression Suite
+
+### TC-51.1: Run critical job seeker E2E suite
+- **Precondition:** Playwright Chromium installed, app starts on `PLAYWRIGHT_PORT`
+- **Steps:**
+  1. Run `npm run test:e2e:critical`
+  2. Inspect `e2e/resume-flow.spec.ts` and `e2e/auto-apply.spec.ts` results
+- **Expected:** Resume analyze/improve/re-analyze, auto-apply full/partial/retry, and credits exhaustion UX assertions pass.
+
+### TC-51.2: Run critical recruiter E2E suite
+- **Steps:**
+  1. Run `npx playwright test e2e/recruiter-flow.spec.ts`
+  2. Verify create/publish job, AI description generation, ATS analyze, shortlist partial, and messaging retry scenarios
+- **Expected:** Recruiter reliability checkpoints pass with deterministic route mocks.
+
+### TC-51.3: API contract suite
+- **Steps:**
+  1. Run `npm run test:api`
+  2. Review `api-tests/contracts.api.spec.ts`
+- **Expected:** Validation errors expose structured metadata (`requestId`, `retryable`, `nextAction` when applicable); success paths include meta envelope when available.
+
+### TC-51.4: API data-integrity suite
+- **Steps:**
+  1. Run `npx playwright test api-tests/data-integrity.api.spec.ts`
+  2. Check idempotent behavior around mark-read and auto-apply confirm contracts
+- **Expected:** No server crash; idempotent semantics hold in seeded/non-seeded test envs.
+
+### TC-51.5: Fixture and seeding determinism
+- **Steps:**
+  1. Run `node scripts/test/seed-fixtures.mjs`
+  2. Apply generated SQL in test DB
+  3. Re-run E2E/API suites
+- **Expected:** Stable deterministic data across repeated CI/local test runs.

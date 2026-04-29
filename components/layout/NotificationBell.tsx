@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Bell, Volume2 } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
-
-interface Notification {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  read: boolean;
-  created_at: string;
-}
+import {
+  useNotifications,
+  useMarkAllRead,
+  useMarkRead,
+  notificationKeys,
+  type AppNotification,
+} from "@/hooks/queries/use-notifications";
+import { useUser } from "@/hooks/queries/use-user";
+import { useQueryClient } from "@tanstack/react-query";
 
 const TYPE_COLORS: Record<string, string> = {
   success: "bg-green-500",
@@ -23,60 +24,71 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export function NotificationBell() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const { data: userData } = useUser();
+
+  const { data: notifications = [] } = useNotifications();
+  const markAllReadMutation = useMarkAllRead();
+  const markReadMutation = useMarkRead();
+  const queryClient = useQueryClient();
+
+  const messagesBase = pathname.startsWith("/recruiter") ? "/recruiter/messages" : "/messages";
 
   const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const fetchNotifications = useCallback(() => {
-    fetch("/api/notifications")
-      .then((r) => (r.ok ? r.json() : []))
-      .then(setNotifications)
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
 
   useEffect(() => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const uid = userData?.id;
 
-    if (!supabaseUrl || !supabaseKey) {
-      const interval = setInterval(fetchNotifications, 30000);
-      return () => clearInterval(interval);
-    }
+    if (!supabaseUrl || !supabaseKey || !uid) return;
 
     const supabase = createBrowserClient(supabaseUrl, supabaseKey);
-
     const channel = supabase
-      .channel("notifications-realtime")
+      .channel(`notifications-realtime:${uid}`)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "notifications",
+          filter: `user_id=eq.${uid}`,
         },
         (payload) => {
-          const newNotif = payload.new as Notification;
-          setNotifications((prev) => [newNotif, ...prev].slice(0, 30));
+          const newNotif = payload.new as AppNotification;
+          queryClient.setQueryData(notificationKeys.list(), (old: AppNotification[] | undefined) =>
+            [newNotif, ...(old ?? [])].slice(0, 30)
+          );
           setToast(newNotif.title);
           setTimeout(() => setToast(null), 4000);
         }
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${uid}`,
+        },
+        (payload) => {
+          const updated = payload.new as AppNotification;
+          queryClient.setQueryData(notificationKeys.list(), (old: AppNotification[] | undefined) => {
+            if (!old) return old;
+            return old.map((n) => (n.id === updated.id ? { ...n, ...updated } : n));
+          });
+        }
+      )
       .subscribe();
 
-    const interval = setInterval(fetchNotifications, 60000);
-
     return () => {
-      supabase.removeChannel(channel);
-      clearInterval(interval);
+      void supabase.removeChannel(channel);
     };
-  }, [fetchNotifications]);
+  }, [queryClient, userData?.id]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -87,28 +99,39 @@ export function NotificationBell() {
   }, []);
 
   async function markAllRead() {
-    await fetch("/api/notifications", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mark_all_read: true }),
-    });
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    await markAllReadMutation.mutateAsync();
   }
 
-  async function markRead(id: string) {
-    await fetch("/api/notifications", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+  function openNotification(n: AppNotification) {
+    if (!n.read) {
+      void markReadMutation.mutateAsync(n.id);
+    }
+
+    if (n.type === "message" && n.data && typeof n.data === "object") {
+      const senderId = n.data.sender_id;
+      if (typeof senderId === "string" && senderId.length > 0) {
+        router.push(`${messagesBase}?peer=${encodeURIComponent(senderId)}`);
+        setOpen(false);
+        return;
+      }
+    }
+
+    if (n.type === "application" && n.data && typeof n.data === "object") {
+      const applicationId = n.data.application_id;
+      const base = pathname.startsWith("/recruiter") ? "/recruiter/applications" : "/applications";
+      if (typeof applicationId === "string" && applicationId.length > 0) {
+        router.push(`${base}?applicationId=${encodeURIComponent(applicationId)}`);
+        setOpen(false);
+        return;
+      }
+      router.push(base);
+      setOpen(false);
+      return;
+    }
   }
 
   return (
     <>
-      {/* Toast notification - responsive positioning */}
       {toast && (
         <div className="fixed left-4 right-4 top-16 z-[100] flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2.5 shadow-lg sm:left-auto sm:right-4 sm:top-4 sm:w-auto sm:max-w-sm sm:px-4 sm:py-3">
           <Volume2 className="h-4 w-4 shrink-0 text-green-600" />
@@ -137,7 +160,8 @@ export function NotificationBell() {
               <span className="text-sm font-semibold text-text">Notifications</span>
               {unreadCount > 0 && (
                 <button
-                  onClick={markAllRead}
+                  type="button"
+                  onClick={() => void markAllRead()}
                   className="rounded px-2 py-1 text-xs text-primary hover:bg-primary/10 active:bg-primary/20"
                 >
                   Mark all read
@@ -147,29 +171,34 @@ export function NotificationBell() {
 
             <div className="max-h-[60vh] overflow-y-auto sm:max-h-80">
               {notifications.length === 0 ? (
-                <p className="px-4 py-6 text-center text-sm text-text-muted">
-                  No notifications yet
-                </p>
+                <p className="px-4 py-6 text-center text-sm text-text-muted">No notifications yet</p>
               ) : (
                 notifications.slice(0, 20).map((n) => (
                   <button
                     key={n.id}
-                    onClick={() => { if (!n.read) markRead(n.id); }}
+                    type="button"
+                    onClick={() => openNotification(n)}
                     className={`flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-gray-50 active:bg-gray-100 ${
                       !n.read ? "bg-blue-50/50" : ""
                     }`}
                   >
-                    <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
-                      !n.read ? (TYPE_COLORS[n.type] || TYPE_COLORS.info) : "bg-transparent"
-                    }`} />
+                    <span
+                      className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
+                        !n.read ? TYPE_COLORS[n.type] || TYPE_COLORS.info : "bg-transparent"
+                      }`}
+                    />
                     <div className="min-w-0 flex-1">
                       <p className={`text-sm ${!n.read ? "font-medium text-text" : "text-text-muted"}`}>
                         {n.title}
                       </p>
                       <p className="mt-0.5 text-xs text-text-muted line-clamp-2">{n.message}</p>
                       <p className="mt-1 text-[10px] text-text-muted">
-                        {new Date(n.created_at).toLocaleDateString()} {new Date(n.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(n.created_at).toLocaleDateString()}{" "}
+                        {new Date(n.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </p>
+                      {n.type === "message" ? (
+                        <p className="mt-1 text-[10px] font-medium text-indigo-600">Open conversation</p>
+                      ) : null}
                     </div>
                   </button>
                 ))

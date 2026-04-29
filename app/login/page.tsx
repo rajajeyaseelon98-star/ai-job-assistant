@@ -5,6 +5,9 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api-fetcher";
+import { userKeys, type UserData } from "@/hooks/queries/use-user";
 import { AuthSplitShell } from "@/components/auth/auth-split-shell";
 import { AuthTrustSignals } from "@/components/auth/auth-trust-signals";
 
@@ -35,6 +38,7 @@ const inputClass =
   "mt-1.5 w-full min-h-[44px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-base text-slate-900 placeholder:text-slate-400 transition focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-60 sm:text-sm";
 
 function LoginForm() {
+  const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -46,19 +50,49 @@ function LoginForm() {
   async function handleGoogleLogin() {
     setGoogleLoading(true);
     setMessage(null);
-    const supabase = createClient();
-    const next = searchParams.get("next") || "/dashboard";
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-      },
-    });
-    if (error) {
-      const msg = error.message.toLowerCase().includes("provider")
-        ? "Google sign-in is not configured yet. Please use email login instead."
-        : error.message;
-      setMessage({ type: "error", text: msg });
+    try {
+      const supabase = createClient();
+      const next = searchParams.get("next") || "/dashboard";
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error) {
+        const msg = error.message.toLowerCase().includes("provider")
+          ? "Google sign-in is not configured yet. Please use email login instead."
+          : error.message;
+        setMessage({ type: "error", text: msg });
+        setGoogleLoading(false);
+        return;
+      }
+
+      if (!data?.url) {
+        setMessage({
+          type: "error",
+          text: "Unable to start Google sign-in. Please retry or continue with email.",
+        });
+        setGoogleLoading(false);
+        return;
+      }
+
+      // In standalone PWA mode, explicit navigation is more reliable than implicit SDK redirects.
+      window.location.assign(data.url);
+
+      // If navigation does not happen (popup blockers/webview constraints), recover gracefully.
+      window.setTimeout(() => {
+        setGoogleLoading(false);
+        setMessage({
+          type: "error",
+          text: "Google sign-in did not open. Tap again, or open this app URL in Chrome and retry.",
+        });
+      }, 8000);
+    } catch (error) {
+      const text = error instanceof Error ? error.message : "Failed to start Google sign-in";
+      setMessage({ type: "error", text });
       setGoogleLoading(false);
     }
   }
@@ -68,7 +102,7 @@ function LoginForm() {
     setLoading(true);
     setMessage(null);
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
       setMessage({ type: "error", text: error.message });
@@ -76,7 +110,23 @@ function LoginForm() {
     }
     const next = searchParams.get("next") || "/dashboard";
     const safePath = next.startsWith("/") && !next.startsWith("//") && !next.includes("://") ? next : "/dashboard";
-    router.push(safePath);
+
+    // Role-aware redirect: default /dashboard → last active mode (same as users.role after switch)
+    let redirectPath = safePath;
+    if (safePath === "/dashboard" && authData.user) {
+      try {
+        const userData = await queryClient.fetchQuery({
+          queryKey: userKeys.me(),
+          queryFn: () => apiFetch<UserData>("/api/user"),
+        });
+        const mode = userData.last_active_role ?? userData.role;
+        if (mode === "recruiter") redirectPath = "/recruiter";
+      } catch {
+        /* fallback to /dashboard */
+      }
+    }
+
+    router.push(redirectPath);
     router.refresh();
   }
 

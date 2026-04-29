@@ -27,7 +27,7 @@ export function ActivityList({ items }: ActivityListProps) {
               <FileText className="h-5 w-5 shrink-0 text-indigo-600" />
               <div>
                 <p className="text-sm font-medium text-slate-900">Analyze your resume</p>
-                <p className="text-xs text-slate-500">Get your ATS score in 30 seconds</p>
+                <p className="text-xs text-slate-500">Get structured feedback in about a minute</p>
               </div>
             </Link>
             <Link

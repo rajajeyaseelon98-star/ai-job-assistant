@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useStreakRewards, useClaimReward } from "@/hooks/queries/use-streak-rewards";
 import {
   Flame,
   Gift,
@@ -42,42 +42,17 @@ const REWARD_ICONS: Record<string, React.ElementType> = {
 };
 
 export default function StreakRewardsPage() {
-  const [streak, setStreak] = useState<UserStreak | null>(null);
-  const [rewards, setRewards] = useState<StreakReward[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [claiming, setClaiming] = useState<number | null>(null);
+  const { data, isLoading: loading } = useStreakRewards();
+  const claimMutation = useClaimReward();
 
-  useEffect(() => {
-    fetch("/api/streak-rewards")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data) {
-          setStreak(data.streak);
-          setRewards(data.rewards);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const streak = data?.streak ?? null;
+  const rewards = data?.rewards ?? [];
+  const claiming = claimMutation.isPending ? claimMutation.variables : null;
 
   async function claimReward(days: number) {
-    setClaiming(days);
     try {
-      const res = await fetch("/api/streak-rewards", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ streak_days: days }),
-      });
-      if (res.ok) {
-        setRewards((prev) =>
-          prev.map((r) => (r.streak_days === days ? { ...r, claimed: true } : r))
-        );
-      }
-    } catch {
-      // handle silently
-    } finally {
-      setClaiming(null);
-    }
+      await claimMutation.mutateAsync(days);
+    } catch { /* mutation error handled by React Query */ }
   }
 
   if (loading) {

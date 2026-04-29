@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Crown,
   Star,
@@ -10,6 +10,7 @@ import {
   Send,
   ArrowUpRight,
 } from "lucide-react";
+import { useRecruiterTopCandidates, usePushCandidate } from "@/hooks/queries/use-recruiter";
 
 interface CandidateRanking {
   user_id: string;
@@ -22,40 +23,23 @@ interface CandidateRanking {
 }
 
 export default function TopCandidatesPage() {
-  const [candidates, setCandidates] = useState<CandidateRanking[]>([]);
-  const [loading, setLoading] = useState(true);
   const [skillFilter, setSkillFilter] = useState("");
+  const [searchParams, setSearchParams] = useState("");
   const [pushing, setPushing] = useState<string | null>(null);
+  const pushMutation = usePushCandidate();
 
-  useEffect(() => {
-    fetchCandidates();
-  }, []);
-
-  async function fetchCandidates() {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({ limit: "30" });
-      if (skillFilter) params.set("skills", skillFilter);
-      const res = await fetch(`/api/recruiter/top-candidates?${params}`);
-      if (res.ok) setCandidates(await res.json());
-    } catch {
-      // Ignore
-    }
-    setLoading(false);
-  }
+  const queryParams = searchParams || "limit=30";
+  const { data: candidatesRaw, isLoading: loading } = useRecruiterTopCandidates(queryParams);
+  const candidates = (candidatesRaw ?? []) as CandidateRanking[];
 
   async function handlePush(candidateId: string, name: string) {
     setPushing(candidateId);
     try {
-      await fetch("/api/recruiter/push", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          candidate_id: candidateId,
-          push_type: "job_invite",
-          title: "A recruiter is interested in your profile!",
-          message: `Your profile caught our attention. We'd love to discuss potential opportunities with you.`,
-        }),
+      await pushMutation.mutateAsync({
+        candidate_id: candidateId,
+        push_type: "job_invite",
+        title: "A recruiter is interested in your profile!",
+        message: `Your profile caught our attention. We'd love to discuss potential opportunities with you.`,
       });
       alert(`Notification sent to ${name}!`);
     } catch {
@@ -66,7 +50,9 @@ export default function TopCandidatesPage() {
 
   function handleFilterSearch(e: React.FormEvent) {
     e.preventDefault();
-    fetchCandidates();
+    const params = new URLSearchParams({ limit: "30" });
+    if (skillFilter) params.set("skills", skillFilter);
+    setSearchParams(params.toString());
   }
 
   return (

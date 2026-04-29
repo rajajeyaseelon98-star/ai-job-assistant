@@ -25,13 +25,28 @@ export async function generateDailyReport(
   const todayStr = today.toISOString().split("T")[0];
   const yesterdayStr = yesterday.toISOString().split("T")[0];
 
-  // 1. Auto-apply runs from last 24h
-  const { data: runs } = await supabase
-    .from("auto_apply_runs")
-    .select("results, jobs_found, jobs_matched, jobs_applied, status")
-    .eq("user_id", userId)
-    .gte("created_at", yesterday.toISOString())
-    .order("created_at", { ascending: false });
+  // Run all 3 independent queries in parallel
+  const [{ data: runs }, { data: interviewApps }, { data: responseApps }] =
+    await Promise.all([
+      supabase
+        .from("auto_apply_runs")
+        .select("results, jobs_found, jobs_matched, jobs_applied, status")
+        .eq("user_id", userId)
+        .gte("created_at", yesterday.toISOString())
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("applications")
+        .select("role, company")
+        .eq("user_id", userId)
+        .eq("status", "interviewing")
+        .gte("updated_at", yesterday.toISOString()),
+      supabase
+        .from("applications")
+        .select("status")
+        .eq("user_id", userId)
+        .in("status", ["interviewing", "offer", "rejected"])
+        .gte("updated_at", yesterday.toISOString()),
+    ]);
 
   let newJobsFound = 0;
   let autoApplied = 0;
@@ -57,24 +72,7 @@ export async function generateDailyReport(
     }
   }
 
-  // 2. Applications status changes (interviews scheduled)
-  const { data: interviewApps } = await supabase
-    .from("applications")
-    .select("role, company")
-    .eq("user_id", userId)
-    .eq("status", "interviewing")
-    .gte("updated_at", yesterday.toISOString());
-
   const interviewsScheduled = interviewApps?.length || 0;
-
-  // 3. Responses received (status changed from applied)
-  const { data: responseApps } = await supabase
-    .from("applications")
-    .select("status")
-    .eq("user_id", userId)
-    .in("status", ["interviewing", "offer", "rejected"])
-    .gte("updated_at", yesterday.toISOString());
-
   const responsesReceived = responseApps?.length || 0;
 
   // 4. Generate action items

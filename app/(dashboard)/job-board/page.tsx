@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Search,
   MapPin,
@@ -13,8 +13,24 @@ import {
   Loader2,
   FileText,
   CheckCircle2,
+  Wand2,
 } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+
+const ReactMarkdown = dynamic(() => import("react-markdown"), {
+  loading: () => <div className="h-20 animate-pulse rounded bg-slate-100" />,
+  ssr: false,
+});
+import {
+  useJobs,
+  useAppliedJobIds,
+  useJobBoardResumes,
+  useJobBoardImprovedResumes,
+  useApplyToJob,
+} from "@/hooks/queries/use-job-board";
+import { useGenerateCoverLetter } from "@/hooks/mutations/use-generate-cover-letter";
+import { buildJobPostingPromptText } from "@/lib/job-posting-text";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -89,17 +105,19 @@ const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
   internship: "Internship",
 };
 
+/** `u:` uploaded resume id, `i:` improved resume id */
+function parseResumePick(s: string): { kind: "upload"; id: string } | { kind: "improved"; id: string } | null {
+  if (!s) return null;
+  if (s.startsWith("u:")) return { kind: "upload", id: s.slice(2) };
+  if (s.startsWith("i:")) return { kind: "improved", id: s.slice(2) };
+  return null;
+}
+
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
 export default function JobBoardPage() {
-  // Data
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [loading, setLoading] = useState(true);
-
   // Filters
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("");
@@ -110,115 +128,94 @@ export default function JobBoardPage() {
   // Detail / apply state
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showApplyForm, setShowApplyForm] = useState(false);
-  const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
 
-  // Apply form state
-  const [resumes, setResumes] = useState<Resume[]>([]);
-  const [selectedResume, setSelectedResume] = useState("");
+  // Apply form: `u:<resumeId>` or `i:<improvedResumeId>` or ""
+  const [resumePick, setResumePick] = useState("");
   const [coverLetter, setCoverLetter] = useState("");
   const [applying, setApplying] = useState(false);
   const [applyError, setApplyError] = useState("");
 
-  /* Fetch jobs */
-  const fetchJobs = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (search) params.set("search", search);
-      if (location) params.set("location", location);
-      if (workType) params.set("work_type", workType);
-      if (employmentType) params.set("employment_type", employmentType);
-      params.set("page", String(page));
-      params.set("limit", "20");
+  // TanStack Query hooks
+  const filters = { search, location, workType, employmentType, page };
+  const { data: jobsData, isLoading: loading } = useJobs(filters);
+  const { data: appliedIds = [] } = useAppliedJobIds();
+  const { data: resumes = [] } = useJobBoardResumes(showApplyForm);
+  const { data: improvedResumes = [] } = useJobBoardImprovedResumes(showApplyForm);
+  const applyMutation = useApplyToJob();
+  const coverGen = useGenerateCoverLetter();
 
-      const res = await fetch(`/api/jobs?${params.toString()}`);
-      if (res.ok) {
-        const data = await res.json();
-        setJobs(data.jobs);
-        setTotal(data.total);
-        setTotalPages(data.totalPages);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
+  const hasResumeOptions = resumes.length > 0 || improvedResumes.length > 0;
+
+  useEffect(() => {
+    if (!resumePick) {
+      if (resumes.length > 0) setResumePick(`u:${resumes[0].id}`);
+      else if (improvedResumes.length > 0) setResumePick(`i:${improvedResumes[0].id}`);
     }
-  }, [search, location, workType, employmentType, page]);
+  }, [resumes, improvedResumes, resumePick]);
 
-  useEffect(() => {
-    fetchJobs();
-  }, [fetchJobs]);
+  const jobs = jobsData?.jobs ?? [];
+  const total = jobsData?.total ?? 0;
+  const totalPages = jobsData?.totalPages ?? 0;
+  const appliedJobIds = useMemo(() => new Set(appliedIds), [appliedIds]);
 
-  /* Fetch user's existing applications to show "Applied" badges */
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch("/api/jobs/applied");
-        if (res.ok) {
-          const ids: string[] = await res.json();
-          setAppliedJobIds(new Set(ids));
-        }
-      } catch {
-        // ignore -- user may not be logged in for public browsing
-      }
-    })();
-  }, []);
-
-  /* Fetch resumes when apply form opens */
-  useEffect(() => {
-    if (!showApplyForm) return;
-    (async () => {
-      try {
-        const res = await fetch("/api/upload-resume");
-        if (res.ok) {
-          const data = await res.json();
-          // Normalise: API may return array directly or { resumes: [...] }
-          const list = Array.isArray(data) ? data : data.resumes || [];
-          setResumes(list);
-          if (list.length > 0) setSelectedResume(list[0].id);
-        }
-      } catch {
-        // ignore
-      }
-    })();
-  }, [showApplyForm]);
-
-  /* Search on Enter or debounce */
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
     setPage(1);
-    fetchJobs();
   }
 
-  /* Apply to a job */
   async function handleApply() {
     if (!selectedJob) return;
     setApplying(true);
     setApplyError("");
 
     try {
-      const res = await fetch(`/api/jobs/${selectedJob.id}/apply`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          resume_id: selectedResume || undefined,
-          cover_letter: coverLetter || undefined,
-        }),
+      const pick = parseResumePick(resumePick);
+      await applyMutation.mutateAsync({
+        jobId: selectedJob.id,
+        resumeId: pick?.kind === "upload" ? pick.id : undefined,
+        improvedResumeId: pick?.kind === "improved" ? pick.id : undefined,
+        coverLetter: coverLetter || undefined,
       });
-
-      if (res.ok) {
-        setAppliedJobIds((prev) => new Set(prev).add(selectedJob.id));
-        setShowApplyForm(false);
-        setCoverLetter("");
-        setSelectedResume("");
-      } else {
-        const err = await res.json();
-        setApplyError(err.error || "Failed to apply");
-      }
-    } catch {
-      setApplyError("Network error. Please try again.");
+      setShowApplyForm(false);
+      setCoverLetter("");
+      setResumePick("");
+    } catch (err) {
+      setApplyError(err instanceof Error ? err.message : "Network error. Please try again.");
     } finally {
       setApplying(false);
+    }
+  }
+
+  async function handleGenerateCoverLetter() {
+    if (!selectedJob) return;
+    const pick = parseResumePick(resumePick);
+    if (!pick) {
+      setApplyError("Select an uploaded or improved resume to generate a cover letter.");
+      return;
+    }
+    setApplyError("");
+    try {
+      const jobDescription = buildJobPostingPromptText({
+        title: selectedJob.title,
+        description: selectedJob.description,
+        requirements: selectedJob.requirements,
+        skills_required: selectedJob.skills_required,
+        location: selectedJob.location,
+        work_type: selectedJob.work_type,
+        employment_type: selectedJob.employment_type,
+        companyName: selectedJob.companies?.name ?? undefined,
+      });
+      const data = await coverGen.mutateAsync({
+        ...(pick.kind === "upload"
+          ? { resumeId: pick.id }
+          : { improvedResumeId: pick.id }),
+        jobDescription,
+        companyName: selectedJob.companies?.name ?? undefined,
+        role: selectedJob.title,
+      });
+      setCoverLetter(data.coverLetter);
+    } catch (err) {
+      setApplyError(err instanceof Error ? err.message : "Cover letter generation failed.");
     }
   }
 
@@ -370,9 +367,12 @@ export default function JobBoardPage() {
               {job.companies && (
                 <div className="mb-2 flex items-center gap-2">
                   {job.companies.logo_url ? (
-                    <img
+                    <Image
                       src={job.companies.logo_url}
                       alt=""
+                      width={24}
+                      height={24}
+                      unoptimized
                       className="h-6 w-6 rounded object-cover"
                     />
                   ) : (
@@ -492,9 +492,12 @@ export default function JobBoardPage() {
                 {selectedJob.companies && (
                   <div className="mb-3 flex items-center gap-2">
                 {selectedJob.companies.logo_url ? (
-                  <img
+                  <Image
                     src={selectedJob.companies.logo_url}
                     alt=""
+                    width={32}
+                    height={32}
+                    unoptimized
                     className="h-8 w-8 rounded object-cover"
                   />
                 ) : (
@@ -633,35 +636,71 @@ export default function JobBoardPage() {
                     <label className="mb-1 block text-xs font-medium text-text-muted">
                       Resume (optional)
                     </label>
-                    {resumes.length === 0 ? (
+                    {!hasResumeOptions ? (
                       <p className="text-xs text-text-muted">
-                        No resumes uploaded.{" "}
+                        No resume on file.{" "}
                         <a href="/resume-analyzer" className="text-primary underline">
-                          Upload one first
-                        </a>
-                        .
+                          Upload a file
+                        </a>{" "}
+                        or create an{" "}
+                        <a href="/resume-analyzer" className="text-primary underline">
+                          AI improved resume
+                        </a>{" "}
+                        first.
                       </p>
                     ) : (
                       <select
-                        value={selectedResume}
-                        onChange={(e) => setSelectedResume(e.target.value)}
+                        value={resumePick}
+                        onChange={(e) => setResumePick(e.target.value)}
                         className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
                       >
                         <option value="">No resume</option>
-                        {resumes.map((r) => (
-                          <option key={r.id} value={r.id}>
-                            {r.file_name}
-                          </option>
-                        ))}
+                        {resumes.length > 0 ? (
+                          <optgroup label="Uploaded files">
+                            {resumes.map((r) => (
+                              <option key={`u-${r.id}`} value={`u:${r.id}`}>
+                                {r.file_name}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ) : null}
+                        {improvedResumes.length > 0 ? (
+                          <optgroup label="AI improved resumes">
+                            {improvedResumes.map((r) => (
+                              <option key={`i-${r.id}`} value={`i:${r.id}`}>
+                                {r.label} · {timeAgo(r.created_at)}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ) : null}
                       </select>
                     )}
                   </div>
 
                   {/* Cover letter */}
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-text-muted">
-                      Cover letter (optional)
-                    </label>
+                    <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+                      <label className="block text-xs font-medium text-text-muted">
+                        Cover letter (optional)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => void handleGenerateCoverLetter()}
+                        disabled={
+                          coverGen.isPending ||
+                          !parseResumePick(resumePick) ||
+                          !hasResumeOptions
+                        }
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {coverGen.isPending ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Wand2 className="h-3 w-3" />
+                        )}
+                        Generate with AI
+                      </button>
+                    </div>
                     <textarea
                       value={coverLetter}
                       onChange={(e) => setCoverLetter(e.target.value)}

@@ -91,7 +91,9 @@ CREATE POLICY "Users can view own row" ON public.users
   FOR SELECT USING (auth.uid() = id);
 
 CREATE POLICY "Users can update own row" ON public.users
-  FOR UPDATE USING (auth.uid() = id);
+  FOR UPDATE
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
 
 CREATE POLICY "Users can insert own row" ON public.users
   FOR INSERT WITH CHECK (auth.uid() = id);
@@ -245,6 +247,7 @@ CREATE POLICY "Users can manage own applications" ON public.applications FOR ALL
 
 -- Add role to users table
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'job_seeker' CHECK (role IN ('job_seeker', 'recruiter'));
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS last_active_role TEXT NOT NULL DEFAULT 'job_seeker' CHECK (last_active_role IN ('job_seeker', 'recruiter'));
 
 -- Company profiles for recruiters
 CREATE TABLE IF NOT EXISTS public.companies (
@@ -335,7 +338,11 @@ CREATE TABLE IF NOT EXISTS public.messages (
   subject TEXT,
   content TEXT NOT NULL,
   is_read BOOLEAN DEFAULT false,
+  read_at TIMESTAMPTZ,
   template_name TEXT,
+  attachment_path TEXT,
+  attachment_name TEXT,
+  attachment_mime TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON public.messages(sender_id);
@@ -344,6 +351,8 @@ ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own messages" ON public.messages FOR SELECT USING (auth.uid() = sender_id OR auth.uid() = receiver_id);
 CREATE POLICY "Users can send messages" ON public.messages FOR INSERT WITH CHECK (auth.uid() = sender_id);
 CREATE POLICY "Users can update own received messages" ON public.messages FOR UPDATE USING (auth.uid() = receiver_id);
+
+ALTER TABLE public.messages REPLICA IDENTITY FULL;
 
 -- Message templates for recruiters
 CREATE TABLE IF NOT EXISTS public.message_templates (

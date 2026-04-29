@@ -2,12 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Loader2, Rocket } from "lucide-react";
-
-interface Resume {
-  id: string;
-  file_name: string;
-  created_at: string;
-}
+import { useResumes } from "@/hooks/queries/use-smart-apply";
 
 interface AutoApplyFormProps {
   onStart: (config: {
@@ -21,23 +16,17 @@ interface AutoApplyFormProps {
 }
 
 export function AutoApplyForm({ onStart, loading }: AutoApplyFormProps) {
-  const [resumes, setResumes] = useState<Resume[]>([]);
   const [resumeId, setResumeId] = useState("");
   const [location, setLocation] = useState("");
   const [roles, setRoles] = useState("");
   const [minSalary, setMinSalary] = useState("");
   const [maxResults, setMaxResults] = useState("10");
-  const [loadingResumes, setLoadingResumes] = useState(true);
+
+  const { data: resumes = [], isLoading: loadingResumes } = useResumes();
 
   useEffect(() => {
-    fetch("/api/upload-resume")
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data: Resume[]) => {
-        setResumes(data);
-        if (data.length > 0) setResumeId(data[0].id);
-      })
-      .finally(() => setLoadingResumes(false));
-  }, []);
+    if (resumes.length > 0 && !resumeId) setResumeId(resumes[0].id);
+  }, [resumes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

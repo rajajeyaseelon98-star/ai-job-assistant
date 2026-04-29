@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { useJobMatchById } from "@/hooks/queries/use-jobseeker-persisted";
 import { JobMatchForm } from "@/components/job/JobMatchForm";
 import { MatchResult } from "@/components/job/MatchResult";
 
@@ -21,42 +22,33 @@ function JobMatchContent() {
     jobDescription: string;
     resumeText: string;
   } | null>(null);
-  const [pastLoading, setPastLoading] = useState(!!matchId);
   const [formDefaults, setFormDefaults] = useState<{
     jobTitle: string;
     jobDescription: string;
     resumeText: string;
   }>({ jobTitle: "", jobDescription: "", resumeText: "" });
 
+  const { data: pastMatch, isLoading: pastLoading } = useJobMatchById(matchId);
+
   useEffect(() => {
-    if (!matchId) return;
-    setPastLoading(true);
-    fetch(`/api/job-matches/${matchId}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.analysis) {
-          const a = data.analysis;
-          setResult({
-            match_score: a.match_score ?? 0,
-            matched_skills: a.matched_skills ?? [],
-            missing_skills: a.missing_skills ?? [],
-            resume_improvements: a.resume_improvements ?? [],
-          });
-        }
-        if (data) {
-          const defaults = {
-            jobTitle: data.job_title ?? "",
-            jobDescription: data.job_description ?? "",
-            resumeText: data.resume_text ?? "",
-          };
-          setFormDefaults(defaults);
-          // Same context as a fresh match run — enables "Tailor resume" + sessionStorage prefill from history
-          setMatchContext(defaults);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setPastLoading(false));
-  }, [matchId]);
+    if (!pastMatch) return;
+    if (pastMatch.analysis) {
+      const a = pastMatch.analysis as Record<string, unknown>;
+      setResult({
+        match_score: (a.match_score as number) ?? 0,
+        matched_skills: (a.matched_skills as string[]) ?? [],
+        missing_skills: (a.missing_skills as string[]) ?? [],
+        resume_improvements: (a.resume_improvements as string[]) ?? [],
+      });
+    }
+    const defaults = {
+      jobTitle: (pastMatch.job_title as string) ?? "",
+      jobDescription: (pastMatch.job_description as string) ?? "",
+      resumeText: (pastMatch.resume_text as string) ?? "",
+    };
+    setFormDefaults(defaults);
+    setMatchContext(defaults);
+  }, [pastMatch]);
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-4 py-8 sm:space-y-6 md:space-y-8">
