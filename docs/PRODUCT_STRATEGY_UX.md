@@ -2,7 +2,7 @@
 
 **Purpose:** Single narrative for positioning, focus, and UX priorities. **Update this file** when strategy or major UX decisions change. Cross-references `KNOWLEDGE_TRANSFER.md`, `FEATURES_FLOW.md`, and `TEST_CASES.md`.
 
-**Last updated:** 2026-03-07
+**Last updated:** 2026-04-30
 
 ### Recently implemented (code)
 
@@ -26,6 +26,9 @@
 - **LinkedIn import:** Moved out of primary “Improve”; **Advanced** nav + optional banner on `/import-linkedin`.
 - **AI Auto-Apply cards:** **Direct apply (our platform)** vs **External apply** (`apply_channel` + copy on `/auto-apply`).
 - **Application tracker:** Kanban columns, drag-and-drop, extended stats + conversion line, richer empty state with links.
+- **Marketplace (recruiter)**: company onboarding + team invites; job postings; applications lifecycle + events timeline; in-app notifications.
+- **Email delivery**: Resend-backed best-effort email with audit logs + retries; webhooks for lifecycle visibility.
+- **PWA**: install UX + offline fallback banner for better mobile reliability.
 
 ---
 

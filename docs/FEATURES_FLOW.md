@@ -2,7 +2,19 @@
 
 **Purpose:** Step-by-step flow chart of every feature. Shows the data path from user action → frontend → API → lib → database → response for each feature.
 
-**Last updated:** 2026-04-02 (Per-component tables and hook-to-API mapping: see **`docs/KNOWLEDGE_TRANSFER.md`** §6.1–§6.3. Aligned with code: `PATCH /api/user/role`, dashboard `GET /api/dashboard` + `useDashboardStats`, history `GET /api/history`, cron trigger cleanup steps, public `/api/public/*` routes, job board `GET /api/jobs/applied`. **§30:** shared **`MessagesInbox`**, **`GET`/`POST /api/messages`**, **`POST /api/messages/mark-read`**, job seeker **`/messages`**, recruiter **`/api/recruiter/messages`** re-export.)
+**Last updated:** 2026-04-30  
+**Note:** This file is intentionally comprehensive and can drift. The highest-fidelity “what is actually deployed” narrative lives in `docs/KNOWLEDGE_TRANSFER.md`.
+
+## Recent architecture changes (keep in mind while reading)
+
+- **AI providers:** `lib/ai.ts` now uses a provider chain **Gemini → Groq → OpenAI** (fallback on 503/429/quota/high-demand conditions).
+- **AI credits + usage:** usage/credits tracking and enforcement are now core cross-cutting behavior; see `docs/KNOWLEDGE_TRANSFER.md` and `docs/AI_CREDIT_TRACKING_IMPLEMENTATION_PLAN.md`.
+- **Marketplace multi-tenant recruiter model:** recruiter ownership is company-scoped via `company_memberships` + `company_id` (not `recruiter_id` equality).
+- **Email delivery hardening:** Resend email sending is best-effort but observable:
+  - `public.email_logs` for audit + retries
+  - `POST /api/webhooks/resend` for lifecycle updates (Svix signature verified)
+  - `GET|POST /api/internal/email-retry` for replay
+- **Cron constraints:** Vercel Cron frequency depends on plan; Hobby is effectively daily-only (higher frequency requires Pro or external scheduler).
 
 ---
 

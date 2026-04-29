@@ -269,6 +269,44 @@ Add optional email delivery for critical trust moments while keeping in-app noti
   - If no background worker exists yet, send asynchronously and never fail the primary action.
   - Optionally log delivery attempts in `notification_deliveries`.
 
+---
+
+## Implementation notes (current codebase reality)
+
+These notes clarify where the current implementation intentionally diverges from the original “target end state” wording while preserving the plan’s intent.
+
+### Entitlements model (implemented)
+
+The plan described a standalone `company_entitlements` table. Current implementation stores plan/limits on `public.companies`:
+
+- `companies.plan_tier` (`starter|pro|enterprise`)
+- `companies.max_active_jobs`
+- `companies.max_team_members`
+
+And exposes it via:
+
+- `GET/PATCH /api/recruiter/entitlements`
+
+This still delivers “entitlements before billing” and supports enforcement at job creation/activation and invite flows.
+
+### Email delivery reliability (implemented + hardened)
+
+Email delivery is implemented with Resend plus operational safety:
+
+- `public.email_logs` audit table + idempotency + retry metadata
+- `GET|POST /api/internal/email-retry` replay endpoint (cron/manual)
+- `POST /api/webhooks/resend` lifecycle updates (`delivered|bounced|complaint`)
+
+### RLS recursion pitfall (company_memberships)
+
+Avoid policies on `company_memberships` that query `company_memberships` inside the policy condition; Postgres can raise:
+
+- `42P17 infinite recursion detected in policy for relation "company_memberships"`
+
+Mitigation pattern:
+
+- `SECURITY DEFINER` helper functions with `row_security = off` for membership checks.
+
 ### Verification
 - Email sends in production environment
 - Rate limiting / spam controls

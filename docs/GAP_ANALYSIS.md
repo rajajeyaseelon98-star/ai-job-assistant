@@ -2,6 +2,24 @@
 
 Line-by-line and page-by-page comparison of the current AI Job Assistant implementation against the provided specification. **✔** = implemented, **⚠** = partial, **❌** = missing.
 
+**Last updated:** 2026-04-30
+
+## Important note (scope drift)
+
+This file was originally written against an **earlier, smaller spec** (resume analyzer, job match, cover letter, interview prep, dashboard/history/pricing/settings).
+
+Since then, the codebase has grown into a broader platform:
+
+- Job seeker: auto-apply + smart auto-apply, applications tracker, messaging, usage/credits dashboard, PWA install/offline UX
+- Recruiter: company onboarding + teams, job postings, application pipeline + events, candidate screening/shortlisting, recruiter messaging, entitlements/pricing simulation
+- Email system: Resend delivery, logging, retries, webhooks
+- AI reliability: guarded JSON, caching, credit enforcement, provider fallbacks
+
+So, treat this document as **historical** and **not** as a complete reflection of “what the product currently is”.
+
+**Current source of truth for implementation:** `docs/KNOWLEDGE_TRANSFER.md`  
+**Current QA expectations:** `docs/TEST_CASES.md`, `docs/TEST_PLAN_E2E.md`, `docs/AUTOMATED_TESTING_STRATEGY.md`
+
 ---
 
 ## 1️⃣ Dashboard (Main Page)
@@ -19,6 +37,19 @@ Line-by-line and page-by-page comparison of the current AI Job Assistant impleme
 **Tables per spec:** `users` ✔, `resumes` ✔, `job_matches` ✔, `cover_letters` ❌, `interview_sessions` ❌.
 
 ---
+
+## 0️⃣ New platform areas (not covered by the original spec)
+
+The following major areas are implemented but were not part of the original “spec vs implementation” checklist:
+
+- **AI credits + usage tracking**: `ai_usage`, `/api/usage/*`, dashboard UI, `CREDITS_EXHAUSTED` handling.
+- **Auto-apply + smart auto-apply**: engine + run receipts/timelines, confirmations, and cron-triggered automation.
+- **Messaging**: threads, attachments, realtime indicators, read receipts, recipient search RPC.
+- **Recruiter marketplace**: companies, memberships/invites, jobs, applications lifecycle, events timeline, in-app notifications, team sharing.
+- **Email delivery**: Resend send, `email_logs`, retry endpoint, webhook lifecycle updates.
+- **PWA**: manifest/icons, install CTA, offline fallback UX, dev SW reset.
+
+If you want a *current* gap report, use `docs/FEATURE_WISE_GAPS_SCENARIOS_DEPENDENCIES.md` and `docs/LAUNCH_READINESS_GAP_REPORT.md`.
 
 ## 2️⃣ Resume Analyzer
 

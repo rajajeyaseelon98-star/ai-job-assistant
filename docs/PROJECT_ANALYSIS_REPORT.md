@@ -45,7 +45,7 @@
 - **Framework:** Next.js 15 App Router + React 18 + TypeScript (`package.json`, `app/**`).
 - **State management:**
   - Server-state: TanStack React Query (`lib/query-provider.tsx`, `hooks/queries/**`).
-  - Local/component state: React hooks in pages/components.
+  - Local/component state: React hooks in `app/**` pages/layouts + `components/**`.
   - Browser persistence: targeted `localStorage/sessionStorage` usage in certain onboarding/form flows.
 - **UI libraries:** Tailwind CSS, Framer Motion, Lucide React, React Markdown.
 - **Routing system:** Next.js App Router with role-separated route groups:
@@ -78,8 +78,9 @@
 
 - **LLM providers:**
   - Gemini (`lib/gemini.ts`, model `gemini-2.5-flash`).
+  - Groq (`lib/groq.ts`, model `llama-3.3-70b-versatile` by default).
   - OpenAI (`lib/openai.ts`, model `gpt-4o-mini`).
-- **AI routing:** `lib/ai.ts` prefers Gemini and falls back to OpenAI on quota/rate-limit errors.
+- **AI routing:** `lib/ai.ts` prefers Gemini and falls back to **Groq**, then **OpenAI** on quota/rate-limit/temporary-provider errors.
 - **AI caching:** `lib/aiCache.ts` stores hashed prompt responses in `ai_cache` with feature TTLs.
 - **External APIs:** Adzuna jobs integration in auto-jobs / auto-apply flows.
 - **File services:** Supabase Storage buckets for resumes, avatars, company logos, message attachments.

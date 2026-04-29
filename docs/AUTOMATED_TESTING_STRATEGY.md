@@ -1,5 +1,7 @@
 # Automated Testing Strategy
 
+**Last updated:** 2026-04-30 (Aligned with AI provider fallback + email webhook/cron routes)
+
 ## Scope
 
 This strategy adds deterministic automation for:
@@ -40,6 +42,11 @@ This strategy adds deterministic automation for:
 - Use explicit URL regex (not loose globs) to avoid intercepting wrong routes.
 - For live integration runs, disable route mocks and use seeded fixtures + test credits.
 
+## Provider fallback testing guidance (Gemini → Groq → OpenAI)
+
+- Keep **provider fallback** unit-tested at the `lib/ai.ts` boundary with mocked fetch responses (503/429/quota).
+- In Playwright E2E, prefer **one stable “AI mocked” mode** for PRs and **one scheduled “live integration” mode** with small prompts and strict spend limits.
+
 ## Critical E2E Coverage
 
 ### Job seeker
@@ -71,6 +78,17 @@ This strategy adds deterministic automation for:
 - Structured validation errors include `requestId`, `retryable`, and actionable metadata.
 - Success/error envelope checks for usage and recruiter optimize routes.
 - Contract checks run through cookie-based mock auth request contexts.
+
+## Email delivery: webhook + cron coverage
+
+- **Webhook contract tests:** add API-only specs that:
+  - send `POST /api/webhooks/resend` with **valid** Svix signature headers (fixture secret) and verify a 200 response
+  - send with invalid/missing signature and verify 401/400 response (depending on implementation)
+- **Cron auth tests:** add API-only specs for `GET /api/internal/email-retry` that assert:
+  - missing `Authorization` -> 401
+  - `Authorization: Bearer <CRON_SECRET>` -> 200 (in test env with secret configured)
+
+Note: database assertions for `email_logs`/`email_job_runs` should be done with service-role test helpers (never via end-user RLS paths).
 
 ## Data Integrity Coverage
 

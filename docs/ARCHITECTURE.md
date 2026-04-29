@@ -1,78 +1,91 @@
-# AI Job Assistant – Project Architecture
+# AI Job Assistant – Architecture (current)
 
-## 1. System Overview
+**Last updated:** 2026-04-30  
+**Source of truth for behavior:** `docs/KNOWLEDGE_TRANSFER.md`
 
-AI Job Assistant is a SaaS application that helps software developers (0–5 years experience) improve resumes, match jobs, generate cover letters, and prepare for interviews using AI.
+## 1. System overview
 
-## 2. High-Level Architecture
+AI Job Assistant is a multi-surface Next.js app for **job seekers** and **recruiters**:
+
+- Job seeker tools: resume analysis + improvement, job match/tailor, auto-apply/smart auto-apply, interview prep, messaging, application tracking.
+- Recruiter tools: company onboarding + multi-user teams, job posting CRUD, application pipeline + events, candidate screening/shortlisting, messaging, templates/alerts, entitlements/pricing simulation.
+
+## 2. High-level architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Vercel (Hosting)                          │
-├─────────────────────────────────────────────────────────────────┤
-│  Next.js App (App Router)                                        │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │   Frontend  │  │  API Routes │  │  Server Components /     │  │
-│  │   (React)   │  │  /api/*     │  │  Client Components      │  │
-│  └──────┬──────┘  └──────┬──────┘  └────────────┬────────────┘  │
-└─────────┼────────────────┼─────────────────────┼───────────────┘
-          │                │                     │
-          ▼                ▼                     ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     Supabase                                      │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐   │
-│  │   Auth       │  │  PostgreSQL  │  │  Storage (resumes)    │   │
-│  └──────────────┘  └──────────────┘  └──────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  OpenAI API / Anthropic Claude (AI features)                     │
-└─────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────┐
+│                               Vercel                                  │
+│  Next.js 15 App Router                                                 │
+│  - UI routes: app/(dashboard)/* and app/(recruiter)/*                  │
+│  - API routes: app/api/* (Route Handlers)                              │
+│  - Middleware: middleware.ts (session bootstrap + protected routes)    │
+│  - PWA: next-pwa (manifest + SW in production)                         │
+└───────────────────────────────────────────────────────────────────────┘
+                 │                                │
+                 │                                │
+                 ▼                                ▼
+┌─────────────────────────────────────────┐  ┌──────────────────────────┐
+│                Supabase                 │  │        External APIs      │
+│ - Auth (OAuth/email)                    │  │ - AI providers (server)   │
+│ - Postgres + RLS policies               │  │   Gemini → Groq → OpenAI   │
+│ - Storage (resumes, attachments, logos) │  │ - Resend (email delivery) │
+│ - Realtime (messages/notifications)     │  │ - Job sources (e.g. Adzuna)│
+└─────────────────────────────────────────┘  └──────────────────────────┘
 ```
 
-## 3. Data Flow
+## 3. Key subsystems
 
-- **Auth**: Supabase Auth → session in client → API routes validate via `getUser()`.
-- **Resume upload**: Client → API route → Supabase Storage + parse (pdf-parse/mammoth) → `resumes` table.
-- **AI features**: Client → API route → check usage → call OpenAI → persist result (where applicable) → return JSON.
+### 3.1 Auth + session
 
-## 4. Module Boundaries
+- `middleware.ts` calls `updateSession()` (`lib/supabase/middleware.ts`) to refresh Supabase SSR cookies.
+- Protected-route behavior (page vs API) is enforced in middleware and reinforced in layouts.
+- Some endpoints are intentionally public (e.g. `api/public/*`, share endpoints, platform stats). Webhooks must also be public and verify via provider signatures.
 
-| Module            | Responsibility                    | Key files                          |
-|-------------------|------------------------------------|------------------------------------|
-| Auth              | Sign up, login, logout, reset PW   | `lib/supabase.ts`, auth pages      |
-| Users             | Plan, profile in DB                | `users` table, `lib/auth.ts`       |
-| Resumes           | Upload, parse, store               | `resumes` table, upload API, utils |
-| Resume Analysis   | ATS score, strengths, suggestions | `/api/analyze-resume`, `resume_analysis` |
-| Improve Resume    | Rewrite bullet points              | `/api/improve-resume`              |
-| Job Match         | Score, missing skills, keywords    | `/api/job-match`, `job_matches`    |
-| Cover Letter      | Generate from resume + JD          | `/api/generate-cover-letter`       |
-| Interview Prep    | Technical + behavioral questions   | `/api/interview-prep`              |
-| Usage & Pricing   | Free vs Pro limits, usage_logs     | `usage_logs`, middleware/helpers   |
+### 3.2 Database + RLS (multi-tenant recruiter model)
 
-## 5. Security Model
+- Supabase Postgres is the source of truth.
+- **Job seeker isolation**: resume rows + analyses are owner-scoped.
+- **Recruiter multi-tenant**:
+  - `companies`, `company_memberships`, `company_invites`
+  - `job_postings` are company-scoped (`company_id`)
+  - `job_applications` are visible to company members for that job’s company
+  - `application_events` provides the application timeline
+- RLS is used as the primary access boundary, with **service-role** used only for cross-user notifications/emails and internal ops.
 
-- All feature API routes require an authenticated user (Supabase JWT).
-- File upload: validate MIME type and extension (PDF, DOCX only); scan size limits.
-- Rate limiting: apply per-user/per-route limits (e.g. with Upstash or in-memory).
-- No AI keys or secrets exposed to the client; all AI calls from API routes.
+### 3.3 AI layer (providers + caching + credits)
 
-## 6. Scalability Considerations
+**Provider chain (default):**
 
-- Stateless API routes; scale with Vercel serverless.
-- Database connection pooling via Supabase.
-- Storage and DB in same Supabase project to reduce latency.
-- AI calls are the main bottleneck; consider queuing for heavy usage later.
+- Gemini (primary) → Groq (fallback) → OpenAI (fallback)
 
-## 7. Tech Stack Summary
+Core infrastructure:
 
-| Layer      | Technology        |
-|-----------|--------------------|
-| Frontend  | Next.js (App Router), React, TypeScript, Tailwind CSS |
-| Backend   | Next.js API routes |
-| Database  | Supabase PostgreSQL |
-| Auth      | Supabase Auth     |
-| Storage   | Supabase Storage  |
-| AI        | OpenAI API (or Anthropic Claude) |
-| Hosting   | Vercel            |
+- `lib/ai.ts`: provider selection + caching wrappers
+- `lib/aiCache.ts`: DB-backed caching
+- `lib/aiUsage.ts` + `lib/aiUsageQueries.ts`: token/credit/cost logging + credit enforcement controls
+
+Key goals:
+
+- Strict/guarded JSON outputs for critical flows
+- Token reduction via caching + multi-step generation for heavy flows
+- Credit enforcement with graceful `CREDITS_EXHAUSTED` handling
+
+### 3.4 Email delivery (Resend) + lifecycle tracking
+
+- `lib/email.ts`: best-effort send, idempotency guard, structured results
+- `public.email_logs`: audit trail + retry metadata
+- `POST /api/webhooks/resend`: verifies Svix signature (`RESEND_WEBHOOK_SECRET`) and updates delivery lifecycle fields on `email_logs`
+- Retry endpoint: `GET|POST /api/internal/email-retry` protected by `CRON_SECRET` (Vercel Cron) or `INTERNAL_CRON_SECRET` (manual/internal)
+
+### 3.5 PWA
+
+- `next-pwa` enabled in production builds
+- `public/manifest.json` + icons
+- Offline UX: offline fallback page + banner patterns
+
+## 4. Operational/rollout considerations
+
+- **Environment variables** are required for each subsystem (Supabase, AI providers, Resend, cron secrets).
+- **Migrations must be applied** before production features relying on new tables/columns are turned on.
+- For platform limits (e.g., Vercel Cron frequency), prefer a scheduler compatible with the deployment tier.
+

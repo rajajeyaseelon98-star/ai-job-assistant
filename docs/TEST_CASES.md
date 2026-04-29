@@ -2,7 +2,7 @@
 
 **Purpose:** In-depth test cases for every feature flow. Covers happy paths, edge cases, error handling, and integration scenarios.
 
-**Last updated:** 2026-04-23 (Added AI usage/credit system QA coverage in **Section 50**, including DB migrations/grants validation, usage APIs, credit enforcement (`CREDITS_EXHAUSTED`), usage dashboard assertions, and observability checks. Previous updates retained below.)
+**Last updated:** 2026-04-30 (Added provider fallback + email delivery lifecycle tests. Previous updates retained below.)
 
 ---
 
@@ -49,6 +49,8 @@
 49. [Dashboard, history, jobs applied, and public APIs](#49-dashboard-history-jobs-applied-and-public-apis)
 50. [AI Usage Tracking & Credits](#50-ai-usage-tracking--credits)
 51. [Automated QA Regression Suite](#51-automated-qa-regression-suite)
+52. [Email Delivery Lifecycle & Retries](#52-email-delivery-lifecycle--retries)
+53. [AI Provider Fallback (Gemini → Groq → OpenAI)](#53-ai-provider-fallback-gemini--groq--openai)
 
 ---
 
@@ -1893,6 +1895,68 @@ Shared inbox UI (**`MessagesInbox`**) for recruiters at **`/recruiter/messages`*
 ---
 
 ## 51. Automated QA Regression Suite
+
+---
+
+## 52. Email Delivery Lifecycle & Retries
+
+### TC-52.1: Email send writes an audit row (sent)
+- **Precondition:** `EMAIL_ENABLED=true`, category flag enabled, `RESEND_API_KEY` + `EMAIL_FROM` set, migrations applied (`email_logs`).
+- **Steps:**
+  1. Trigger any flow that sends email (e.g. recruiter invite create or application stage change).
+  2. Query `public.email_logs` (service role) for the new row by `event_type`/recipient.
+- **Expected:**
+  - Row exists with `status='sent'`
+  - `provider_message_id` populated
+  - `idempotency_key` set when provided
+  - `meta.payload` contains enough data for replay.
+
+### TC-52.2: Idempotency guard prevents duplicate sends
+- **Steps:**
+  1. Trigger the same email event twice with the same `idempotencyKey`.
+- **Expected:**
+  - Second attempt logs `status='skipped'` with `error_code='DUPLICATE'`
+  - No duplicate `sent` rows for the same `idempotency_key`.
+
+### TC-52.3: Retry endpoint replays retryable failures
+- **Precondition:** At least one `email_logs` row with `status='failed'`, `retryable=true`, `attempt_count < 3`.
+- **Steps:**
+  1. Call `GET /api/internal/email-retry?limit=5` with `Authorization: Bearer <CRON_SECRET>` (or internal secret).
+- **Expected:**
+  - Endpoint returns `{ ok: true, retried, succeeded, failed, skipped }`
+  - New `email_logs` rows are written for each retry attempt (best-effort).
+
+### TC-52.4: Resend webhook updates lifecycle fields
+- **Precondition:** Resend webhook is configured to hit `POST /api/webhooks/resend` with correct `RESEND_WEBHOOK_SECRET`; migrations applied (lifecycle fields).
+- **Steps:**
+  1. Replay a `email.delivered` / `email.bounced` / `email.complained` webhook from Resend dashboard.
+- **Expected:**
+  - Matching `email_logs` row (by `provider_message_id == data.email_id`) gets `delivery_status` + timestamp field set.
+  - `webhook_last_event` and `webhook_last_at` updated.
+
+---
+
+## 53. AI Provider Fallback (Gemini → Groq → OpenAI)
+
+### TC-53.1: Gemini 503 triggers fallback to Groq (if configured)
+- **Precondition:** `GEMINI_API_KEY` set, `GROQ_API_KEY` set; route uses `cachedAiGenerate`.
+- **Steps:**
+  1. Force Gemini to return a temporary error (simulate provider error / mock in tests).
+  2. Trigger an AI endpoint (e.g. interview prep).
+- **Expected:**
+  - Response succeeds using Groq.
+  - Usage logs record `provider='groq'` (if AI usage tracking enabled).
+
+### TC-53.2: Groq failure falls back to OpenAI (if configured)
+- **Precondition:** `OPENAI_API_KEY` set and billing enabled.
+- **Expected:** If Groq fails with a retryable condition, OpenAI path is used.
+
+### TC-53.3: OpenAI insufficient quota is treated as non-retryable
+- **Steps:**
+  1. Use an OpenAI key with no quota (or mock a 429 `insufficient_quota`).
+- **Expected:**
+  - API returns a clear non-retryable error (not a generic 500).
+  - UI shows actionable guidance (enable billing / switch provider).
 
 ### TC-51.1: Run critical job seeker E2E suite
 - **Precondition:** Playwright Chromium installed, app starts on `PLAYWRIGHT_PORT`

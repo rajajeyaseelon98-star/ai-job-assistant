@@ -1,5 +1,7 @@
 # PWA Implementation Guide
 
+**Last updated:** 2026-04-30
+
 ## Objective
 
 Convert the existing Next.js App Router application into a Progressive Web App (PWA) without breaking dynamic AI/API behavior.
@@ -31,6 +33,7 @@ Runtime policy:
 
 - `/api/*` -> `NetworkOnly`
   - Prevents stale API/AI/auth/usage responses
+  - Includes webhook/cron/internal routes (e.g. `/api/webhooks/*`, `/api/internal/*`) which must never be served from cache
 - JS/CSS -> `StaleWhileRevalidate`
   - Improves repeat-load speed while updating in background
 - Images/Fonts -> `CacheFirst` with expiry

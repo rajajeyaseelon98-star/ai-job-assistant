@@ -2,6 +2,8 @@
 
 **Purpose:** Premium SaaS UI tokens and reusable components. **Update** when changing `tailwind.config.ts` or `app/globals.css`.
 
+**Last updated:** 2026-04-30
+
 ## Colors (exact)
 
 | Token | Hex | Use |
@@ -32,7 +34,11 @@ Tailwind: `bg-background`, `text-foreground`, `text-text-muted`, `border-border`
 | `components/ui/Card.tsx` | `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, `CardFooter` |
 | `components/ui/Input.tsx` | `Input`, `Textarea`, `Select` (forwardRef) |
 | `components/ui/Label.tsx` | `Label` |
-| `lib/utils/cn.ts` | Class name merge helper |
+| `components/ui/ActionStatusBanner.tsx` | Standard action state banner (`loading|success|error`) |
+| `components/ui/InlineRetryCard.tsx` | Inline retry UX for recoverable errors |
+| `components/ui/ActionReceiptCard.tsx` | “Receipt” UX after successful actions (ids/timestamps/next steps) |
+| `components/ui/AICreditExhaustedAlert.tsx` | Upgrade CTA block for credit exhaustion |
+| `lib/utils/cn.ts` (or equivalent) | Class name merge helper |
 
 ## CSS utilities (`globals.css`)
 
@@ -72,3 +78,13 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 - Transitions: `duration-200` / `ease-in-out`  
 - Corners: `rounded-lg` (buttons), `rounded-xl` (cards)  
 - No heavy gradients; single accent blue  
+
+## UX reliability pattern (recommended)
+
+For long-running AI actions and any action with non-trivial failure modes, prefer:
+
+- `ActionStatusBanner` (showing progress + success message)
+- `InlineRetryCard` on errors that are safe to retry
+- `ActionReceiptCard` to show completion metadata and next steps
+
+This keeps the UI consistent across job seeker + recruiter surfaces.
