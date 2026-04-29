@@ -39,6 +39,8 @@ export async function middleware(request: NextRequest) {
       !pathname.startsWith("/api/auth") &&
       !pathname.startsWith("/api/platform-stats") &&
       !pathname.startsWith("/api/public/") &&
+      !pathname.startsWith("/api/webhooks/") &&
+      !pathname.startsWith("/api/internal/email-retry") &&
       !pathname.startsWith("/api/share-result") &&
       !pathname.startsWith("/api/share/"));
 
