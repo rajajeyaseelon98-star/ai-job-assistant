@@ -7,7 +7,7 @@ import { getAppBaseUrl } from "@/lib/appUrl";
 import { sendEmail } from "@/lib/email";
 import { applicationStatusChangedEmailTemplate } from "@/lib/emailTemplates";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
- 
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
