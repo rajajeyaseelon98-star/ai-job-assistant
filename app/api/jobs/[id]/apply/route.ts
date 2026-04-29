@@ -201,6 +201,11 @@ export async function POST(
           const emails = (profiles || [])
             .map((p) => (p as { email?: string }).email)
             .filter((e): e is string => typeof e === "string" && e.includes("@"));
+        const maxRecipients = Math.max(
+          1,
+          Math.min(100, Number(process.env.EMAIL_MAX_RECIPIENTS_PER_EVENT || 25) || 25)
+        );
+        const recipientBatch = emails.slice(0, maxRecipients);
 
           const tpl = applicationReceivedEmailTemplate({
             companyName,
@@ -210,13 +215,21 @@ export async function POST(
           });
 
           await Promise.all(
-            emails.map((to) =>
+          recipientBatch.map((to) =>
               sendEmail({
                 to,
                 subject: tpl.subject,
                 html: tpl.html,
                 text: tpl.text,
                 category: "marketplace",
+              eventType: "application_received_recruiter",
+              idempotencyKey: `application:${application.id}:recruiter:${to}`,
+              meta: {
+                application_id: application.id,
+                job_id: jobId,
+                candidate_id: user.id,
+                company_id: companyId,
+              },
               })
             )
           );

@@ -4,7 +4,7 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 export interface AiUsageLogInput {
   userId?: string | null;
   featureName: string;
-  provider: "gemini" | "openai" | "unknown";
+  provider: "gemini" | "groq" | "openai" | "unknown";
   modelUsed: string;
   promptText?: string;
   completionText?: string;

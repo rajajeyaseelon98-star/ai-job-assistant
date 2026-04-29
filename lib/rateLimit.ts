@@ -7,7 +7,8 @@ import { getRecipientSearchRateLimitConfig } from "@/lib/rate-limit-config";
  * Falls back to allowing requests if the DB query fails (fail-open for availability).
  */
 const WINDOW_MS = 60_000; // 1 minute window
-const MAX_REQUESTS = 10; // max requests per window per user
+// Dev/testing can easily exceed the default due to retries + rapid iteration.
+const MAX_REQUESTS = process.env.NODE_ENV === "production" ? 10 : 200; // max requests per window per user
 
 type RateLimitConfig = {
   windowMs: number;

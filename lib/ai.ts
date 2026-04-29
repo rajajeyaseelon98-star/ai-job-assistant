@@ -1,4 +1,5 @@
 import { isGeminiAvailable, geminiGenerate, geminiGenerateContent } from "./gemini";
+import { groqChatCompletion, isGroqAvailable } from "./groq";
 import { isOpenAIAvailable, chatCompletion } from "./openai";
 import { generateCacheKey, getCachedResponse, setCachedResponse } from "./aiCache";
 import { parseJsonLoose } from "./aiJson";
@@ -14,15 +15,19 @@ import { calculateCredits, estimateTokensFromText, getUserCreditBalance, increme
 function isQuotaOrRateLimitError(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err);
   return (
+    msg.includes("503") ||
     msg.includes("429") ||
     msg.includes("Too Many Requests") ||
+    msg.toLowerCase().includes("service unavailable") ||
+    msg.toLowerCase().includes("high demand") ||
+    msg.toLowerCase().includes("temporarily unavailable") ||
     msg.includes("quota") ||
     msg.includes("rate limit") ||
     msg.includes("Quota exceeded")
   );
 }
 
-type AiProvider = "gemini" | "openai" | "unknown";
+type AiProvider = "gemini" | "groq" | "openai" | "unknown";
 
 interface AiGenerateResult {
   text: string;
@@ -96,12 +101,22 @@ async function aiGenerateWithMeta(
       const text = await geminiGenerate(systemPrompt, userContent, options);
       return { text, provider: "gemini", modelUsed: "gemini-2.5-flash" };
     } catch (err) {
-      if (isQuotaOrRateLimitError(err) && isOpenAIAvailable()) {
-        const text = await chatCompletion(systemPrompt, userContent, options);
-        return { text, provider: "openai", modelUsed: "gpt-4o-mini" };
+      if (isQuotaOrRateLimitError(err)) {
+        if (isGroqAvailable()) {
+          const text = await groqChatCompletion(systemPrompt, userContent, options);
+          return { text, provider: "groq", modelUsed: process.env.GROQ_MODEL || "groq" };
+        }
+        if (isOpenAIAvailable()) {
+          const text = await chatCompletion(systemPrompt, userContent, options);
+          return { text, provider: "openai", modelUsed: "gpt-4o-mini" };
+        }
       }
       throw err;
     }
+  }
+  if (isGroqAvailable()) {
+    const text = await groqChatCompletion(systemPrompt, userContent, options);
+    return { text, provider: "groq", modelUsed: process.env.GROQ_MODEL || "groq" };
   }
   const text = await chatCompletion(systemPrompt, userContent, options);
   return { text, provider: "openai", modelUsed: "gpt-4o-mini" };

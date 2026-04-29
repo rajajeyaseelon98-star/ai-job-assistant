@@ -30,9 +30,16 @@ export async function POST(request: Request) {
 
   const rl = await checkRateLimit(user.id);
   if (!rl.allowed) {
+    const retryAfterSeconds = Math.max(1, Math.ceil(rl.retryAfterMs / 1000));
     return NextResponse.json(
-      { error: "Too many requests. Try again shortly.", requestId, retryable: true, nextAction: "Retry shortly" },
-      { status: 429 }
+      {
+        error: "Too many requests. Try again shortly.",
+        requestId,
+        retryable: true,
+        nextAction: "Retry shortly",
+        retryAfterSeconds,
+      },
+      { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } }
     );
   }
 
@@ -109,8 +116,48 @@ export async function POST(request: Request) {
       );
     }
     console.error("Interview prep error:", e);
+
+    const msg = e instanceof Error ? e.message : String(e);
+    const isOpenAiInsufficientQuota =
+      msg.toLowerCase().includes("insufficient_quota") ||
+      msg.toLowerCase().includes("exceeded your current quota") ||
+      msg.toLowerCase().includes("check your plan and billing");
+
+    if (isOpenAiInsufficientQuota) {
+      return NextResponse.json(
+        {
+          error: "OpenAI quota exceeded",
+          detail: msg,
+          requestId,
+          retryable: false,
+          nextAction: "Enable OpenAI billing or remove OPENAI_API_KEY to use Gemini-only",
+        },
+        { status: 402 }
+      );
+    }
+
+    const isTemporaryProviderIssue =
+      msg.includes("503") ||
+      msg.includes("429") ||
+      msg.toLowerCase().includes("service unavailable") ||
+      msg.toLowerCase().includes("high demand") ||
+      msg.toLowerCase().includes("temporar");
+
+    if (isTemporaryProviderIssue) {
+      return NextResponse.json(
+        {
+          error: "AI provider temporarily unavailable",
+          detail: msg,
+          requestId,
+          retryable: true,
+          nextAction: "Retry shortly",
+        },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Failed to generate questions", requestId, retryable: true, nextAction: "Retry generation" },
+      { error: "Failed to generate questions", detail: msg, requestId, retryable: true, nextAction: "Retry generation" },
       { status: 500 }
     );
   }

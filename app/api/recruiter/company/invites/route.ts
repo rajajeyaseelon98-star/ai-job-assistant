@@ -132,8 +132,16 @@ export async function POST(request: Request) {
       html: tpl.html,
       text: tpl.text,
       category: "invites",
+      eventType: "company_invite_created",
+      idempotencyKey: `invite:${data.id}:recipient:${email.trim().toLowerCase()}`,
+      meta: {
+        company_id,
+        invite_id: data.id,
+        invited_by: user.id,
+        role,
+      },
     });
-    emailQueued = res.ok && !res.skipped;
+    emailQueued = res.ok && res.status === "sent";
   } catch (e) {
     console.warn("[invites] failed to queue invite email", {
       error: e instanceof Error ? e.message : String(e),

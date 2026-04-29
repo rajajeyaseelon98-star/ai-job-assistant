@@ -161,6 +161,14 @@ export async function PATCH(
             html: tpl.html,
             text: tpl.text,
             category: "marketplace",
+            eventType: "application_stage_changed_candidate",
+            idempotencyKey: `application:${id}:candidate:${toEmail}:stage:${String(requestedStage)}`,
+            meta: {
+              application_id: id,
+              candidate_id: candidateId,
+              from_stage: fromStage,
+              to_stage: requestedStage,
+            },
           });
         }
       } catch (e) {
