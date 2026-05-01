@@ -63,7 +63,7 @@ export function InstallAppButton() {
         }
         setDeferredPrompt(null);
       }}
-      className="fixed bottom-4 right-4 z-50 inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-600/25 hover:bg-indigo-700"
+      className="fixed bottom-4 right-4 z-50 inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg hover:bg-primary-hover"
       aria-label="Install app"
     >
       <Download className="h-4 w-4" />

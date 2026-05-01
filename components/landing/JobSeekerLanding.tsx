@@ -47,7 +47,7 @@ export function JobSeekerLanding() {
       </section>
 
       {/* Problem — contrast */}
-      <section className={`bg-slate-50 ${landingSectionY}`}>
+      <section className={`bg-surface-muted/60 ${landingSectionY}`}>
         <div className={`${landingContainer} text-center`}>
           <h2 className="text-2xl font-bold text-foreground md:text-3xl">
             Why 90% of job seekers never get shortlisted
@@ -141,7 +141,7 @@ export function JobSeekerLanding() {
       </section>
 
       {/* Pricing */}
-      <section className={`bg-slate-50/50 ${landingSectionY}`}>
+      <section className={`bg-surface-muted/40 ${landingSectionY}`}>
         <div className={`${landingContainer}`}>
           <h2 className="text-center text-2xl font-bold text-foreground md:text-3xl">Pricing</h2>
           <p className="mt-2 text-center text-sm text-text-muted">Cancel anytime · One interview can pay for Pro</p>

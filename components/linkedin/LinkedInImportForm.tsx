@@ -5,6 +5,10 @@ import { Upload, Linkedin, Loader2, FileText, Info } from "lucide-react";
 import type { ImprovedResumeContent } from "@/types/analysis";
 import { useUploadResume } from "@/hooks/mutations/use-upload-resume";
 import { useImportLinkedIn } from "@/hooks/mutations/use-import-linkedin";
+import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
+import { Card } from "@/components/ui/Card";
 
 interface LinkedInImportFormProps {
   onResult: (content: ImprovedResumeContent) => void;
@@ -59,45 +63,43 @@ export function LinkedInImportForm({ onResult }: LinkedInImportFormProps) {
 
   return (
     <div>
-      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 mb-10">
-        <h3 className="font-display text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-          <Info className="h-4 w-4 text-indigo-600" />
+      <Card className="mb-10 bg-surface-muted/60">
+        <h3 className="mb-4 flex items-center gap-2 font-display text-lg font-bold text-text">
+          <Info className="h-4 w-4 text-primary" />
           How to get your data
         </h3>
         <div className="space-y-4">
           <div className="flex gap-3 items-start">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 mt-1 shrink-0">
+            <span className="mt-1 shrink-0 rounded border border-primary/15 bg-card px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
               Option 1
             </span>
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <p className="text-sm leading-relaxed text-text-muted">
               Go to your LinkedIn profile, select all text (Ctrl+A), and copy-paste it below.
             </p>
           </div>
           <div className="flex gap-3 items-start">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 mt-1 shrink-0">
+            <span className="mt-1 shrink-0 rounded border border-primary/15 bg-card px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
               Option 2
             </span>
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <p className="text-sm leading-relaxed text-text-muted">
               On LinkedIn, click &quot;More&quot; on your profile, then &quot;Save to PDF&quot;. Upload the PDF here.
             </p>
           </div>
           <div className="flex gap-3 items-start">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 mt-1 shrink-0">
+            <span className="mt-1 shrink-0 rounded border border-primary/15 bg-card px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
               Option 3
             </span>
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <p className="text-sm leading-relaxed text-text-muted">
               Go to LinkedIn Settings &rarr; Data Privacy &rarr; Get a copy of your data. Upload the exported file.
             </p>
           </div>
         </div>
-      </div>
+      </Card>
 
-      <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 sm:p-10 mb-8">
+      <Card className="mb-8 p-6 sm:p-10">
         <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           <div>
-            <label className="text-sm font-semibold text-slate-700 mb-3 block">
-              Upload LinkedIn PDF
-            </label>
+            <Label className="mb-3">Upload LinkedIn PDF</Label>
             <input
               ref={fileRef}
               type="file"
@@ -108,30 +110,25 @@ export function LinkedInImportForm({ onResult }: LinkedInImportFormProps) {
                 if (f) void handleFileUpload(f);
               }}
             />
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={parsing}
-              className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm rounded-xl px-4 py-2.5 text-sm font-medium transition-all inline-flex items-center gap-2 mb-8 disabled:opacity-50"
-            >
+            <Button type="button" onClick={() => fileRef.current?.click()} disabled={parsing} variant="secondary" className="mb-8">
               <Upload className="h-4 w-4" />
               <span>{parsing ? "Parsing…" : "Upload LinkedIn PDF export"}</span>
               <FileText className="h-4 w-4" />
-            </button>
+            </Button>
           </div>
 
           <div>
-            <div className="text-sm font-semibold text-slate-700 mb-3 block pt-4 border-t border-slate-100">
+            <div className="mb-3 block border-t border-border pt-4 text-sm font-semibold text-text">
               Or paste your LinkedIn profile text
             </div>
-            <textarea
+            <Textarea
               value={profileText}
               onChange={(e) => setProfileText(e.target.value)}
               rows={8}
               placeholder={
                 "Copy everything from your LinkedIn profile page and paste here...\n\nInclude: headline, about, experience, education, skills, certifications, projects, etc."
               }
-              className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none min-h-[200px]"
+              className="min-h-[200px] rounded-xl"
             />
             {profileText ? (
               <p className="mt-1 text-xs text-text-muted">{profileText.length} characters</p>
@@ -147,25 +144,16 @@ export function LinkedInImportForm({ onResult }: LinkedInImportFormProps) {
             </div>
           )}
 
-          <button
+          <Button
             type="submit"
             disabled={loading || !profileText.trim() || profileText.trim().length < 50 || parsing}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 rounded-xl px-8 py-3.5 font-medium transition-all w-full sm:w-auto inline-flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full sm:w-auto"
           >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Creating Resume...
-              </>
-            ) : (
-              <>
-                <Linkedin className="h-4 w-4" />
-                Import & Create Resume
-              </>
-            )}
-          </button>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Linkedin className="h-4 w-4" />}
+            {loading ? "Creating Resume..." : "Import & Create Resume"}
+          </Button>
         </form>
-      </div>
+      </Card>
     </div>
   );
 }

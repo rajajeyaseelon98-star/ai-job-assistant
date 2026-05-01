@@ -23,7 +23,8 @@ const variants: Record<ButtonVariant, string> = {
 };
 
 const sizes: Record<ButtonSize, string> = {
-  sm: "min-h-9 px-3 text-xs",
+  // Enforce 44px tap targets on mobile, allow denser UI on >=sm screens.
+  sm: "min-h-11 px-3 text-xs sm:min-h-9",
   md: "min-h-11 px-4 py-2.5 text-sm",
   lg: "min-h-12 px-6 text-base",
 };

@@ -5,6 +5,9 @@ import { Upload, Search, MapPin, Loader2 } from "lucide-react";
 import type { ExtractedSkills, JobResult } from "@/types/jobFinder";
 import { useUploadResume } from "@/hooks/mutations/use-upload-resume";
 import { useAutoJobsSearch } from "@/hooks/mutations/use-auto-jobs";
+import { Button } from "@/components/ui/Button";
+import { Input, Textarea } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
 
 interface JobFinderFormProps {
   onResult: (result: {
@@ -70,7 +73,7 @@ export function JobFinderForm({ onResult }: JobFinderFormProps) {
     <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
       {/* File upload */}
       <div>
-        <label className="mb-2 block text-sm font-semibold text-slate-700">Upload Resume (PDF/DOCX)</label>
+        <Label className="mb-2">Upload Resume (PDF/DOCX)</Label>
         <input
           ref={fileRef}
           type="file"
@@ -81,31 +84,30 @@ export function JobFinderForm({ onResult }: JobFinderFormProps) {
             if (f) handleFileUpload(f);
           }}
         />
-        <button
+        <Button
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={uploadMut.isPending}
-          className="flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600 transition-all hover:border-indigo-500 disabled:opacity-50"
+          variant="secondary"
+          className="w-full justify-center border-2 border-dashed border-border bg-surface-muted/60 hover:border-primary/35"
         >
           <Upload className="h-4 w-4" />
           {uploadMut.isPending ? "Parsing…" : "Choose file or drag & drop"}
-        </button>
+        </Button>
       </div>
 
       {/* Resume text */}
       <div>
-        <label className="mb-2 block text-sm font-semibold text-slate-700">
-          Or paste your resume text
-        </label>
-        <textarea
+        <Label className="mb-2">Or paste your resume text</Label>
+        <Textarea
           value={resumeText}
           onChange={(e) => setResumeText(e.target.value)}
           rows={6}
           placeholder="Paste your full resume text here..."
-          className="w-full min-h-[120px] resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
+          className="min-h-[120px] rounded-xl"
         />
         {resumeText && (
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-text-muted">
             {resumeText.length} characters
           </p>
         )}
@@ -113,17 +115,14 @@ export function JobFinderForm({ onResult }: JobFinderFormProps) {
 
       {/* Location */}
       <div>
-        <label className="mb-2 block text-sm font-semibold text-slate-700">
-          Preferred Location (optional)
-        </label>
+        <Label className="mb-2">Preferred Location (optional)</Label>
         <div className="relative">
-          <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
+          <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+          <Input
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="e.g., San Francisco, Remote, New York..."
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-9 pr-4 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
+            className="pl-9"
           />
         </div>
       </div>
@@ -139,10 +138,10 @@ export function JobFinderForm({ onResult }: JobFinderFormProps) {
         </div>
       )}
 
-      <button
+      <Button
         type="submit"
         disabled={loading || !resumeText.trim()}
-        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 font-medium text-white shadow-md shadow-indigo-600/20 transition-all hover:bg-indigo-700 disabled:opacity-50 sm:w-auto"
+        className="mt-4 w-full sm:w-auto"
       >
         {loading ? (
           <>
@@ -155,7 +154,7 @@ export function JobFinderForm({ onResult }: JobFinderFormProps) {
             Find Matching Jobs
           </>
         )}
-      </button>
+      </Button>
     </form>
   );
 }

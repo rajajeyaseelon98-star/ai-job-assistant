@@ -7,6 +7,9 @@ import { useGenerateCoverLetter } from "@/hooks/mutations/use-generate-cover-let
 import { InlineRetryCard } from "@/components/ui/InlineRetryCard";
 import { ActionReceiptCard } from "@/components/ui/ActionReceiptCard";
 import { toUiFeedback } from "@/lib/ui-feedback";
+import { Button } from "@/components/ui/Button";
+import { Input, Textarea } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
 
 export interface CoverLetterGenerated {
   id: string;
@@ -98,25 +101,21 @@ export function CoverLetterForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-0">
-      <div className="mb-4 inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
+      <div className="mb-4 inline-flex items-center rounded-full border border-primary/20 bg-surface-muted px-3 py-1 text-xs font-medium text-primary">
         {sourceLabel}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <div>
-          <label className="text-sm font-semibold text-slate-700 mb-2 block">Company name</label>
-          <input
-            type="text"
-            className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
+          <Label className="mb-2">Company name</Label>
+          <Input
             value={companyName}
             onChange={(e) => setCompanyName(e.target.value)}
             placeholder="Acme Inc."
           />
         </div>
         <div>
-          <label className="text-sm font-semibold text-slate-700 mb-2 block">Role</label>
-          <input
-            type="text"
-            className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
+          <Label className="mb-2">Role</Label>
+          <Input
             value={role}
             onChange={(e) => setRole(e.target.value)}
             placeholder="React Developer"
@@ -124,9 +123,9 @@ export function CoverLetterForm({
         </div>
       </div>
       <div>
-        <label className="text-sm font-semibold text-slate-700 mb-2 block">Job description</label>
-        <textarea
-          className="resize-y min-h-[160px] mb-6 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
+        <Label className="mb-2">Job description</Label>
+        <Textarea
+          className="mb-6 min-h-[160px] rounded-xl"
           rows={6}
           value={jobDescription}
           onChange={(e) => setJobDescription(e.target.value)}
@@ -134,9 +133,9 @@ export function CoverLetterForm({
         />
       </div>
       <div>
-        <label className="text-sm font-semibold text-slate-700 mb-2 block">Your resume text</label>
-        <textarea
-          className="resize-y min-h-[160px] mb-6 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
+        <Label className="mb-2">Your resume text</Label>
+        <Textarea
+          className="mb-6 min-h-[160px] rounded-xl"
           rows={6}
           value={resumeText}
           onChange={(e) => setResumeText(e.target.value)}
@@ -163,24 +162,14 @@ export function CoverLetterForm({
             secondaryLabel="View AI usage"
           />
           {generatedMeta.requestId ? (
-            <p className="mt-2 text-xs text-slate-500">Request ID: {generatedMeta.requestId}</p>
+            <p className="mt-2 text-xs text-text-muted">Request ID: {generatedMeta.requestId}</p>
           ) : null}
         </div>
       ) : null}
-      <button
-        type="submit"
-        disabled={loading}
-        className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-md shadow-indigo-500/25 rounded-xl px-8 py-3.5 font-medium transition-all w-full sm:w-auto inline-flex items-center justify-center gap-2 disabled:opacity-50"
-      >
-        {loading ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Generating cover letter…
-          </>
-        ) : (
-          "Generate cover letter"
-        )}
-      </button>
+      <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+        {loading ? "Generating cover letter…" : "Generate cover letter"}
+      </Button>
       {loading && <AIProgressIndicator message="Generating your cover letter…" />}
     </form>
   );

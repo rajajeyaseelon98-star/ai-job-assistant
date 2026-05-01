@@ -48,7 +48,7 @@ export function UserAvatar({ name, avatarUrl, userId, size = 40, className }: Us
   return (
     <div
       className={cn(
-        "rounded-full shrink-0 flex items-center justify-center text-xs font-bold bg-indigo-100 text-indigo-700",
+        "flex shrink-0 items-center justify-center rounded-full bg-surface-muted text-xs font-bold text-primary",
         className
       )}
       style={{ width: size, height: size }}

@@ -152,7 +152,7 @@ export function RecruiterLanding() {
         </div>
       </section>
 
-      <section className={`bg-slate-50 ${landingSectionY}`}>
+      <section className={`bg-surface-muted/60 ${landingSectionY}`}>
         <div className={`${landingContainer} text-center`}>
           <h2 className="text-2xl font-bold text-foreground md:text-3xl">Why hiring feels broken</h2>
           <ul className="mx-auto mt-10 max-w-xl space-y-4 text-left text-sm md:text-base">
@@ -232,7 +232,7 @@ export function RecruiterLanding() {
       </section>
 
       {/* Pricing */}
-      <section className={`bg-slate-50/50 ${landingSectionY}`}>
+      <section className={`bg-surface-muted/40 ${landingSectionY}`}>
         <div className={`${landingContainer}`}>
           <h2 className="text-center text-2xl font-bold md:text-3xl">Pricing</h2>
           <p className="mt-2 text-center text-sm text-text-muted">Focus → hiring speed</p>

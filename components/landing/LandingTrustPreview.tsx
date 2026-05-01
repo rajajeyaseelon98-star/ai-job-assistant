@@ -4,7 +4,7 @@ import { landingContainer, landingSectionY } from "./landingShell";
 /** Placeholder “logos” + product preview — swap for real assets later */
 export function LandingTrustPreview({ audience }: { audience: "job_seeker" | "recruiter" }) {
   return (
-    <section className={`border-y border-border bg-slate-50/80 ${landingSectionY}`}>
+    <section className={`border-y border-border bg-surface-muted/60 ${landingSectionY}`}>
       <div className={`${landingContainer}`}>
         <p className="text-center text-xs font-semibold uppercase tracking-wider text-text-muted">
           Trusted by teams &amp; job seekers
@@ -13,7 +13,7 @@ export function LandingTrustPreview({ audience }: { audience: "job_seeker" | "re
           {["Acme", "Nova", "Vertex", "Skyline", "Pulse"].map((name) => (
             <span
               key={name}
-              className="text-lg font-bold tracking-tight text-slate-400 transition hover:text-slate-600"
+              className="text-lg font-bold tracking-tight text-text-muted transition hover:text-text"
             >
               {name}
             </span>
@@ -30,34 +30,34 @@ export function LandingTrustPreview({ audience }: { audience: "job_seeker" | "re
             <LayoutDashboard className="h-5 w-5 text-primary" />
             Product preview
           </div>
-          <div className="overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-slate-100 to-slate-200 shadow-card-md">
-            <div className="flex items-center gap-2 border-b border-slate-200/80 bg-white/90 px-4 py-3">
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card-md">
+            <div className="flex items-center gap-2 border-b border-border bg-card/90 px-4 py-3">
               <div className="flex gap-1.5">
                 <span className="h-2.5 w-2.5 rounded-full bg-red-400/90" />
                 <span className="h-2.5 w-2.5 rounded-full bg-amber-400/90" />
                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/90" />
               </div>
-              <span className="text-xs font-medium text-slate-500">
+              <span className="text-xs font-medium text-text-muted">
                 {audience === "job_seeker" ? "Dashboard — Resume & matches" : "Dashboard — Candidates & pipeline"}
               </span>
             </div>
             <div className="grid gap-0 md:grid-cols-3">
-              <div className="border-b border-slate-200/80 bg-white/70 p-4 md:border-b-0 md:border-r">
+              <div className="border-b border-border bg-card/70 p-4 md:border-b-0 md:border-r">
                 <BarChart3 className="h-8 w-8 text-primary/80" />
-                <p className="mt-3 text-xs font-medium text-slate-600">
+                <p className="mt-3 text-xs font-medium text-text-muted">
                   {audience === "job_seeker" ? "ATS & job match" : "Shortlist & scores"}
                 </p>
                 <div className="mt-3 h-16 rounded-lg bg-gradient-to-br from-primary/20 to-emerald-500/10" />
               </div>
-              <div className="border-b border-slate-200/80 bg-white/50 p-4 md:border-b-0 md:border-r">
-                <div className="h-24 rounded-lg bg-slate-300/40" />
-                <div className="mt-2 h-3 w-2/3 rounded bg-slate-300/50" />
+              <div className="border-b border-border bg-card/50 p-4 md:border-b-0 md:border-r">
+                <div className="h-24 rounded-lg bg-surface-muted" />
+                <div className="mt-2 h-3 w-2/3 rounded bg-surface-muted" />
               </div>
-              <div className="bg-white/70 p-4">
+              <div className="bg-card/70 p-4">
                 <div className="space-y-2">
-                  <div className="h-3 w-full rounded bg-slate-300/45" />
-                  <div className="h-3 w-5/6 rounded bg-slate-300/35" />
-                  <div className="h-3 w-4/6 rounded bg-slate-300/35" />
+                  <div className="h-3 w-full rounded bg-surface-muted" />
+                  <div className="h-3 w-5/6 rounded bg-surface-muted" />
+                  <div className="h-3 w-4/6 rounded bg-surface-muted" />
                 </div>
               </div>
             </div>

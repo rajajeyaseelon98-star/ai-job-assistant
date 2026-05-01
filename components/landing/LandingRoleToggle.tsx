@@ -15,7 +15,7 @@ export function LandingRoleToggle({ role, onRoleChange }: Props) {
   return (
     <div className="mx-auto w-full max-w-xl">
       <div
-        className="inline-flex w-full rounded-full border border-slate-200 bg-white p-1 shadow-sm"
+        className="inline-flex w-full rounded-full border border-border bg-card p-1 shadow-sm"
         role="tablist"
         aria-label="Choose mode"
       >
@@ -26,8 +26,8 @@ export function LandingRoleToggle({ role, onRoleChange }: Props) {
           onClick={() => onRoleChange("job_seeker")}
           className={`flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-full text-sm font-semibold transition-all duration-200 ease-in-out md:text-base ${
             role === "job_seeker"
-              ? "bg-slate-900 text-white shadow-md"
-              : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+              ? "bg-primary text-primary-foreground shadow-md"
+              : "text-text-muted hover:bg-surface-muted hover:text-text"
           }`}
         >
           <span className="text-base" aria-hidden>
@@ -43,8 +43,8 @@ export function LandingRoleToggle({ role, onRoleChange }: Props) {
           onClick={() => onRoleChange("recruiter")}
           className={`flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-full text-sm font-semibold transition-all duration-200 ease-in-out md:text-base ${
             role === "recruiter"
-              ? "bg-slate-900 text-white shadow-md"
-              : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+              ? "bg-primary text-primary-foreground shadow-md"
+              : "text-text-muted hover:bg-surface-muted hover:text-text"
           }`}
         >
           <span className="text-base" aria-hidden>

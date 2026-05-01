@@ -6,6 +6,10 @@ import type { ImprovedResumeContent } from "@/types/analysis";
 import { humanizeNetworkError } from "@/lib/friendlyApiError";
 import { useUploadResume } from "@/hooks/mutations/use-upload-resume";
 import { useImproveResume } from "@/hooks/mutations/use-improve-resume";
+import { Button } from "@/components/ui/Button";
+import { Input, Textarea } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
+import { Card } from "@/components/ui/Card";
 
 interface TailorResumeFormProps {
   onResult: (content: ImprovedResumeContent, improvedResumeId?: string) => void;
@@ -90,12 +94,12 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-      <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      <Card className="mb-6">
         <div className="mb-6 flex items-center gap-3">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 text-sm font-bold text-indigo-600">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/15 bg-surface-muted text-sm font-bold text-primary">
             1
           </span>
-          <h3 className="font-display text-xl font-semibold text-slate-900">Your Resume</h3>
+          <h3 className="font-display text-xl font-semibold text-text">Your Resume</h3>
         </div>
 
         <input
@@ -108,64 +112,58 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
             if (f) void handleFileUpload(f);
           }}
         />
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={parsing}
-          className="mb-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 disabled:opacity-50"
-        >
+        <Button type="button" onClick={() => fileRef.current?.click()} disabled={parsing} variant="secondary">
           <Upload className="h-4 w-4" />
           Upload PDF/DOCX
-        </button>
-        <p className="mb-3 text-xs text-slate-500">
+        </Button>
+        <p className="mb-3 text-xs text-text-muted">
           If a PDF won’t parse, export as DOCX or paste your text — both work.
         </p>
 
-        <label className="mb-2 block text-sm font-semibold text-slate-700">Resume Text</label>
-        <textarea
+        <Label className="mb-2">Resume Text</Label>
+        <Textarea
           value={resumeText}
           onChange={(e) => setResumeText(e.target.value)}
           rows={5}
           placeholder="Or paste your full resume text here..."
-          className="w-full min-h-[160px] resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
+          className="min-h-[160px] rounded-xl"
         />
-      </div>
+      </Card>
 
-      <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      <Card className="mb-6">
         <div className="mb-6 flex items-center gap-3">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 text-sm font-bold text-indigo-600">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/15 bg-surface-muted text-sm font-bold text-primary">
             2
           </span>
-          <h3 className="font-display text-xl font-semibold text-slate-900">Target Job</h3>
+          <h3 className="font-display text-xl font-semibold text-text">Target Job</h3>
         </div>
 
         <div className="mb-3 sm:mb-4">
-          <label className="mb-2 block text-sm font-semibold text-slate-700">Job Title</label>
+          <Label className="mb-2">Job Title</Label>
           <div className="relative">
-            <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
+            <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+            <Input
               value={jobTitle}
               onChange={(e) => setJobTitle(e.target.value)}
               placeholder="e.g., Senior Frontend Developer"
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-9 pr-4 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
+              className="pl-9"
             />
           </div>
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-semibold text-slate-700">
+          <Label className="mb-2">
             Job Description <span className="text-red-500">*</span>
-          </label>
-          <textarea
+          </Label>
+          <Textarea
             value={jobDescription}
             onChange={(e) => setJobDescription(e.target.value)}
             rows={6}
             placeholder="Paste the full job description here. The more detail, the better the tailoring..."
-            className="w-full min-h-[160px] resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
+            className="min-h-[160px] rounded-xl"
           />
         </div>
-      </div>
+      </Card>
 
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
 
@@ -176,23 +174,14 @@ export function TailorResumeForm({ onResult }: TailorResumeFormProps) {
         </div>
       )}
 
-      <button
+      <Button
         type="submit"
         disabled={loading || !resumeText.trim() || !jobDescription.trim() || parsing}
-        className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-8 py-3.5 font-medium text-white shadow-md shadow-indigo-500/25 transition-all hover:from-indigo-700 hover:to-violet-700 disabled:opacity-50 sm:w-auto"
+        className="mt-2 w-full sm:w-auto"
       >
-        {loading ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Tailoring Resume...
-          </>
-        ) : (
-          <>
-            <Wand2 className="h-4 w-4" />
-            Tailor My Resume
-          </>
-        )}
-      </button>
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+        {loading ? "Tailoring Resume..." : "Tailor My Resume"}
+      </Button>
     </form>
   );
 }

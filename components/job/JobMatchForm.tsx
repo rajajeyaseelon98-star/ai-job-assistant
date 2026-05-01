@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { AIProgressIndicator } from "@/components/ui/AIProgressIndicator";
 import { useJobMatch } from "@/hooks/mutations/use-job-match";
+import { Button } from "@/components/ui/Button";
+import { Input, Textarea } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
 
 interface JobMatchFormProps {
   defaultResumeText?: string;
@@ -65,9 +68,9 @@ export function JobMatchForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
       <div>
-        <label className="mb-2 block text-sm font-semibold text-slate-700">Resume text</label>
-        <textarea
-          className="w-full min-h-[160px] resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
+        <Label className="mb-2">Resume text</Label>
+        <Textarea
+          className="min-h-[160px] rounded-xl"
           rows={6}
           value={resumeText}
           onChange={(e) => setResumeText(e.target.value)}
@@ -75,19 +78,17 @@ export function JobMatchForm({
         />
       </div>
       <div>
-        <label className="mb-2 block text-sm font-semibold text-slate-700">Job title (optional)</label>
-        <input
-          type="text"
-          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
+        <Label className="mb-2">Job title (optional)</Label>
+        <Input
           value={jobTitle}
           onChange={(e) => setJobTitle(e.target.value)}
           placeholder="e.g. React Developer"
         />
       </div>
       <div>
-        <label className="mb-2 block text-sm font-semibold text-slate-700">Job description</label>
-        <textarea
-          className="w-full min-h-[160px] resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
+        <Label className="mb-2">Job description</Label>
+        <Textarea
+          className="min-h-[160px] rounded-xl"
           rows={8}
           value={jobDescription}
           onChange={(e) => setJobDescription(e.target.value)}
@@ -95,13 +96,9 @@ export function JobMatchForm({
         />
       </div>
       {error && <p className="text-xs sm:text-sm text-red-600">{error}</p>}
-      <button
-        type="submit"
-        disabled={loading}
-        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 font-medium text-white shadow-md shadow-indigo-600/20 transition-all hover:bg-indigo-700 disabled:opacity-50 sm:w-auto"
-      >
+      <Button type="submit" disabled={loading} className="mt-4 w-full sm:w-auto">
         {loading ? "Matching…" : "Match resume"}
-      </button>
+      </Button>
       {loading && <AIProgressIndicator message="Matching your resume to the job…" />}
     </form>
   );

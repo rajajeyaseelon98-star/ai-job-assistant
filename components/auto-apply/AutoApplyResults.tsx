@@ -11,6 +11,7 @@ import {
 import { formatApiFetchThrownError } from "@/lib/api-error";
 import { AutoApplyRunReceipt } from "@/components/auto-apply/AutoApplyRunReceipt";
 import { InlineRetryCard } from "@/components/ui/InlineRetryCard";
+import { Button } from "@/components/ui/Button";
 
 interface AutoApplyResultsProps {
   runId: string;
@@ -97,7 +98,7 @@ export function AutoApplyResults({ runId, results, status, onComplete }: AutoApp
 
   if (jobs.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-gray-300 py-8 text-center">
+      <div className="rounded-xl border border-dashed border-border bg-card py-8 text-center shadow-card">
         <p className="text-sm text-text-muted">No matching jobs found. Try adjusting your preferences.</p>
       </div>
     );
@@ -123,29 +124,30 @@ export function AutoApplyResults({ runId, results, status, onComplete }: AutoApp
       </div>
 
       {!confirmed && (
-        <div className="sticky bottom-6 z-20 mx-auto mt-8 flex flex-col items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-xl shadow-slate-200/50 backdrop-blur-md sm:flex-row">
+        <div className="sticky bottom-6 z-20 mx-auto mt-8 flex flex-col items-center justify-between gap-4 rounded-2xl border border-border bg-card/90 p-4 shadow-xl backdrop-blur-md sm:flex-row">
           <div className="flex-1">
-            <p className="text-sm font-medium text-slate-700">
+            <p className="text-sm font-medium text-text">
               {selectedCount} job{selectedCount !== 1 ? "s" : ""} selected
             </p>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-text-muted">
               Applications will be tracked in your Applications page
             </p>
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
             <div className="flex w-full gap-2 sm:w-auto">
-              <button
+              <Button
                 onClick={handleSaveSelections}
                 disabled={saving || confirming}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition-all hover:bg-slate-50 disabled:opacity-50 sm:flex-none"
+                variant="secondary"
+                className="flex-1 sm:flex-none"
               >
                 {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                 Save
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleConfirmApply}
                 disabled={confirming || selectedCount === 0}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 text-sm font-medium text-white shadow-md shadow-indigo-500/25 transition-all hover:from-indigo-700 hover:to-violet-700 disabled:opacity-50 sm:flex-none"
+                className="flex-1 sm:flex-none"
               >
                 {confirmApplyActive && confirming ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -153,7 +155,7 @@ export function AutoApplyResults({ runId, results, status, onComplete }: AutoApp
                   <Send className="h-3.5 w-3.5" />
                 )}
                 Apply to {selectedCount} Job{selectedCount !== 1 ? "s" : ""}
-              </button>
+              </Button>
             </div>
             {actionError ? (
               <div className="w-full sm:max-w-md">

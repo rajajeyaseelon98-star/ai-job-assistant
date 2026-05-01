@@ -31,11 +31,11 @@ export function AiUsageDashboard() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <header>
-        <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900">AI Usage Dashboard</h1>
-        <p className="mt-1 text-sm text-slate-500">Token, credit, and feature-level AI usage for your account.</p>
+        <h1 className="font-display text-2xl font-bold tracking-tight text-text">AI Usage Dashboard</h1>
+        <p className="mt-1 text-sm text-text-muted">Token, credit, and feature-level AI usage for your account.</p>
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <UsageHealthChip healthy={!hasAnyError} detail={generatedAt ? `Generated ${new Date(generatedAt).toLocaleString()}` : "Waiting for data"} />
-          {generatedAt ? <span className="text-xs text-slate-500">Last refresh: {new Date(generatedAt).toLocaleTimeString()}</span> : null}
+          {generatedAt ? <span className="text-xs text-text-muted">Last refresh: {new Date(generatedAt).toLocaleTimeString()}</span> : null}
         </div>
       </header>
 
@@ -59,47 +59,47 @@ export function AiUsageDashboard() {
       ) : null}
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border bg-white p-4">
-          <p className="text-xs text-slate-500">Total Tokens</p>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+          <p className="text-xs text-text-muted">Total Tokens</p>
           <p className="mt-1 text-2xl font-semibold">{formatNumber(summary.data?.totalTokens ?? 0)}</p>
         </div>
-        <div className="rounded-xl border bg-white p-4">
-          <p className="text-xs text-slate-500">Total Credits Used</p>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+          <p className="text-xs text-text-muted">Total Credits Used</p>
           <p className="mt-1 text-2xl font-semibold">{formatNumber(summary.data?.totalCredits ?? 0)}</p>
         </div>
-        <div className="rounded-xl border bg-white p-4">
-          <p className="text-xs text-slate-500">Most Used Feature</p>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+          <p className="text-xs text-text-muted">Most Used Feature</p>
           <p className="mt-1 text-xl font-semibold">{summary.data?.mostUsedFeature ?? "-"}</p>
         </div>
-        <div className="rounded-xl border bg-white p-4">
-          <p className="text-xs text-slate-500">Estimated Cost</p>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+          <p className="text-xs text-text-muted">Estimated Cost</p>
           <p className="mt-1 text-base font-semibold">
             {formatCurrency(summary.data?.totalCostUsd ?? 0, "USD")} / {formatCurrency(summary.data?.totalCostInr ?? 0, "INR")}
           </p>
         </div>
       </section>
 
-      <section className="rounded-xl border bg-white p-4">
+      <section className="rounded-xl border border-border bg-card p-4 shadow-card">
         <div className="mb-2 flex items-center justify-between">
           <h2 className="font-semibold">Credit Balance</h2>
-          <span className="text-sm text-slate-600">
+          <span className="text-sm text-text-muted">
             {formatNumber(summary.data?.usedCredits ?? 0)} / {formatNumber(summary.data?.totalCreditsAvailable ?? 0)}
           </span>
         </div>
-        <div className="h-2 w-full rounded bg-slate-100">
-          <div className="h-2 rounded bg-indigo-500" style={{ width: `${creditPercent}%` }} />
+        <div className="h-2 w-full rounded bg-surface-muted">
+          <div className="h-2 rounded bg-primary" style={{ width: `${creditPercent}%` }} />
         </div>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-text-muted">
           Remaining credits: <span className="font-medium">{formatNumber(summary.data?.remainingCredits ?? 0)}</span>
         </p>
       </section>
 
-      <section className="rounded-xl border bg-white p-4">
+      <section className="rounded-xl border border-border bg-card p-4 shadow-card">
         <h2 className="mb-3 font-semibold">Feature Breakdown</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-left text-slate-500">
+              <tr className="border-b border-border text-left text-text-muted">
                 <th className="py-2">Feature</th>
                 <th className="py-2">Calls</th>
                 <th className="py-2">Tokens</th>
@@ -109,7 +109,7 @@ export function AiUsageDashboard() {
             </thead>
             <tbody>
               {(breakdown.data?.rows ?? []).map((row) => (
-                <tr key={row.feature_name} className="border-b last:border-b-0">
+                <tr key={row.feature_name} className="border-b border-border last:border-b-0">
                   <td className="py-2">{row.feature_name}</td>
                   <td className="py-2">{formatNumber(row.calls)}</td>
                   <td className="py-2">{formatNumber(row.total_tokens)}</td>
@@ -119,7 +119,7 @@ export function AiUsageDashboard() {
               ))}
               {(!breakdown.data?.rows || breakdown.data.rows.length === 0) && (
                 <tr>
-                  <td className="py-3 text-slate-500" colSpan={5}>
+                  <td className="py-3 text-text-muted" colSpan={5}>
                     No usage data yet.
                   </td>
                 </tr>
@@ -129,12 +129,12 @@ export function AiUsageDashboard() {
         </div>
       </section>
 
-      <section className="rounded-xl border bg-white p-4">
+      <section className="rounded-xl border border-border bg-card p-4 shadow-card">
         <h2 className="mb-3 font-semibold">Usage History (Latest 50)</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-left text-slate-500">
+              <tr className="border-b border-border text-left text-text-muted">
                 <th className="py-2">Date</th>
                 <th className="py-2">Feature</th>
                 <th className="py-2">Tokens</th>
@@ -144,7 +144,7 @@ export function AiUsageDashboard() {
             </thead>
             <tbody>
               {(history.data?.rows ?? []).map((row) => (
-                <tr key={row.id} className="border-b last:border-b-0">
+                <tr key={row.id} className="border-b border-border last:border-b-0">
                   <td className="py-2">{new Date(row.created_at).toLocaleString()}</td>
                   <td className="py-2">{row.feature_name}</td>
                   <td className="py-2">{formatNumber(row.total_tokens)}</td>
@@ -154,7 +154,7 @@ export function AiUsageDashboard() {
               ))}
               {(!history.data?.rows || history.data.rows.length === 0) && (
                 <tr>
-                  <td className="py-3 text-slate-500" colSpan={5}>
+                  <td className="py-3 text-text-muted" colSpan={5}>
                     No usage history yet.
                   </td>
                 </tr>
@@ -165,7 +165,7 @@ export function AiUsageDashboard() {
       </section>
 
       {(summary.isLoading || history.isLoading || breakdown.isLoading) && (
-        <p className="text-sm text-slate-500">Loading usage metrics...</p>
+        <p className="text-sm text-text-muted">Loading usage metrics...</p>
       )}
     </div>
   );

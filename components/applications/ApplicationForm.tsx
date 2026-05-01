@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Loader2, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Input, Select, Textarea } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
 import type { Application, ApplicationStatus } from "@/types/application";
 import { STATUS_LABELS } from "@/types/application";
 import { useSaveApplication } from "@/hooks/queries/use-applications";
@@ -60,13 +62,18 @@ export function ApplicationForm({ initial, onSave, onCancel }: ApplicationFormPr
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden">
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 sm:px-8">
-          <h3 className="font-display text-lg font-bold text-slate-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-2xl overflow-hidden rounded-3xl border border-border bg-card shadow-2xl">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4 sm:px-8">
+          <h3 className="font-display text-lg font-bold text-text">
             {isEdit ? "Edit Application" : "Add Application"}
           </h3>
-          <button type="button" onClick={onCancel} className="text-slate-400 hover:text-slate-700 p-1 rounded-md hover:bg-slate-50">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="min-h-11 min-w-11 rounded-md p-1 text-text-muted transition-colors hover:bg-surface-muted hover:text-text"
+            aria-label="Close"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -74,92 +81,81 @@ export function ApplicationForm({ initial, onSave, onCancel }: ApplicationFormPr
         <form onSubmit={handleSubmit} className="space-y-4 px-6 py-6 sm:px-8">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">Company *</label>
-              <input
-                type="text"
+              <Label className="mb-2">Company *</Label>
+              <Input
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
                 placeholder="Google, Amazon..."
-                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">Role *</label>
-              <input
-                type="text"
+              <Label className="mb-2">Role *</Label>
+              <Input
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 placeholder="Senior Frontend Developer"
-                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">Status</label>
-              <select
+              <Label className="mb-2">Status</Label>
+              <Select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as ApplicationStatus)}
-                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
               >
                 {Object.entries(STATUS_LABELS).map(([val, label]) => (
                   <option key={val} value={val}>{label}</option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">Applied Date</label>
-              <input
+              <Label className="mb-2">Applied Date</Label>
+              <Input
                 type="date"
                 value={appliedDate}
                 onChange={(e) => setAppliedDate(e.target.value)}
-                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">Location</label>
-              <input
-                type="text"
+              <Label className="mb-2">Location</Label>
+              <Input
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="Remote, NYC..."
-                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">Job URL</label>
-              <input
+              <Label className="mb-2">Job URL</Label>
+              <Input
                 type="url"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://..."
-                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">Salary</label>
-              <input
-                type="text"
+              <Label className="mb-2">Salary</Label>
+              <Input
                 value={salary}
                 onChange={(e) => setSalary(e.target.value)}
                 placeholder="$120k - $150k"
-                className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
               />
             </div>
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-700">Notes</label>
-            <textarea
+            <Label className="mb-2">Notes</Label>
+            <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
               placeholder="Recruiter name, interview feedback, next steps..."
-              className="bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 w-full min-h-[100px] resize-y transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
+              className="min-h-[100px] rounded-xl"
             />
           </div>
 
@@ -168,18 +164,10 @@ export function ApplicationForm({ initial, onSave, onCancel }: ApplicationFormPr
           )}
 
           <div className="flex flex-col gap-2 sm:flex-row">
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 rounded-xl px-6 py-2.5 font-medium transition-all inline-flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Plus className="h-4 w-4" />
-              )}
+            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               {isEdit ? "Update" : "Add Application"}
-            </button>
+            </Button>
             <Button type="button" variant="secondary" onClick={onCancel} className="w-full sm:w-auto">
               Cancel
             </Button>

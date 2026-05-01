@@ -82,24 +82,24 @@ export function Topbar({ planType: propPlanType }: TopbarProps) {
   const showUsageChips = !userPending;
 
   return (
-    <header className="sticky top-0 z-20 flex min-h-14 items-center gap-2 border-b border-slate-200 bg-white/80 px-4 shadow-sm backdrop-blur-md sm:px-6">
+    <header className="sticky top-0 z-20 flex min-h-14 items-center gap-2 border-b border-border bg-card/80 px-4 shadow-sm backdrop-blur-md sm:px-6">
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
         <div className="w-8 shrink-0 lg:hidden" />
         {showUsageChips ? (
           <>
             <div className="flex items-center gap-2 md:hidden">
-              <span className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 text-slate-600 text-[11px] font-medium tracking-wide px-3 py-1 rounded-full">
+              <span className="flex items-center gap-1.5 rounded-full border border-border bg-surface-muted px-3 py-1 text-[11px] font-medium tracking-wide text-text-muted">
                 Resume {usedResume}/{limitResume === -1 ? "\u221E" : limitResume}
               </span>
-              <span className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 text-slate-600 text-[11px] font-medium tracking-wide px-3 py-1 rounded-full">
+              <span className="flex items-center gap-1.5 rounded-full border border-border bg-surface-muted px-3 py-1 text-[11px] font-medium tracking-wide text-text-muted">
                 Jobs {usedJob}/{limitJob === -1 ? "\u221E" : limitJob}
               </span>
             </div>
             <div className="hidden flex-wrap items-center gap-2 md:flex">
-              <span className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 text-slate-600 text-[11px] font-medium tracking-wide px-3 py-1 rounded-full">
+              <span className="flex items-center gap-1.5 rounded-full border border-border bg-surface-muted px-3 py-1 text-[11px] font-medium tracking-wide text-text-muted">
                 Resume {usedResume}/{limitResume === -1 ? "\u221E" : limitResume}
               </span>
-              <span className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 text-slate-600 text-[11px] font-medium tracking-wide px-3 py-1 rounded-full">
+              <span className="flex items-center gap-1.5 rounded-full border border-border bg-surface-muted px-3 py-1 text-[11px] font-medium tracking-wide text-text-muted">
                 Jobs {usedJob}/{limitJob === -1 ? "\u221E" : limitJob}
               </span>
             </div>
@@ -110,24 +110,24 @@ export function Topbar({ planType: propPlanType }: TopbarProps) {
         {showUpgradeCta ? (
           <Link
             href="/pricing"
-            className="shrink-0 rounded-full bg-indigo-600 px-3 py-1 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 sm:py-1.5 sm:text-sm"
+            className="shrink-0 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover sm:py-1.5 sm:text-sm"
           >
             Upgrade
           </Link>
         ) : null}
       </div>
-      <p className="hidden max-w-md flex-[2] truncate text-center font-sans text-[11px] leading-snug text-slate-500 lg:block xl:max-w-lg xl:text-xs">
+      <p className="hidden max-w-md flex-[2] truncate text-center font-sans text-[11px] leading-snug text-text-muted lg:block xl:max-w-lg xl:text-xs">
         Stronger applications: score your resume, match roles, and apply with less busywork.
       </p>
       <div className="relative flex min-w-0 flex-1 items-center justify-end gap-1 sm:gap-2">
         <Link
           href={messagesHref}
-          className="relative rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+          className="relative min-h-11 min-w-11 rounded-lg p-2 text-text-muted transition-colors hover:bg-surface-muted hover:text-text"
           aria-label="Messages"
         >
           <MessageSquare className="h-5 w-5" />
           {totalUnread > 0 ? (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] font-bold leading-none text-white">
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-primary-foreground">
               {totalUnread > 9 ? "9+" : totalUnread}
             </span>
           ) : null}
@@ -137,29 +137,29 @@ export function Topbar({ planType: propPlanType }: TopbarProps) {
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors duration-200 hover:bg-slate-100 active:bg-slate-200/70 sm:gap-2"
+          className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors duration-200 hover:bg-surface-muted active:bg-surface-muted/70 sm:gap-2"
         >
           <UserAvatar
             name={displayName}
             avatarUrl={userData?.avatar_url}
             userId={userData?.id}
             size={32}
-            className="ring-1 ring-indigo-100"
+            className="ring-1 ring-border"
           />
-          <ChevronDown className="h-4 w-4 text-slate-500" />
+          <ChevronDown className="h-4 w-4 text-text-muted" />
         </button>
         {open && (
-          <div className="absolute right-0 top-full mt-1 w-48 rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+          <div className="absolute right-0 top-full mt-1 w-48 rounded-xl border border-border bg-card py-1 shadow-lg">
             <Link
               href="/settings"
-              className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-800 transition-colors hover:bg-slate-50"
+              className="flex min-h-11 items-center gap-2 px-4 py-2.5 text-sm text-text transition-colors hover:bg-surface-muted"
               onClick={() => setOpen(false)}
             >
               <User className="h-4 w-4" /> Profile
             </Link>
             <Link
               href="/pricing"
-              className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-800 transition-colors hover:bg-slate-50"
+              className="flex min-h-11 items-center gap-2 px-4 py-2.5 text-sm text-text transition-colors hover:bg-surface-muted"
               onClick={() => setOpen(false)}
             >
               <CreditCard className="h-4 w-4" /> Billing
@@ -170,7 +170,7 @@ export function Topbar({ planType: propPlanType }: TopbarProps) {
                 setOpen(false);
                 handleLogout();
               }}
-              className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-slate-800 transition-colors hover:bg-slate-50"
+              className="flex min-h-11 w-full items-center gap-2 px-4 py-2.5 text-sm text-text transition-colors hover:bg-surface-muted"
             >
               <LogOut className="h-4 w-4" /> Logout
             </button>

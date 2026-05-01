@@ -44,7 +44,7 @@ export function RecruiterTopbar({ userName, avatarUrl, userId }: RecruiterTopbar
   }
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-slate-200 bg-white/80 backdrop-blur-md px-4 sm:px-6">
+    <header className="sticky top-0 z-20 flex min-h-14 items-center justify-between border-b border-border bg-card/80 px-4 backdrop-blur-md sm:px-6">
       <div className="flex items-center gap-2">
         <div className="w-8 lg:hidden" />
         <span className="hidden text-sm text-text-muted sm:inline">
@@ -54,12 +54,12 @@ export function RecruiterTopbar({ userName, avatarUrl, userId }: RecruiterTopbar
       <div className="flex items-center gap-1 sm:gap-2">
         <Link
           href="/recruiter/messages"
-          className="relative rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+          className="relative min-h-11 min-w-11 rounded-lg p-2 text-text-muted transition-colors hover:bg-surface-muted hover:text-text"
           aria-label="Messages"
         >
           <MessageSquare className="h-5 w-5" />
           {totalUnread > 0 ? (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] font-bold leading-none text-white">
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-primary-foreground">
               {totalUnread > 9 ? "9+" : totalUnread}
             </span>
           ) : null}
@@ -69,10 +69,10 @@ export function RecruiterTopbar({ userName, avatarUrl, userId }: RecruiterTopbar
           <button
             type="button"
             onClick={() => setOpen(!open)}
-            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors duration-200 hover:bg-slate-50 active:bg-slate-100 sm:gap-2"
+            className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors duration-200 hover:bg-surface-muted active:bg-surface-muted/70 sm:gap-2"
           >
             {companyLogo ? (
-              <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
+              <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-border bg-card">
                 <Image
                   src={companyLogo}
                   alt=""
@@ -87,16 +87,16 @@ export function RecruiterTopbar({ userName, avatarUrl, userId }: RecruiterTopbar
               avatarUrl={avatarUrl}
               userId={userId}
               size={32}
-              className="ring-1 ring-slate-200"
+              className="ring-1 ring-border"
             />
-            <span className="hidden max-w-[120px] truncate text-sm text-slate-700 md:inline">{userName}</span>
-            <ChevronDown className="h-4 w-4 text-slate-400" />
+            <span className="hidden max-w-[120px] truncate text-sm text-text md:inline">{userName}</span>
+            <ChevronDown className="h-4 w-4 text-text-muted" />
           </button>
           {open && (
-            <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+            <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-border bg-card py-1 shadow-lg">
               <Link
                 href="/recruiter/settings"
-                className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+                className="flex min-h-11 items-center gap-2 px-4 py-2.5 text-sm text-text hover:bg-surface-muted"
                 onClick={() => setOpen(false)}
               >
                 <Settings className="h-4 w-4" /> Settings
@@ -107,7 +107,7 @@ export function RecruiterTopbar({ userName, avatarUrl, userId }: RecruiterTopbar
                   setOpen(false);
                   void handleLogout();
                 }}
-                className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-slate-700 transition-colors duration-200 hover:bg-slate-50"
+                className="flex min-h-11 w-full items-center gap-2 px-4 py-2.5 text-sm text-text transition-colors duration-200 hover:bg-surface-muted"
               >
                 <LogOut className="h-4 w-4" /> Logout
               </button>

@@ -44,12 +44,12 @@ export function StartHereChecklist({
 
   if (!ready) {
     return (
-      <div className="animate-pulse rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="h-5 w-48 rounded bg-slate-200" />
+      <div className="animate-pulse rounded-xl border border-border bg-card p-6 shadow-card">
+        <div className="h-5 w-48 rounded bg-surface-muted" />
         <div className="mt-4 space-y-3">
-          <div className="h-10 rounded bg-slate-100" />
-          <div className="h-10 rounded bg-slate-100" />
-          <div className="h-10 rounded bg-slate-100" />
+          <div className="h-10 rounded bg-surface-muted" />
+          <div className="h-10 rounded bg-surface-muted" />
+          <div className="h-10 rounded bg-surface-muted" />
         </div>
       </div>
     );
@@ -57,7 +57,7 @@ export function StartHereChecklist({
 
   if (dismissed && !allDone) {
     return (
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 sm:text-sm">
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-border bg-card px-3 py-2 text-xs text-text-muted sm:text-sm">
         <span>First time? We can show the 3-step path again.</span>
         <button
           type="button"
@@ -69,7 +69,7 @@ export function StartHereChecklist({
             }
             setDismissed(false);
           }}
-          className="font-medium text-indigo-600 hover:underline"
+          className="font-medium text-primary hover:underline"
         >
           Show Start path
         </button>
@@ -81,22 +81,22 @@ export function StartHereChecklist({
 
   return (
     <section
-      className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+      className="rounded-xl border border-border bg-card p-6 shadow-card"
       aria-labelledby="start-here-title"
     >
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h2 id="start-here-title" className="font-display text-lg font-semibold text-slate-900">
+          <h2 id="start-here-title" className="font-display text-lg font-semibold text-text">
             Your first win — 3 steps
           </h2>
-          <p className="mt-1 font-sans text-sm text-slate-500">
+          <p className="mt-1 font-sans text-sm text-text-muted">
             Do these in order. Everything else is optional until you&apos;re ready.
           </p>
         </div>
         <button
           type="button"
           onClick={dismiss}
-          className="shrink-0 rounded-lg p-2 text-slate-400 transition hover:bg-slate-50 hover:text-slate-700"
+          className="shrink-0 rounded-lg p-2 text-text-muted transition hover:bg-surface-muted hover:text-text"
           aria-label="Dismiss checklist"
         >
           <X className="h-4 w-4" />
@@ -108,16 +108,16 @@ export function StartHereChecklist({
           {hasAtsScore ? (
             <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" aria-hidden />
           ) : (
-            <Circle className="h-5 w-5 shrink-0 text-slate-300" strokeWidth={1.75} aria-hidden />
+            <Circle className="h-5 w-5 shrink-0 text-border" strokeWidth={1.75} aria-hidden />
           )}
           <div className="min-w-0 flex-1">
             <p
               className={`text-sm ${
                 hasAtsScore
-                  ? "font-normal text-slate-400 line-through"
+                  ? "font-normal text-text-muted line-through"
                   : nextStep === 1
-                    ? "font-medium text-slate-900"
-                    : "font-normal text-slate-700"
+                    ? "font-medium text-text"
+                    : "font-normal text-text"
               }`}
             >
               1. Upload or paste your resume and get an ATS score
@@ -125,7 +125,7 @@ export function StartHereChecklist({
             {!hasAtsScore && (
               <Link
                 href="/resume-analyzer"
-                className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-500 hover:underline"
+                className="mt-1 inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary hover:text-primary-hover hover:underline sm:min-h-0"
               >
                 Open Resume Analyzer <ChevronRight className="h-4 w-4" />
               </Link>
@@ -136,16 +136,16 @@ export function StartHereChecklist({
           {hasJobMatch ? (
             <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" aria-hidden />
           ) : (
-            <Circle className="h-5 w-5 shrink-0 text-slate-300" strokeWidth={1.75} aria-hidden />
+            <Circle className="h-5 w-5 shrink-0 text-border" strokeWidth={1.75} aria-hidden />
           )}
           <div className="min-w-0 flex-1">
             <p
               className={`text-sm ${
                 hasJobMatch
-                  ? "font-normal text-slate-400 line-through"
+                  ? "font-normal text-text-muted line-through"
                   : nextStep === 2
-                    ? "font-medium text-slate-900"
-                    : "font-normal text-slate-700"
+                    ? "font-medium text-text"
+                    : "font-normal text-text"
               }`}
             >
               2. Run Job Match to see fit and gaps for a role
@@ -153,7 +153,7 @@ export function StartHereChecklist({
             {!hasJobMatch && (
               <Link
                 href="/job-match"
-                className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-500 hover:underline"
+                className="mt-1 inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary hover:text-primary-hover hover:underline sm:min-h-0"
               >
                 Open Job Match <ChevronRight className="h-4 w-4" />
               </Link>
@@ -164,16 +164,16 @@ export function StartHereChecklist({
           {hasTrackedApplication ? (
             <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" aria-hidden />
           ) : (
-            <Circle className="h-5 w-5 shrink-0 text-slate-300" strokeWidth={1.75} aria-hidden />
+            <Circle className="h-5 w-5 shrink-0 text-border" strokeWidth={1.75} aria-hidden />
           )}
           <div className="min-w-0 flex-1">
             <p
               className={`text-sm ${
                 hasTrackedApplication
-                  ? "font-normal text-slate-400 line-through"
+                  ? "font-normal text-text-muted line-through"
                   : nextStep === 3
-                    ? "font-medium text-slate-900"
-                    : "font-normal text-slate-700"
+                    ? "font-medium text-text"
+                    : "font-normal text-text"
               }`}
             >
               3. Apply (auto or manual) and track in Applications
@@ -182,14 +182,14 @@ export function StartHereChecklist({
               <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
                 <Link
                   href="/auto-apply"
-                  className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-500 hover:underline"
+                  className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary hover:text-primary-hover hover:underline sm:min-h-0"
                 >
                   AI Auto-Apply <ChevronRight className="h-4 w-4" />
                 </Link>
-                <span className="text-slate-400">·</span>
+                <span className="text-text-muted">·</span>
                 <Link
                   href="/applications"
-                  className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-500 hover:underline"
+                  className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary hover:text-primary-hover hover:underline sm:min-h-0"
                 >
                   Application tracker <ChevronRight className="h-4 w-4" />
                 </Link>

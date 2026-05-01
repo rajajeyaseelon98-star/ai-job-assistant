@@ -23,7 +23,7 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
         ? "bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1 rounded-full text-sm font-bold"
         : "bg-rose-50 text-rose-700 border border-rose-200 px-3 py-1 rounded-full text-sm font-bold";
   const interviewFill = !prob
-    ? "bg-slate-300"
+    ? "bg-border"
     : prob.level === "HIGH"
       ? "bg-emerald-500"
       : prob.level === "MEDIUM"
@@ -31,27 +31,32 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
         : "bg-rose-500";
 
   return (
-    <div className={`relative rounded-2xl border bg-white p-6 shadow-sm transition-all ${
-      job.selected ? "border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50/30" : "border-slate-200"
+    <div className={`relative rounded-2xl border bg-card p-6 shadow-sm transition-all ${
+      job.selected ? "border-primary ring-1 ring-primary/25 bg-surface-muted/60" : "border-border"
     } ${job.applied ? "opacity-60" : ""}`}>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="font-display truncate text-xl font-bold text-slate-900">{job.title}</h3>
+            <h3 className="font-display truncate text-xl font-bold text-text">{job.title}</h3>
             {job.url && (
-              <a href={job.url} target="_blank" rel="noopener noreferrer" className="min-h-[44px] min-w-[44px] shrink-0 flex items-center justify-center text-slate-400 hover:text-indigo-600 sm:min-h-0 sm:min-w-0">
+              <a
+                href={job.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="min-h-[44px] min-w-[44px] shrink-0 flex items-center justify-center text-text-muted hover:text-primary sm:min-h-0 sm:min-w-0"
+              >
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
             )}
           </div>
-          <p className="text-sm text-slate-500">{job.company}</p>
+          <p className="text-sm text-text-muted">{job.company}</p>
 
           <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-text-muted">
             <span
               className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium ${
                 channel === "platform"
                   ? "border-emerald-100/50 bg-emerald-50 text-emerald-700"
-                  : "border-slate-200 bg-slate-100 text-slate-600"
+                  : "border-border bg-surface-muted text-text-muted"
               }`}
               title={
                 channel === "platform"
@@ -69,7 +74,7 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
                 </>
               )}
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface-muted px-2.5 py-1 text-xs font-medium text-text-muted">
               Source: {job.source}
             </span>
             {job.location && (
@@ -88,7 +93,7 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
           </div>
 
           {job.match_reason && (
-            <p className="mt-2 text-xs text-slate-500">{job.match_reason}</p>
+            <p className="mt-2 text-xs text-text-muted">{job.match_reason}</p>
           )}
         </div>
 
@@ -118,9 +123,9 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
                 type="checkbox"
                 checked={job.selected}
                 onChange={() => onToggleSelect(job.job_id)}
-                className="h-5 w-5 cursor-pointer rounded border-slate-300 text-indigo-600 transition-all focus:ring-indigo-600"
+                className="h-5 w-5 cursor-pointer rounded border-border text-primary transition-all focus:ring-primary"
               />
-              <span className="text-xs text-slate-500">Apply</span>
+              <span className="text-xs text-text-muted">Apply</span>
             </label>
           )}
           {job.applied && (
@@ -131,9 +136,9 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
 
       {/* Interview Probability Details */}
       {prob && (
-        <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
+        <div className="mt-4 rounded-xl border border-border bg-surface-muted p-4">
           <div className="flex flex-wrap items-center justify-between gap-1 mb-1.5">
-            <span className="flex items-center gap-1 text-sm font-semibold text-slate-700">
+            <span className="flex items-center gap-1 text-sm font-semibold text-text">
               <TrendingUp className="h-3 w-3" /> Interview Chance: {prob.score}%
             </span>
             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
@@ -146,7 +151,7 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
           </div>
 
           {/* Progress bar */}
-          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-card">
             <div
               className={`h-1.5 rounded-full transition-all ${interviewFill}`}
               style={{ width: `${prob.score}%` }}
@@ -166,7 +171,7 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
 
           {/* Boost Tips */}
           {prob.boost_tips.length > 0 && (
-            <div className="border-t border-gray-200 pt-1.5 mt-1.5">
+            <div className="border-t border-border pt-1.5 mt-1.5">
               {prob.boost_tips.slice(0, 2).map((tip, i) => (
                 <p key={i} className="text-[11px] text-amber-600 flex items-start gap-1">
                   <Lightbulb className="h-3 w-3 mt-0.5 shrink-0" /> {tip}
@@ -178,9 +183,9 @@ export function JobMatchCard({ job, onToggleSelect }: JobMatchCardProps) {
       )}
 
       {job.cover_letter && (
-        <details className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
+        <details className="mt-4 rounded-xl border border-border bg-surface-muted p-4">
           <summary className="cursor-pointer text-xs font-medium text-primary">View cover letter snippet</summary>
-          <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{job.cover_letter}</p>
+          <p className="mt-1.5 text-sm leading-relaxed text-text-muted">{job.cover_letter}</p>
         </details>
       )}
     </div>

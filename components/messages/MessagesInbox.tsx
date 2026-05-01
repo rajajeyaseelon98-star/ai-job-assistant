@@ -20,6 +20,8 @@ import { useMessagingReadSync } from "@/hooks/use-messaging-read-sync";
 import { MessageDeliveryState } from "@/components/messages/MessageDeliveryState";
 import { RealtimeHealthBadge } from "@/components/messages/RealtimeHealthBadge";
 import { InlineRetryCard } from "@/components/ui/InlineRetryCard";
+import { Button } from "@/components/ui/Button";
+import { Input, Textarea } from "@/components/ui/Input";
 
 function peerIdForMessage(m: Message, myId: string): string {
   return m.sender_id === myId ? m.receiver_id : m.sender_id;
@@ -451,17 +453,17 @@ export function MessagesInbox() {
 
   return (
     <div className="w-full lg:max-w-6xl lg:mx-auto lg:py-8 lg:px-6 min-h-[calc(100dvh-140px)]">
-      <div className="bg-white overflow-hidden flex flex-col lg:flex-row min-h-[calc(100dvh-140px)] lg:min-h-[480px] lg:h-[calc(100vh-140px)] lg:border lg:border-slate-200 lg:shadow-xl lg:shadow-slate-200/40 lg:rounded-[32px]">
+      <div className="bg-card overflow-hidden flex flex-col lg:flex-row min-h-[calc(100dvh-140px)] lg:min-h-[480px] lg:h-[calc(100vh-140px)] lg:border lg:border-border lg:shadow-xl lg:rounded-[32px]">
         <aside
-          className={`w-full lg:w-1/3 lg:min-w-[220px] lg:border-r lg:border-slate-100 bg-slate-50/50 flex flex-col ${
+          className={`w-full lg:w-1/3 lg:min-w-[220px] lg:border-r lg:border-border bg-surface-muted/60 flex flex-col ${
             selectedPeerId || showCompose ? "hidden lg:flex" : "flex"
           }`}
         >
-          <div className="p-6 border-b border-slate-100 bg-white/50 backdrop-blur-md flex items-center justify-between gap-3">
+          <div className="p-6 border-b border-border bg-card/50 backdrop-blur-md flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="font-display text-lg font-bold text-slate-900">Inbox</h1>
+              <h1 className="font-display text-lg font-bold text-text">Inbox</h1>
               {hasNextPage ? (
-                <p className="mt-1 text-[11px] leading-snug text-slate-500">
+                <p className="mt-1 text-[11px] leading-snug text-text-muted">
                   Showing recent threads first. Older activity loads below.
                 </p>
               ) : null}
@@ -470,25 +472,21 @@ export function MessagesInbox() {
               connected={realtimeConnected}
               delayed={threadQuery.isLoading || threadQuery.isFetchingNextPage}
             />
-            <button
-              type="button"
-              onClick={() => openCompose()}
-              className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-700 transition-all"
-            >
+            <Button type="button" onClick={() => openCompose()} size="sm">
               <Send className="h-3.5 w-3.5" /> Compose
-            </button>
+            </Button>
           </div>
 
           <div className="flex-1 overflow-y-auto">
             {loading ? (
-              <p className="p-4 text-sm text-slate-500">Loading messages...</p>
+              <p className="p-4 text-sm text-text-muted">Loading messages...</p>
             ) : displayConversations.length === 0 ? (
               <div className="p-6 text-center">
-                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-300">
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-muted text-border">
                   <MessageSquare className="h-7 w-7" />
                 </div>
-                <p className="text-sm font-medium text-slate-600">No conversations yet</p>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="text-sm font-medium text-text-muted">No conversations yet</p>
+                <p className="mt-1 text-xs text-text-muted">
                   Compose a message to a recruiter or reply when someone reaches out.
                 </p>
               </div>
@@ -498,8 +496,8 @@ export function MessagesInbox() {
                   key={c.peerId}
                   type="button"
                   onClick={() => selectPeer(c.peerId)}
-                  className={`w-full text-left p-3 lg:p-4 border-b border-slate-50 hover:bg-white transition-all flex gap-3 ${
-                    selectedPeerId === c.peerId && !showCompose ? "bg-white ring-1 ring-indigo-100" : ""
+                  className={`w-full text-left p-3 lg:p-4 border-b border-border/40 hover:bg-card transition-all flex gap-3 ${
+                    selectedPeerId === c.peerId && !showCompose ? "bg-card ring-1 ring-border" : ""
                   }`}
                 >
                   <UserAvatar
@@ -510,17 +508,17 @@ export function MessagesInbox() {
                     className="shrink-0"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="flex items-center gap-2 text-sm font-bold text-slate-800">
+                    <p className="flex items-center gap-2 text-sm font-bold text-text">
                       <span className="truncate">{peerDisplayName(c.peerId, peerProfiles)}</span>
                       {(unreadByPeer[c.peerId] ?? 0) > 0 ? (
-                        <span className="shrink-0 rounded-full bg-indigo-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+                        <span className="shrink-0 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-bold leading-none text-primary-foreground">
                           {(unreadByPeer[c.peerId] ?? 0) > 9 ? "9+" : unreadByPeer[c.peerId]}
                         </span>
                       ) : null}
                     </p>
-                    <p className="text-xs text-slate-500 truncate">{c.subject || "Message"}</p>
-                    <p className="text-xs text-slate-400 truncate mt-0.5">{c.preview}</p>
-                    <p className="text-[10px] text-slate-400 mt-1">
+                    <p className="text-xs text-text-muted truncate">{c.subject || "Message"}</p>
+                    <p className="text-xs text-text-muted truncate mt-0.5">{c.preview}</p>
+                    <p className="text-[10px] text-text-muted mt-1">
                       {new Date(c.lastAt).toLocaleString()}
                     </p>
                   </div>
@@ -528,12 +526,12 @@ export function MessagesInbox() {
               ))
             )}
             {hasNextPage ? (
-              <div className="border-t border-slate-100 p-3">
+              <div className="border-t border-border p-3">
                 <button
                   type="button"
                   onClick={() => void fetchNextPage()}
                   disabled={isFetchingNextPage}
-                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                  className="w-full min-h-11 rounded-xl border border-border bg-card py-2.5 text-xs font-semibold text-text transition hover:bg-surface-muted disabled:opacity-60"
                 >
                   {isFetchingNextPage ? "Loading older…" : "Load older messages"}
                 </button>
@@ -543,19 +541,19 @@ export function MessagesInbox() {
         </aside>
 
         <main
-          className={`flex-1 flex flex-col bg-white relative min-w-0 ${
+          className={`flex-1 flex flex-col bg-card relative min-w-0 ${
             !selectedPeerId && !showCompose && !resolvingComposeUrl ? "hidden lg:flex" : "flex"
           }`}
         >
           {resolvingComposeUrl ? (
-            <div className="flex flex-1 flex-col items-center justify-center gap-3 p-12 text-slate-500">
-              <Loader2 className="h-10 w-10 animate-spin text-indigo-500" />
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 p-12 text-text-muted">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
               <p className="text-sm font-medium">Opening conversation…</p>
             </div>
           ) : showCompose ? (
             <form onSubmit={handleSendCompose} className="flex-1 flex flex-col min-h-0">
-              <div className="p-4 lg:p-6 border-b border-slate-100 flex justify-between items-center shrink-0">
-                <p className="font-display text-sm font-bold text-indigo-600 uppercase tracking-widest">
+              <div className="p-4 lg:p-6 border-b border-border flex justify-between items-center shrink-0">
+                <p className="font-display text-sm font-bold text-primary uppercase tracking-widest">
                   New Message
                 </p>
                 <div className="flex items-center gap-2">
@@ -565,7 +563,7 @@ export function MessagesInbox() {
                       setShowCompose(false);
                       clearQueryParams();
                     }}
-                    className="lg:hidden text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+                    className="lg:hidden text-xs font-semibold text-primary hover:text-primary-hover"
                   >
                     Back
                   </button>
@@ -575,7 +573,7 @@ export function MessagesInbox() {
                       setShowCompose(false);
                       clearQueryParams();
                     }}
-                    className="hidden lg:inline text-xs text-slate-500 hover:text-slate-800"
+                    className="hidden lg:inline text-xs text-text-muted hover:text-text"
                   >
                     Close
                   </button>
@@ -583,29 +581,27 @@ export function MessagesInbox() {
               </div>
               <div className="p-4 lg:p-8 space-y-4 flex-1 overflow-y-auto">
                 <RecipientPicker receiverId={receiverId} onReceiverIdChange={setReceiverId} />
-                <input
-                  type="text"
+                <Input
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   placeholder="Subject (optional)"
-                  className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 w-full focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none text-sm"
                 />
                 <input ref={composeFileRef} type="file" className="hidden" onChange={handleComposeFileChange} />
                 {composeAttachment ? (
-                  <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                    <Paperclip className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+                  <div className="flex items-center gap-2 rounded-xl border border-border bg-surface-muted px-3 py-2 text-xs text-text">
+                    <Paperclip className="h-3.5 w-3.5 shrink-0 text-text-muted" />
                     <span className="truncate flex-1">{composeAttachment.name}</span>
                     <button
                       type="button"
                       onClick={() => setComposeAttachment(null)}
-                      className="shrink-0 rounded p-0.5 text-slate-500 hover:bg-slate-200"
+                      className="shrink-0 rounded p-0.5 text-text-muted hover:bg-surface-muted"
                       aria-label="Remove attachment"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 ) : null}
-                <textarea
+                <Textarea
                   value={content}
                   onChange={(e) => {
                     setContent(e.target.value);
@@ -613,14 +609,15 @@ export function MessagesInbox() {
                   }}
                   rows={8}
                   placeholder="Write your message..."
-                  className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 w-full focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none text-sm"
+                  className="rounded-xl"
                 />
                 <div className="flex flex-wrap items-center gap-2">
-                  <button
+                  <Button
                     type="button"
                     disabled={uploadingComposeFile}
                     onClick={() => composeFileRef.current?.click()}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                    variant="secondary"
+                    size="sm"
                   >
                     {uploadingComposeFile ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -628,25 +625,20 @@ export function MessagesInbox() {
                       <Paperclip className="h-3.5 w-3.5" />
                     )}
                     Attach file
-                  </button>
+                  </Button>
                 </div>
                 {error && showCompose ? (
                   <InlineRetryCard message={error} onRetry={() => setError("")} retryLabel="Dismiss" />
                 ) : null}
                 {deliveryState ? <MessageDeliveryState state={deliveryState} detail={deliveryDetail} /> : null}
-                <button
-                  type="submit"
-                  disabled={sending || uploadingComposeFile}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 rounded-xl px-6 py-3 font-bold transition-all flex items-center gap-2 w-full sm:w-fit disabled:opacity-50"
-                >
-                  {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  Send
-                </button>
+                <Button type="submit" disabled={sending || uploadingComposeFile} className="w-full sm:w-fit">
+                  {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send
+                </Button>
               </div>
             </form>
           ) : selectedPeerId ? (
             <div className="flex-1 flex flex-col min-h-0">
-              <div className="p-4 border-b border-slate-100 flex items-center justify-between gap-2 shrink-0">
+              <div className="p-4 border-b border-border flex items-center justify-between gap-2 shrink-0">
                 <div className="flex items-center gap-3 min-w-0">
                   <UserAvatar
                     name={threadPeerProfiles[selectedPeerId]?.name ?? null}
@@ -655,8 +647,8 @@ export function MessagesInbox() {
                     size={44}
                   />
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Conversation</p>
-                    <p className="text-sm font-bold text-slate-900 truncate">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Conversation</p>
+                    <p className="text-sm font-bold text-text truncate">
                       {peerDisplayName(selectedPeerId, threadPeerProfiles)}
                     </p>
                   </div>
@@ -668,7 +660,7 @@ export function MessagesInbox() {
                       setSelectedPeerId(null);
                       clearQueryParams();
                     }}
-                    className="lg:hidden text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+                    className="lg:hidden text-xs font-semibold text-primary hover:text-primary-hover"
                   >
                     Back
                   </button>
@@ -678,32 +670,32 @@ export function MessagesInbox() {
                       setSelectedPeerId(null);
                       clearQueryParams();
                     }}
-                    className="hidden lg:inline text-xs text-slate-500 hover:text-slate-800"
+                    className="hidden lg:inline text-xs text-text-muted hover:text-text"
                   >
                     Close
                   </button>
                 </div>
               </div>
               {peerTyping ? (
-                <p className="border-b border-slate-100 px-4 py-2 text-xs italic text-slate-500">
+                <p className="border-b border-border px-4 py-2 text-xs italic text-text-muted">
                   {peerDisplayName(selectedPeerId, threadPeerProfiles)} is typing…
                 </p>
               ) : null}
               {threadQuery.hasNextPage ? (
-                <div className="border-b border-slate-100 px-4 py-2">
+                <div className="border-b border-border px-4 py-2">
                   <button
                     type="button"
                     onClick={() => void threadQuery.fetchNextPage()}
                     disabled={threadQuery.isFetchingNextPage}
-                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 disabled:opacity-50"
+                    className="min-h-9 text-xs font-semibold text-primary hover:text-primary-hover disabled:opacity-50"
                   >
                     {threadQuery.isFetchingNextPage ? "Loading older…" : "Load older in this conversation"}
                   </button>
                 </div>
               ) : null}
               {threadQuery.isLoading && threadMessages.length === 0 ? (
-                <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-slate-500">
-                  <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+                <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-text-muted">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   <p className="text-sm">Loading conversation…</p>
                 </div>
               ) : threadQuery.error ? (
@@ -711,7 +703,7 @@ export function MessagesInbox() {
               ) : (
               <div
                 ref={messageListRef}
-                className="flex-1 overflow-y-auto p-6 space-y-4 relative"
+                className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 relative"
                 onScroll={() => {
                   const el = messageListRef.current;
                   if (!el) return;
@@ -728,11 +720,11 @@ export function MessagesInbox() {
                     <div key={m.id}>
                       {showUnreadDivider ? (
                         <div className="my-2 flex items-center gap-3">
-                          <div className="h-px flex-1 bg-slate-200" />
-                          <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                          <div className="h-px flex-1 bg-border" />
+                          <span className="shrink-0 rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-text-muted">
                             New messages
                           </span>
-                          <div className="h-px flex-1 bg-slate-200" />
+                          <div className="h-px flex-1 bg-border" />
                         </div>
                       ) : null}
                       <div className={`flex gap-2 items-end ${mine ? "justify-end" : "justify-start"}`}>
@@ -748,12 +740,12 @@ export function MessagesInbox() {
                       <div
                         className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${
                           mine
-                            ? "bg-indigo-600 text-white rounded-br-md"
-                            : "bg-slate-100 text-slate-900 rounded-bl-md"
+                            ? "bg-primary text-primary-foreground rounded-br-md"
+                            : "bg-surface-muted text-text rounded-bl-md"
                         }`}
                       >
                         {m.subject ? (
-                          <p className={`text-xs font-semibold mb-1 ${mine ? "text-indigo-100" : "text-slate-600"}`}>
+                          <p className={`text-xs font-semibold mb-1 ${mine ? "text-primary-foreground/80" : "text-text-muted"}`}>
                             {m.subject}
                           </p>
                         ) : null}
@@ -764,7 +756,7 @@ export function MessagesInbox() {
                               target="_blank"
                               rel="noopener noreferrer"
                               className={`mb-2 inline-flex items-center gap-1.5 text-xs font-semibold underline underline-offset-2 ${
-                                mine ? "text-indigo-100" : "text-indigo-700"
+                                mine ? "text-primary-foreground/80" : "text-primary"
                               }`}
                             >
                               <Paperclip className="h-3.5 w-3.5 shrink-0" />
@@ -773,7 +765,7 @@ export function MessagesInbox() {
                           ) : (
                             <span
                               className={`mb-2 inline-flex items-center gap-1.5 text-xs font-medium ${
-                                mine ? "text-indigo-100" : "text-indigo-700"
+                                mine ? "text-primary-foreground/80" : "text-primary"
                               }`}
                             >
                               <Paperclip className="h-3.5 w-3.5 shrink-0" />
@@ -789,7 +781,7 @@ export function MessagesInbox() {
                           <p className="whitespace-pre-wrap">{m.content}</p>
                         ) : null}
                         <p
-                          className={`text-[10px] mt-2 flex flex-wrap items-center gap-x-1.5 ${mine ? "text-indigo-200 justify-end" : "text-slate-400"}`}
+                          className={`text-[10px] mt-2 flex flex-wrap items-center gap-x-1.5 ${mine ? "text-primary-foreground/70 justify-end" : "text-text-muted"}`}
                         >
                           <span>{new Date(m.created_at).toLocaleString()}</span>
                           {mine ? (
@@ -806,17 +798,18 @@ export function MessagesInbox() {
                 <div ref={bottomRef} />
                 {hasNewBelow ? (
                   <div className="pointer-events-none sticky bottom-16 lg:bottom-2 flex justify-center">
-                    <button
+                    <Button
                       type="button"
                       onClick={() => {
                         setHasNewBelow(false);
                         setNearBottom(true);
                         scrollToBottom("smooth");
                       }}
-                      className="pointer-events-auto rounded-full bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow-lg hover:bg-indigo-700"
+                      className="pointer-events-auto rounded-full px-3 py-1.5 text-xs font-bold"
+                      size="sm"
                     >
                       Jump to latest
-                    </button>
+                    </Button>
                   </div>
                 ) : null}
               </div>
@@ -824,17 +817,17 @@ export function MessagesInbox() {
               {!threadQuery.isLoading || threadMessages.length > 0 ? (
               <form
                 onSubmit={handleSendReply}
-                className="border-t border-slate-100 p-3 lg:p-4 bg-slate-50/80 shrink-0 space-y-2 safe-bottom"
+                className="border-t border-border p-3 lg:p-4 bg-surface-muted/60 shrink-0 space-y-2 safe-bottom"
               >
                 <input ref={replyFileRef} type="file" className="hidden" onChange={handleReplyFileChange} />
                 {replyAttachment ? (
-                  <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
-                    <Paperclip className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+                  <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs text-text">
+                    <Paperclip className="h-3.5 w-3.5 shrink-0 text-text-muted" />
                     <span className="truncate flex-1">{replyAttachment.name}</span>
                     <button
                       type="button"
                       onClick={() => setReplyAttachment(null)}
-                      className="shrink-0 rounded p-0.5 text-slate-500 hover:bg-slate-100"
+                      className="shrink-0 rounded p-0.5 text-text-muted hover:bg-surface-muted"
                       aria-label="Remove attachment"
                     >
                       <X className="h-3.5 w-3.5" />
@@ -846,7 +839,7 @@ export function MessagesInbox() {
                 ) : null}
                 {deliveryState ? <MessageDeliveryState state={deliveryState} detail={deliveryDetail} /> : null}
                 <div className="flex gap-2 items-end">
-                  <textarea
+                  <Textarea
                     value={replyContent}
                     onChange={(e) => {
                       setReplyContent(e.target.value);
@@ -854,22 +847,19 @@ export function MessagesInbox() {
                     }}
                     rows={2}
                     placeholder="Reply…"
-                    className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    className="flex-1 rounded-xl"
                   />
-                  <button
+                  <Button
                     type="button"
                     disabled={uploadingReplyFile}
                     onClick={() => replyFileRef.current?.click()}
-                    className="shrink-0 inline-flex h-[46px] w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                    variant="secondary"
                     aria-label="Attach file"
+                    className="shrink-0"
                   >
-                    {uploadingReplyFile ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Paperclip className="h-4 w-4" />
-                    )}
-                  </button>
-                  <button
+                    {uploadingReplyFile ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
+                  </Button>
+                  <Button
                     type="submit"
                     disabled={
                       replying ||
@@ -877,26 +867,22 @@ export function MessagesInbox() {
                       sendMutation.isPending ||
                       uploadingReplyFile
                     }
-                    className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-50"
+                    className="shrink-0"
                   >
-                    {replying || sendMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Reply className="h-4 w-4" />
-                    )}
+                    {replying || sendMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Reply className="h-4 w-4" />}
                     Send
-                  </button>
+                  </Button>
                 </div>
               </form>
               ) : null}
             </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-12">
-              <div className="w-20 h-20 bg-slate-50 text-slate-200 rounded-3xl flex items-center justify-center mb-6">
+              <div className="w-20 h-20 bg-surface-muted text-border rounded-3xl flex items-center justify-center mb-6">
                 <MessageSquare className="h-9 w-9" />
               </div>
-              <p className="font-display text-slate-600 font-medium text-lg">Select a conversation</p>
-              <p className="text-slate-500 text-sm mt-2 max-w-sm leading-relaxed">
+              <p className="font-display text-text-muted font-medium text-lg">Select a conversation</p>
+              <p className="text-text-muted text-sm mt-2 max-w-sm leading-relaxed">
                 Pick a thread on the left, or use Compose to message someone by name or email.
               </p>
             </div>

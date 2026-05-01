@@ -37,10 +37,10 @@ const view = {
 };
 
 /** Custom SVG checkmark for pricing rows */
-function PricingCheck({ className = "h-5 w-5 shrink-0 text-indigo-600" }: { className?: string }) {
+function PricingCheck({ className = "h-5 w-5 shrink-0 text-primary" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden>
-      <circle cx="10" cy="10" r="9" className="fill-indigo-100" />
+      <circle cx="10" cy="10" r="9" className="fill-surface-muted" />
       <path
         d="M6 10.2 8.4 12.6 14 7"
         stroke="currentColor"
@@ -57,18 +57,18 @@ export default function LandingPage() {
   const signupHref = `/signup?role=${activeTab}`;
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 antialiased">
+    <div className="min-h-screen bg-background font-sans text-text antialiased">
       {/* ── 1. Navbar — glass, sticky ── */}
-      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/70 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-white/60">
+      <header className="sticky top-0 z-50 border-b border-border bg-card/70 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-card/60">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <Link href="/" className="text-lg font-semibold tracking-tight text-slate-900">
+          <Link href="/" className="text-lg font-semibold tracking-tight text-text">
             AI Job Assistant
           </Link>
 
           {/* Center: iOS-style segmented control */}
           <div className="order-3 flex justify-center sm:order-none sm:absolute sm:left-1/2 sm:-translate-x-1/2">
             <div
-              className="inline-flex rounded-full bg-slate-100/90 p-1 shadow-inner ring-1 ring-slate-200/80"
+              className="inline-flex rounded-full bg-surface-muted/80 p-1 shadow-inner ring-1 ring-border"
               role="tablist"
               aria-label="Audience"
             >
@@ -77,10 +77,10 @@ export default function LandingPage() {
                 role="tab"
                 aria-selected={activeTab === "job_seeker"}
                 onClick={() => setActiveTab("job_seeker")}
-                className={`relative min-h-[40px] rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 sm:min-w-[160px] sm:px-5 ${
+                className={`relative min-h-[44px] rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 sm:min-w-[160px] sm:px-5 ${
                   activeTab === "job_seeker"
-                    ? "bg-white text-slate-900 shadow-md shadow-slate-200/50 ring-1 ring-slate-200/80"
-                    : "text-slate-500 hover:text-slate-800"
+                    ? "bg-card text-text shadow-md ring-1 ring-border"
+                    : "text-text-muted hover:text-text"
                 }`}
               >
                 For Job Seekers
@@ -90,10 +90,10 @@ export default function LandingPage() {
                 role="tab"
                 aria-selected={activeTab === "recruiter"}
                 onClick={() => setActiveTab("recruiter")}
-                className={`relative min-h-[40px] rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 sm:min-w-[160px] sm:px-5 ${
+                className={`relative min-h-[44px] rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 sm:min-w-[160px] sm:px-5 ${
                   activeTab === "recruiter"
-                    ? "bg-white text-slate-900 shadow-md shadow-slate-200/50 ring-1 ring-slate-200/80"
-                    : "text-slate-500 hover:text-slate-800"
+                    ? "bg-card text-text shadow-md ring-1 ring-border"
+                    : "text-text-muted hover:text-text"
                 }`}
               >
                 For Recruiters
@@ -104,13 +104,13 @@ export default function LandingPage() {
           <div className="flex items-center justify-end gap-2 sm:gap-3">
             <Link
               href="/login"
-              className="min-h-[44px] rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+              className="min-h-[44px] rounded-full px-4 py-2 text-sm font-medium text-text-muted transition hover:bg-surface-muted hover:text-text"
             >
               Login
             </Link>
             <Link
               href={signupHref}
-              className="inline-flex min-h-[44px] items-center rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-500 hover:shadow-xl hover:shadow-indigo-500/30"
+              className="inline-flex min-h-[44px] items-center rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg transition hover:bg-primary-hover"
             >
               Get Started Free
             </Link>
@@ -127,10 +127,10 @@ export default function LandingPage() {
           transition={{ duration: 0.35, ease: "easeInOut" }}
         >
           {/* ── 2. Hero — dark slate + radial glow + bento ── */}
-          <section className="relative overflow-visible bg-slate-900 px-4 pb-12 pt-16 sm:px-6 sm:pb-16 sm:pt-20 lg:px-8">
-            {/* Soft indigo radial glow */}
+          <section className="relative overflow-visible bg-foreground px-4 pb-12 pt-16 sm:px-6 sm:pb-16 sm:pt-20 lg:px-8">
+            {/* Soft primary radial glow */}
             <div
-              className="pointer-events-none absolute -left-1/4 top-0 h-[500px] w-[800px] rounded-full bg-indigo-500/15 blur-3xl"
+              className="pointer-events-none absolute -left-1/4 top-0 h-[500px] w-[800px] rounded-full bg-primary/15 blur-3xl"
               aria-hidden
             />
             <div
@@ -178,7 +178,7 @@ export default function LandingPage() {
               <div className="mt-10 flex justify-center sm:mt-12">
                 <Link
                   href={signupHref}
-                  className="inline-flex min-h-[48px] items-center gap-2 rounded-full bg-indigo-600 px-8 py-3 text-base font-semibold text-white shadow-[0_0_40px_-10px_rgba(79,70,229,0.4)] transition hover:scale-[1.02] hover:bg-indigo-500"
+                  className="inline-flex min-h-[48px] items-center gap-2 rounded-full bg-primary px-8 py-3 text-base font-semibold text-primary-foreground shadow-[0_0_40px_-10px_rgba(37,99,235,0.35)] transition hover:scale-[1.02] hover:bg-primary-hover"
                 >
                   Get Started Free
                   <ArrowRight className="h-5 w-5" />

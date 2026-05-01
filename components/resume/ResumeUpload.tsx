@@ -63,8 +63,8 @@ export function ResumeUpload({ onUploadComplete }: ResumeUploadProps) {
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        className={`group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-12 text-center shadow-sm transition-all ${
-          dragging ? "border-indigo-500 bg-indigo-50/50" : "border-slate-300 bg-white hover:border-indigo-500 hover:bg-indigo-50/50"
+        className={`group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-12 text-center shadow-card transition-all ${
+          dragging ? "border-primary bg-surface-muted/60" : "border-border bg-card hover:border-primary/35 hover:bg-surface-muted/60"
         }`}
       >
         <input
@@ -76,9 +76,9 @@ export function ResumeUpload({ onUploadComplete }: ResumeUploadProps) {
           disabled={loading}
         />
         <label htmlFor="resume-upload" className="block min-h-[44px] cursor-pointer">
-          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 transition-colors group-hover:bg-indigo-100">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-surface-muted transition-colors group-hover:bg-primary/10">
             <svg
-              className="h-8 w-8 text-slate-400 transition-colors group-hover:text-indigo-600"
+              className="h-8 w-8 text-text-muted transition-colors group-hover:text-primary"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -92,10 +92,10 @@ export function ResumeUpload({ onUploadComplete }: ResumeUploadProps) {
             </svg>
           </div>
           <div>
-            <p className="mb-1 text-lg font-medium text-slate-900">
+            <p className="mb-1 text-lg font-medium text-text">
               {loading ? "Uploading..." : "Drag & drop your resume here"}
             </p>
-            <p className="text-sm text-slate-500">or tap to browse -- PDF or DOCX</p>
+            <p className="text-sm text-text-muted">or tap to browse -- PDF or DOCX</p>
           </div>
         </label>
       </div>

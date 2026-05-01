@@ -4,6 +4,8 @@ import { useState, useRef } from "react";
 import { FeedbackButtons } from "@/components/ui/FeedbackButtons";
 import { usePatchCoverLetter } from "@/hooks/mutations/use-cover-letter-crud";
 import { formatApiFetchThrownError } from "@/lib/api-error";
+import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Input";
 
 interface CoverLetterResultProps {
   id: string | null;
@@ -68,75 +70,57 @@ export function CoverLetterResult({ id, text, onSaved }: CoverLetterResultProps)
 
   return (
     <div>
-      <h3 className="font-display text-2xl font-bold text-slate-900 mb-6">Your Cover Letter</h3>
+      <h3 className="mb-6 font-display text-2xl font-bold text-text">Your Cover Letter</h3>
       {saveError ? (
         <p className="mb-3 text-sm text-red-600">{saveError}</p>
       ) : null}
-      <div className="flex flex-wrap items-center gap-2 mb-6 bg-slate-100/50 p-1.5 rounded-xl border border-slate-200/60 inline-flex">
-        <button
-          type="button"
-          onClick={copy}
-          className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 shadow-sm rounded-lg px-4 py-2 text-sm font-medium transition-all flex items-center gap-2"
-        >
+      <div className="mb-6 inline-flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface-muted/60 p-1.5">
+        <Button type="button" variant="secondary" onClick={copy} className="shadow-sm">
           {copied ? "Copied!" : "Copy"}
-        </button>
-        <button
-          type="button"
-          onClick={downloadTxt}
-          className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 shadow-sm rounded-lg px-4 py-2 text-sm font-medium transition-all flex items-center gap-2"
-        >
+        </Button>
+        <Button type="button" variant="secondary" onClick={downloadTxt} className="shadow-sm">
           Download TXT
-        </button>
-        <button
-          type="button"
-          onClick={downloadPdf}
-          className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 shadow-sm rounded-lg px-4 py-2 text-sm font-medium transition-all flex items-center gap-2"
-        >
+        </Button>
+        <Button type="button" variant="secondary" onClick={downloadPdf} className="shadow-sm">
           Download PDF
-        </button>
+        </Button>
         {id && (
           editing ? (
             <>
-              <button
-                type="button"
-                onClick={saveEdit}
-                disabled={saving}
-                className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 shadow-sm rounded-lg px-4 py-2 text-sm font-medium transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+              <Button type="button" onClick={saveEdit} disabled={saving}>
                 {saving ? "Saving..." : "Save"}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => {
                   setEditing(false);
                   setContent(text);
                   setSaveError("");
                 }}
-                className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 shadow-sm rounded-lg px-4 py-2 text-sm font-medium transition-all flex items-center gap-2"
               >
                 Cancel
-              </button>
+              </Button>
             </>
           ) : (
-            <button
-              type="button"
-              onClick={() => { setEditing(true); setContent(displayText); }}
-              className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 shadow-sm rounded-lg px-4 py-2 text-sm font-medium transition-all flex items-center gap-2"
-            >
+            <Button type="button" variant="secondary" onClick={() => { setEditing(true); setContent(displayText); }}>
               Edit
-            </button>
+            </Button>
           )
         )}
       </div>
-      <div ref={printRef} className="bg-white border border-slate-200 shadow-md rounded-2xl p-8 sm:p-12 prose prose-slate max-w-none text-slate-700 leading-loose">
+      <div
+        ref={printRef}
+        className="prose prose-slate max-w-none rounded-2xl border border-border bg-card p-6 text-text shadow-md sm:p-8 md:p-12"
+      >
         {editing ? (
-          <textarea
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 sm:px-5 sm:py-5 text-sm sm:text-base leading-loose text-slate-700 min-h-[300px] sm:min-h-[400px] resize-y transition-all focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
+          <Textarea
+            className="min-h-[300px] resize-y rounded-xl text-sm leading-loose sm:min-h-[400px] sm:text-base"
             value={content}
             onChange={(e) => setContent(e.target.value)}
           />
         ) : (
-          <div className="whitespace-pre-wrap overflow-x-auto">
+          <div className="whitespace-pre-wrap break-words">
             {displayText}
           </div>
         )}

@@ -11,18 +11,18 @@ function QuestionItem({ q, index }: { q: { question: string; answer: string }; i
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <li className="bg-white border border-slate-200 rounded-xl mb-3 overflow-hidden transition-all hover:border-indigo-200 hover:shadow-sm">
+    <li className="mb-3 overflow-hidden rounded-xl border border-border bg-card transition-all hover:border-primary/30 hover:shadow-sm">
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="group flex items-start gap-4 p-5 text-left w-full"
+        className="group flex w-full items-start gap-4 p-5 text-left"
       >
-        <span className="w-6 h-6 shrink-0 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[11px] font-bold mt-0.5">
+        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-muted text-[11px] font-bold text-text-muted">
           {index + 1}
         </span>
-        <span className="text-slate-700 font-medium leading-relaxed pr-8">{q.question}</span>
+        <span className="pr-8 font-medium leading-relaxed text-text">{q.question}</span>
         <svg
-          className={`h-4 w-4 shrink-0 mt-0.5 text-slate-400 group-hover:text-indigo-500 transition-transform ${expanded ? "rotate-180" : ""}`}
+          className={`mt-0.5 h-4 w-4 shrink-0 text-text-muted transition-transform group-hover:text-primary ${expanded ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -33,7 +33,7 @@ function QuestionItem({ q, index }: { q: { question: string; answer: string }; i
       </button>
       {expanded && (
         <div className="px-[3.75rem] pb-5 pr-5 pl-[3.75rem]">
-          <div className="bg-slate-50/50 border-t border-slate-50 p-4 rounded-lg text-slate-600 text-sm leading-loose whitespace-pre-wrap">
+          <div className="rounded-lg border-t border-border bg-surface-muted/60 p-4 text-sm leading-loose text-text-muted whitespace-pre-wrap">
             {q.answer}
           </div>
         </div>
@@ -54,12 +54,12 @@ function QuestionList({
   if (!items?.length) return null;
   return (
     <div className="mb-12">
-      <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+      <div className="mb-4 flex items-center justify-between border-b border-border pb-2">
         <div className="flex items-center gap-2.5">
-          <span className="w-5 h-5 text-indigo-600">{icon}</span>
-          <h3 className="font-display text-xl font-bold text-slate-900">{title}</h3>
+          <span className="h-5 w-5 text-primary">{icon}</span>
+          <h3 className="font-display text-xl font-bold text-text">{title}</h3>
         </div>
-        <span className="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-1 rounded-md">
+        <span className="rounded-md bg-surface-muted px-2 py-1 text-xs font-medium text-text-muted">
           {items.length} questions
         </span>
       </div>
@@ -86,7 +86,7 @@ export function InterviewQuestions({ data }: InterviewQuestionsProps) {
     return (
       <div className="max-w-md mx-auto text-center py-12">
         <svg
-          className="mx-auto h-10 w-10 text-slate-300"
+          className="mx-auto h-10 w-10 text-text-muted/50"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -104,7 +104,7 @@ export function InterviewQuestions({ data }: InterviewQuestionsProps) {
             d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
           />
         </svg>
-        <p className="mt-4 text-slate-400">
+        <p className="mt-4 text-text-muted">
           No interview questions yet. Generate them using the form above.
         </p>
       </div>

@@ -19,7 +19,7 @@ const TYPE_COLORS: Record<string, string> = {
   warning: "bg-yellow-500",
   auto_apply: "bg-purple-500",
   application: "bg-blue-500",
-  message: "bg-indigo-500",
+  message: "bg-primary",
   info: "bg-gray-500",
 };
 
@@ -143,26 +143,26 @@ export function NotificationBell() {
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="relative rounded-lg p-2 hover:bg-gray-100 active:bg-gray-200"
+          className="relative min-h-11 min-w-11 rounded-lg p-2 transition-colors hover:bg-surface-muted active:bg-surface-muted/70"
           aria-label="Notifications"
         >
           <Bell className="h-5 w-5 text-text-muted" />
           {unreadCount > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white animate-pulse">
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold leading-none text-white animate-pulse">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
         </button>
 
         {open && (
-          <div className="fixed inset-x-3 top-14 z-50 rounded-xl border border-gray-200 bg-card shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-1 sm:w-80">
-            <div className="flex items-center justify-between border-b border-gray-100 px-4 py-2.5">
+          <div className="fixed inset-x-3 top-14 z-50 rounded-xl border border-border bg-card shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-1 sm:w-80">
+            <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
               <span className="text-sm font-semibold text-text">Notifications</span>
               {unreadCount > 0 && (
                 <button
                   type="button"
                   onClick={() => void markAllRead()}
-                  className="rounded px-2 py-1 text-xs text-primary hover:bg-primary/10 active:bg-primary/20"
+                  className="min-h-9 rounded px-2 py-1 text-xs text-primary hover:bg-surface-muted active:bg-surface-muted/70"
                 >
                   Mark all read
                 </button>
@@ -178,8 +178,8 @@ export function NotificationBell() {
                     key={n.id}
                     type="button"
                     onClick={() => openNotification(n)}
-                    className={`flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-gray-50 active:bg-gray-100 ${
-                      !n.read ? "bg-blue-50/50" : ""
+                    className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-muted active:bg-surface-muted/70 ${
+                      !n.read ? "bg-surface-muted" : ""
                     }`}
                   >
                     <span
@@ -197,7 +197,7 @@ export function NotificationBell() {
                         {new Date(n.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </p>
                       {n.type === "message" ? (
-                        <p className="mt-1 text-[10px] font-medium text-indigo-600">Open conversation</p>
+                        <p className="mt-1 text-[10px] font-medium text-primary">Open conversation</p>
                       ) : null}
                     </div>
                   </button>
