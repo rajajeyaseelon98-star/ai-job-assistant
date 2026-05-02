@@ -1,6 +1,6 @@
 # PWA Implementation Guide
 
-**Last updated:** 2026-04-30
+**Last updated:** 2026-05-02
 
 ## Objective
 
@@ -166,6 +166,20 @@ If PWA behavior needs immediate rollback:
 3. (Optional) remove install/offline UI components from `app/layout.tsx`.
 
 This keeps app functionality intact while disabling SW behavior.
+
+---
+
+## Troubleshooting: Google login lands on `localhost` (mobile)
+
+**Symptom:** After choosing a Google account, the browser shows **“localhost refused to connect”** (`ERR_CONNECTION_REFUSED`) on a phone; desktop works.
+
+**Cause:** The standalone PWA was often **installed from `http://localhost:3000`** during development. `manifest.json` uses relative `start_url`, so that install stays tied to **localhost**. OAuth previously built `redirectTo` from `window.location.origin`, so it kept sending you back to localhost — on a phone, that is the **handset**, not your PC.
+
+**Fix (deployment):** Set **`NEXT_PUBLIC_APP_URL`** to your production origin (e.g. `https://ai-job-assistant-six-rho.vercel.app`) on Vercel. The app uses **`getOAuthRedirectOrigin()`** (`lib/appUrl.ts`) for Google OAuth, signup email links, and password-reset redirects.
+
+**Fix (user):** Remove the old home-screen icon and **install the PWA again from the production HTTPS URL**.
+
+**Supabase:** Authentication → URL Configuration → **Redirect URLs** must include `https://<your-production-domain>/auth/callback` (and any paths Supabase emails use).
 
 ---
 

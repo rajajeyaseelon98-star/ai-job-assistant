@@ -10,6 +10,7 @@ import { apiFetch } from "@/lib/api-fetcher";
 import { userKeys, type UserData } from "@/hooks/queries/use-user";
 import { AuthSplitShell } from "@/components/auth/auth-split-shell";
 import { AuthTrustSignals } from "@/components/auth/auth-trust-signals";
+import { getOAuthRedirectOrigin } from "@/lib/appUrl";
 
 function GoogleGlyph() {
   return (
@@ -53,10 +54,11 @@ function LoginForm() {
     try {
       const supabase = createClient();
       const next = searchParams.get("next") || "/dashboard";
+      const origin = getOAuthRedirectOrigin();
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+          redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
           skipBrowserRedirect: true,
         },
       });

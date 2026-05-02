@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { getOAuthRedirectOrigin } from "@/lib/appUrl";
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState("");
@@ -14,7 +15,7 @@ export default function ResetPasswordPage() {
     setLoading(true);
     const supabase = createClient();
     await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/login?reset=1`,
+      redirectTo: `${getOAuthRedirectOrigin()}/login?reset=1`,
     });
     setLoading(false);
     setSent(true);

@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { AuthSplitShell } from "@/components/auth/auth-split-shell";
 import { AuthTrustSignals } from "@/components/auth/auth-trust-signals";
+import { getOAuthRedirectOrigin } from "@/lib/appUrl";
 
 function GoogleGlyph() {
   return (
@@ -58,10 +59,11 @@ function SignupForm() {
     setMessage(null);
     const supabase = createClient();
     const nextPath = redirectAfterAuth(role);
+    const origin = getOAuthRedirectOrigin();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}&role=${role}`,
+        redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}&role=${role}`,
       },
     });
     if (error) {
@@ -82,7 +84,7 @@ function SignupForm() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectAfterAuth(role))}&role=${role}`,
+        emailRedirectTo: `${getOAuthRedirectOrigin()}/auth/callback?next=${encodeURIComponent(redirectAfterAuth(role))}&role=${role}`,
       },
     });
     setLoading(false);
