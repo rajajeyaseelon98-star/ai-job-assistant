@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getAppBaseUrl } from "@/lib/appUrl";
+import { getAppBaseUrl } from "@/lib/appUrl.server";
 import { sendEmail } from "@/lib/email";
 import { companyInviteEmailTemplate } from "@/lib/emailTemplates";
 import crypto from "crypto";

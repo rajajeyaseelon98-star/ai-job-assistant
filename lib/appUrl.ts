@@ -1,7 +1,8 @@
-import { headers } from "next/headers";
-
 /**
  * Canonical origin for OAuth (`redirectTo`), magic links (`emailRedirectTo`), and password-reset emails.
+ *
+ * Safe to import from **`"use client"`** components — no server-only APIs (see **`lib/appUrl.server.ts`** for
+ * `getAppBaseUrl`).
  *
  * **Why:** If `NEXT_PUBLIC_APP_URL` is unset, code falls back to `window.location.origin`. A PWA installed from
  * `http://localhost:3000` keeps that origin on the phone — Google then redirects to `localhost`, which is the
@@ -18,24 +19,3 @@ export function getOAuthRedirectOrigin(): string {
   if (typeof window !== "undefined") return window.location.origin;
   return "";
 }
-
-/**
- * Returns the best-known public base URL for absolute links.
- *
- * Priority:
- * - `NEXT_PUBLIC_APP_URL` (recommended, e.g. https://yourdomain.com)
- * - Vercel URL headers
- * - Request Host header (fallback)
- */
-export async function getAppBaseUrl(): Promise<string> {
-  const explicit = process.env.NEXT_PUBLIC_APP_URL;
-  if (explicit) return explicit.replace(/\/+$/, "");
-
-  const h = await headers();
-  const vercelProto = h.get("x-forwarded-proto") || "https";
-  const vercelHost = h.get("x-forwarded-host") || h.get("host");
-  if (vercelHost) return `${vercelProto}://${vercelHost}`.replace(/\/+$/, "");
-
-  return "http://localhost:3000";
-}
-

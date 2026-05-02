@@ -5,7 +5,7 @@ import { checkRateLimit } from "@/lib/rateLimit";
 import { isValidUUID } from "@/lib/validation";
 import { getImprovedResumePlainTextForUser, getResumeForJobApplication } from "@/lib/resume-for-user";
 import { createNotificationForUser } from "@/lib/notifications";
-import { getAppBaseUrl } from "@/lib/appUrl";
+import { getAppBaseUrl } from "@/lib/appUrl.server";
 import { sendEmail } from "@/lib/email";
 import { applicationReceivedEmailTemplate } from "@/lib/emailTemplates";
 import { createServiceRoleClient } from "@/lib/supabase/admin";

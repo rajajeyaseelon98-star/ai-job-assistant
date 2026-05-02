@@ -30,7 +30,10 @@ export async function GET(request: NextRequest) {
 
   // Resolve company details in a second query (avoids brittle cross-table select syntax).
   const companyIds = (rows || [])
-    .map((r) => String((r as Record<string, unknown>)?.job?.company_id || ""))
+    .map((r) => {
+      const job = (r as { job?: { company_id?: string } | null }).job;
+      return String(job?.company_id ?? "");
+    })
     .filter(Boolean);
   const uniqueCompanyIds = Array.from(new Set(companyIds));
   let companiesById: Record<string, Record<string, unknown>> = {};

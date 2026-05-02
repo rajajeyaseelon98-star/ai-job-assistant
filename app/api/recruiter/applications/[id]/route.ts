@@ -3,7 +3,7 @@ import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { isValidUUID } from "@/lib/validation";
 import { createNotificationForUser } from "@/lib/notifications";
-import { getAppBaseUrl } from "@/lib/appUrl";
+import { getAppBaseUrl } from "@/lib/appUrl.server";
 import { sendEmail } from "@/lib/email";
 import { applicationStatusChangedEmailTemplate } from "@/lib/emailTemplates";
 import { createServiceRoleClient } from "@/lib/supabase/admin";

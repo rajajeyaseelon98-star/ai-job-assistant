@@ -160,7 +160,10 @@ setup("real login: jobseeker storageState", async ({ page }) => {
   setup.setTimeout(180_000);
   const email = requireEnv("E2E_JOBSEEKER_EMAIL");
   const password = requireEnv("E2E_JOBSEEKER_PASSWORD");
-  if (!email || !password) setup.skip(true, "Missing E2E jobseeker credentials env vars.");
+  if (!email || !password) {
+    setup.skip(true, "Missing E2E jobseeker credentials env vars.");
+    return;
+  }
 
   fs.mkdirSync(authDir, { recursive: true });
   const statePath = path.join(authDir, "jobseeker.json");
@@ -178,7 +181,10 @@ setup("real login: recruiter storageState", async ({ page }) => {
   setup.setTimeout(180_000);
   const email = requireEnv("E2E_RECRUITER_EMAIL");
   const password = requireEnv("E2E_RECRUITER_PASSWORD");
-  if (!email || !password) setup.skip(true, "Missing E2E recruiter credentials env vars.");
+  if (!email || !password) {
+    setup.skip(true, "Missing E2E recruiter credentials env vars.");
+    return;
+  }
 
   fs.mkdirSync(authDir, { recursive: true });
   const statePath = path.join(authDir, "recruiter.json");
