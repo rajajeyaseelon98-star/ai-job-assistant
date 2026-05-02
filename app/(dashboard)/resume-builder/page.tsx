@@ -81,6 +81,7 @@ export default function ResumeBuilderPage() {
           <div className="space-y-4">
             <label className="mb-2 block text-sm font-semibold text-slate-700">Full name</label>
             <input
+              data-testid="rb-full-name"
               className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 transition-all outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
@@ -89,18 +90,21 @@ export default function ResumeBuilderPage() {
             <label className="mb-2 block text-sm font-semibold text-slate-700">Email</label>
             <input
               type="email"
+              data-testid="rb-email"
               className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 transition-all outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
             <label className="mb-2 block text-sm font-semibold text-slate-700">Phone</label>
             <input
+              data-testid="rb-phone"
               className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 transition-all outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
             <label className="mb-2 block text-sm font-semibold text-slate-700">Location</label>
             <input
+              data-testid="rb-location"
               className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 transition-all outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
@@ -112,6 +116,7 @@ export default function ResumeBuilderPage() {
           <div>
             <label className="mb-2 block text-sm font-semibold text-slate-700">Professional summary</label>
             <textarea
+              data-testid="rb-summary"
               className="min-h-[160px] w-full resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 transition-all outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
@@ -123,6 +128,7 @@ export default function ResumeBuilderPage() {
           <div>
             <label className="mb-2 block text-sm font-semibold text-slate-700">Experience</label>
             <textarea
+              data-testid="rb-experience"
               className="min-h-[200px] w-full resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 transition-all outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
               value={experience}
               onChange={(e) => setExperience(e.target.value)}
@@ -134,6 +140,7 @@ export default function ResumeBuilderPage() {
           <div>
             <label className="mb-2 block text-sm font-semibold text-slate-700">Education</label>
             <textarea
+              data-testid="rb-education"
               className="min-h-[160px] w-full resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 transition-all outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
               value={education}
               onChange={(e) => setEducation(e.target.value)}
@@ -147,6 +154,7 @@ export default function ResumeBuilderPage() {
             type="button"
             disabled={step === 0}
             onClick={() => setStep((s) => Math.max(0, s - 1))}
+            data-testid="rb-back"
             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-2.5 font-medium text-slate-600 transition-all hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40"
           >
             <ChevronLeft className="h-4 w-4" /> Back
@@ -155,6 +163,7 @@ export default function ResumeBuilderPage() {
             <button
               type="button"
               onClick={() => setStep((s) => s + 1)}
+              data-testid="rb-next"
               className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-2.5 font-medium text-white shadow-sm shadow-indigo-600/20 transition-all hover:bg-indigo-700"
             >
               Next <ChevronRight className="h-4 w-4" />
@@ -166,6 +175,7 @@ export default function ResumeBuilderPage() {
                 onClick={() => {
                   void navigator.clipboard.writeText(buildPlainText());
                 }}
+                data-testid="rb-copy"
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-2.5 font-medium text-slate-600 transition-all hover:bg-slate-50 hover:text-slate-900"
               >
                 <Copy className="h-4 w-4" /> Copy full draft
@@ -173,6 +183,7 @@ export default function ResumeBuilderPage() {
               <button
                 type="button"
                 onClick={openInAnalyzer}
+                data-testid="rb-open-analyzer"
                 className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 font-medium text-white shadow-md shadow-indigo-500/25 transition-all hover:from-indigo-700 hover:to-violet-700"
               >
                 Open in Resume Analyzer →

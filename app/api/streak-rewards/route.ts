@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/auth";
 import { getUserStreak } from "@/lib/streakSystem";
 import { getStreakRewards, claimStreakReward } from "@/lib/streakRewards";
 
@@ -7,8 +7,7 @@ import { getStreakRewards, claimStreakReward } from "@/lib/streakRewards";
  * GET /api/streak-rewards — Get available and claimed rewards
  */
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const streak = await getUserStreak(user.id);
@@ -22,8 +21,7 @@ export async function GET() {
  * Body: { streak_days: number }
  */
 export async function POST(request: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { streak_days } = await request.json();

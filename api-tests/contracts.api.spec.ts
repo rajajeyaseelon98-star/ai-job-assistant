@@ -57,4 +57,33 @@ test.describe("API contract tests", () => {
     });
     await ctx.dispose();
   });
+
+  test("auto-apply POST rejects missing resume_id", async () => {
+    const ctx = await asRole("job_seeker");
+    const res = await ctx.post("/api/auto-apply", {
+      data: {},
+      headers: { "Content-Type": "application/json" },
+    });
+    expect([400, 429]).toContain(res.status());
+    const body = await res.json();
+    if (res.status() === 400) {
+      expect(body.error).toBe("Valid resume_id is required");
+    }
+    await ctx.dispose();
+  });
+
+  test("generate-cover-letter POST rejects empty payload fields", async () => {
+    const ctx = await asRole("job_seeker");
+    const res = await ctx.post("/api/generate-cover-letter", {
+      data: {},
+      headers: { "Content-Type": "application/json" },
+    });
+    expect([400, 429]).toContain(res.status());
+    const body = await res.json();
+    if (res.status() === 400) {
+      expect(body.requestId).toBeTruthy();
+      expect(body.retryable).toBe(false);
+    }
+    await ctx.dispose();
+  });
 });

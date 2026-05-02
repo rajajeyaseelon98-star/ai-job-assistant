@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/auth";
 import { generateDailyActions, completeDailyAction, getDailyProgress } from "@/lib/dailyActions";
 
 /**
  * GET /api/daily-actions — Get today's personalized action items
  */
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const [actions, progress] = await Promise.all([
@@ -23,8 +22,7 @@ export async function GET() {
  * Body: { action_id: string }
  */
 export async function PATCH(request: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { action_id } = await request.json();

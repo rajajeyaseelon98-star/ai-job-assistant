@@ -1,6 +1,6 @@
 # Automated Testing Strategy
 
-**Last updated:** 2026-04-30 (Aligned with AI provider fallback + email webhook/cron routes)
+**Last updated:** 2026-05-02 (Full inventory API/page smoke + `docs/QA_FULL_SITE_COVERAGE.md` + `docs/QA_CHANGE_CHECKLIST.md`)
 
 ## Scope
 
@@ -18,6 +18,8 @@ This strategy adds deterministic automation for:
 - **Fixtures:** Deterministic test payloads under `fixtures/`
 - **Seed helper:** `scripts/test/seed-fixtures.mjs` emits SQL for stable seeded environments
 
+**Inventory-complete automation (Layer A):** See **`docs/QA_FULL_SITE_COVERAGE.md`**. API smoke lives in **`api-tests/inventory-get-smoke.api.spec.ts`** and **`api-tests/inventory-mutations-smoke.api.spec.ts`**; all pages from **`docs/QA_ROUTE_INVENTORY.md`** are visited by **`e2e/full-site-page-inventory-mock.spec.ts`**. When you add routes, follow **`docs/QA_CHANGE_CHECKLIST.md`**.
+
 ## Folder Structure
 
 - `e2e/`
@@ -29,6 +31,8 @@ This strategy adds deterministic automation for:
 - `api-tests/`
   - `contracts.api.spec.ts`
   - `data-integrity.api.spec.ts`
+  - `inventory-get-smoke.api.spec.ts`
+  - `inventory-mutations-smoke.api.spec.ts`
   - `helpers/auth-context.ts`
 - `fixtures/`
   - `users.json`

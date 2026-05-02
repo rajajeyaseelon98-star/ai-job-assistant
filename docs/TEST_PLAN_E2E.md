@@ -14,8 +14,9 @@
 | `E2E_MOCK_AUTH` | Optional legacy flag; **cookie mock auth** in `lib/e2e-auth.ts` is enabled in **non-production** when mock cookies + fixed secret match (see KT). Set in `.env.local` if other code still reads it. |
 | `NEXT_PUBLIC_E2E_MOCK_AUTH` | *(Unused in current code; mock auth is cookie + non-production.)* |
 | (cookie secret) | Fixed value `E2E_MOCK_DEFAULT_SECRET` in `lib/e2e-auth.ts` — must match Playwright cookies; not configurable per env (Edge bundle cannot rely on server-only secrets). |
-| `E2E_JOB_SEEKER_EMAIL` / `E2E_JOB_SEEKER_PASSWORD` | *(Optional)* Real Supabase login — **not** used by default; signed-in specs use **mock auth** instead. |
-| `E2E_USER_RECRUITER_EMAIL` / `E2E_USER_RECRUITER_PASSWORD` | *(Optional)* Same — reserved if you add real-login tests later. |
+| `E2E_JOB_SEEKER_EMAIL` / `E2E_JOB_SEEKER_PASSWORD` | Real-user Playwright: credentials loaded from `.env.e2e.local` for setup (`e2e/auth/real-login.setup.ts`). |
+| `E2E_USER_RECRUITER_EMAIL` / `E2E_USER_RECRUITER_PASSWORD` | Same for recruiter storage state. |
+| `E2E_INTERNAL_AUTH_SECRET` | When set, setup prefers **`POST /api/internal/e2e-password-login`** (non-production) with header **`x-e2e-auth-secret`** for faster login than UI-only flow. Middleware allows **`/api/internal/e2e-*`** without an existing session; the route still returns **404** in production and **401** if the secret is wrong. |
 
 ---
 
@@ -110,4 +111,18 @@ Record new cases in this doc under §2 with linked spec files when automated.
 
 ---
 
-**Last updated:** 2026-03-26 (GitHub Actions E2E job + Playwright browser cache; mock auth via `lib/e2e-auth.ts` + `e2e/e2e-mock-auth.ts`)
+## Related docs (inventory + maintenance)
+
+| Doc | Role |
+|-----|------|
+| `docs/QA_ROUTE_INVENTORY.md` | Canonical list of pages + API routes |
+| `docs/QA_FULL_SITE_COVERAGE.md` | Layer A/B/C (inventory smoke vs behavioral vs deterministic AI) |
+| `docs/QA_COVERAGE_STATUS.md` | What automation exists today |
+| `docs/QA_CHANGE_CHECKLIST.md` | What to update when routes or tests change |
+| `docs/AUTOMATED_TESTING_STRATEGY.md` | Strategy, folder layout, npm scripts |
+
+Playwright defaults to **`http://localhost:<port>`** for `baseURL` (see `playwright.config.ts`) so Supabase cookies align with the dev origin; override with `PLAYWRIGHT_BASE_URL` if needed.
+
+---
+
+**Last updated:** 2026-05-02 (Env table: real-login + `E2E_INTERNAL_AUTH_SECRET`; related-docs index; `localhost` baseURL note)

@@ -38,6 +38,7 @@ export async function middleware(request: NextRequest) {
     (isApiRoute &&
       !pathname.startsWith("/api/auth") &&
       !pathname.startsWith("/api/platform-stats") &&
+      !pathname.startsWith("/api/internal/e2e-") &&
       !pathname.startsWith("/api/public/") &&
       !pathname.startsWith("/api/share-result") &&
       !pathname.startsWith("/api/share/"));

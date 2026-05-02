@@ -1,6 +1,6 @@
 # AI Job Assistant – Folder Structure (current)
 
-**Last updated:** 2026-04-30  
+**Last updated:** 2026-05-02  
 This project uses **Next.js App Router** with route groups for job seeker vs recruiter surfaces.
 
 ```
@@ -61,8 +61,17 @@ ai-job-assistant/
 ├── supabase/
 │   ├── migrations/                          # SQL migrations (RLS, tables, grants, indexes)
 │   └── schema.sql
-├── e2e/                                     # Playwright E2E tests
-├── api-tests/                               # Playwright API/contract tests
+├── e2e/                                     # Playwright E2E (mock auth + deterministic flows)
+│   ├── real/                                # Real-user regression (*.real.spec.ts); storageState from setup
+│   ├── auth/real-login.setup.ts             # Writes playwright/.auth/*.json
+│   ├── site-wide-sweep.spec.ts              # Curated route stability
+│   ├── full-site-page-inventory-mock.spec.ts # All pages from QA_ROUTE_INVENTORY (mock auth)
+│   └── helpers/                             # network-mocks, ai-deterministic-mocks, fixtures
+├── api-tests/                               # Playwright API-only (see playwright.api.config.ts)
+│   ├── inventory-get-smoke.api.spec.ts
+│   ├── inventory-mutations-smoke.api.spec.ts
+│   ├── contracts.api.spec.ts
+│   └── data-integrity.api.spec.ts
 ├── public/                                  # PWA assets: manifest, icons, offline.html
 ├── types/                                   # Shared TS types for UI/API
 ├── docs/                                    # Implementation + strategy docs
@@ -71,5 +80,5 @@ ai-job-assistant/
 
 Notes:
 
-- The precise inventory is documented in `docs/KNOWLEDGE_TRANSFER.md` and the repo itself; this file describes the **shape and intent** of the main directories.
+- The precise route inventory is **`docs/QA_ROUTE_INVENTORY.md`**; architecture detail stays in **`docs/KNOWLEDGE_TRANSFER.md`**. This file describes the **shape and intent** of the main directories.
 - If you add a new cross-cutting subsystem (email, caching, credits, etc.), update this file and KT together.

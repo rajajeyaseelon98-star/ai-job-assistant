@@ -119,6 +119,7 @@ export default function NewJobPage() {
           <label className="text-[13px] font-bold text-slate-700 mb-2 block ml-1">Job Title *</label>
           <input
             type="text" value={title} onChange={(e) => setTitle(e.target.value)}
+            data-testid="rjn-title"
             placeholder="e.g., Senior React Developer"
             className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-slate-900 placeholder:text-slate-400"
           />
@@ -137,6 +138,7 @@ export default function NewJobPage() {
           </div>
           <textarea
             value={description} onChange={(e) => setDescription(e.target.value)}
+            data-testid="rjn-description"
             rows={8} placeholder="Describe the role, responsibilities, and what you're looking for..."
             className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all min-h-[160px] outline-none text-slate-900 placeholder:text-slate-400"
           />
@@ -146,6 +148,7 @@ export default function NewJobPage() {
           <label className="text-[13px] font-bold text-slate-700 mb-2 block ml-1">Requirements</label>
           <textarea
             value={requirements} onChange={(e) => setRequirements(e.target.value)}
+            data-testid="rjn-requirements"
             rows={4} placeholder="Must-have qualifications, certifications..."
             className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all min-h-[160px] outline-none text-slate-900 placeholder:text-slate-400"
           />
@@ -155,6 +158,7 @@ export default function NewJobPage() {
           <label className="text-[13px] font-bold text-slate-700 mb-2 block ml-1">Required Skills (comma-separated)</label>
           <input
             type="text" value={skills} onChange={(e) => setSkills(e.target.value)}
+            data-testid="rjn-skills"
             placeholder="React, TypeScript, Node.js, AWS..."
             className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 transition-all focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-slate-900 placeholder:text-slate-400"
           />
@@ -244,11 +248,13 @@ export default function NewJobPage() {
 
         <div className="flex items-center gap-4 pt-8 border-t border-slate-100">
           <button type="button" onClick={(e) => handleSubmit(e, "active")} disabled={loading}
+            data-testid="rjn-publish"
             className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30 rounded-xl px-10 py-4 font-bold transition-all disabled:opacity-50 w-full sm:w-auto">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Publish Job
           </button>
           <button type="button" onClick={(e) => handleSubmit(e, "draft")} disabled={loading}
+            data-testid="rjn-draft"
             className="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl px-8 py-4 font-bold transition-all disabled:opacity-50 w-full sm:w-auto">
             Save as Draft
           </button>

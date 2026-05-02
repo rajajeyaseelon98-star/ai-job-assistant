@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/auth";
 import { scanOpportunities } from "@/lib/opportunityAlerts";
 
 /**
@@ -8,8 +8,7 @@ import { scanOpportunities } from "@/lib/opportunityAlerts";
  * The client calls this in the background; the UI loads cached alerts instantly.
  */
 export async function POST() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const count = await scanOpportunities(user.id).catch(() => 0);

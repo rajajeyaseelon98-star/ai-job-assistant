@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/auth";
 import { getActiveAlerts, dismissAlert, markAlertSeen } from "@/lib/opportunityAlerts";
 
 /**
@@ -7,8 +7,7 @@ import { getActiveAlerts, dismissAlert, markAlertSeen } from "@/lib/opportunityA
  * Scanning is decoupled to POST /api/opportunity-alerts/scan.
  */
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const alerts = await getActiveAlerts(user.id);
@@ -20,8 +19,7 @@ export async function GET() {
  * Body: { alert_id: string, action: "dismiss" | "seen" }
  */
 export async function PATCH(request: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { alert_id, action } = await request.json();

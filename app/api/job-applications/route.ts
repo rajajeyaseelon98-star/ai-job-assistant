@@ -19,8 +19,7 @@ export async function GET(request: NextRequest) {
     .select(
       `
       id, job_id, candidate_id, resume_id, stage, match_score, recruiter_notes, created_at, updated_at,
-      job:job_postings!job_applications_job_id_fkey(id, title, company_id),
-      company:companies!job_postings_company_id_fkey(id, name, website, industry, location, logo_url)
+      job:job_postings!job_applications_job_id_fkey(id, title, company_id)
     `
     )
     .eq("candidate_id", user.id)
@@ -28,6 +27,23 @@ export async function GET(request: NextRequest) {
     .limit(limit);
 
   if (error) return NextResponse.json({ error: "Failed to load job applications" }, { status: 500 });
+
+  // Resolve company details in a second query (avoids brittle cross-table select syntax).
+  const companyIds = (rows || [])
+    .map((r) => String((r as Record<string, unknown>)?.job?.company_id || ""))
+    .filter(Boolean);
+  const uniqueCompanyIds = Array.from(new Set(companyIds));
+  let companiesById: Record<string, Record<string, unknown>> = {};
+  if (uniqueCompanyIds.length) {
+    const { data: companies } = await supabase
+      .from("companies")
+      .select("id, name, website, industry, location, logo_url")
+      .in("id", uniqueCompanyIds);
+    for (const c of companies || []) {
+      const id = String((c as { id: string }).id);
+      if (id) companiesById[id] = c as unknown as Record<string, unknown>;
+    }
+  }
 
   const appIds = (rows || []).map((r) => (r as { id: string }).id).filter(Boolean);
   let eventsByApp: Record<string, unknown[]> = {};
@@ -44,10 +60,16 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const enriched = (rows || []).map((r) => ({
-    ...r,
-    events: eventsByApp[String((r as { id: string }).id)] || [],
-  }));
+  const enriched = (rows || []).map((r) => {
+    const row = r as Record<string, unknown>;
+    const job = (row.job || null) as Record<string, unknown> | null;
+    const companyId = String(job?.company_id || "");
+    return {
+      ...row,
+      company: companyId ? companiesById[companyId] || null : null,
+      events: eventsByApp[String((r as { id: string }).id)] || [],
+    };
+  });
 
   return NextResponse.json({ rows: enriched });
 }

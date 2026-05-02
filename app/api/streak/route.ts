@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/auth";
 import { getUserStreak, recordDailyActivity } from "@/lib/streakSystem";
 import { isValidActionType } from "@/lib/validation";
 
@@ -7,8 +7,7 @@ import { isValidActionType } from "@/lib/validation";
  * GET /api/streak — Get current user's streak data
  */
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const streak = await getUserStreak(user.id);
@@ -20,8 +19,7 @@ export async function GET() {
  * Body: { action_type?: string }
  */
 export async function POST(request: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let actionType = "daily_login";
